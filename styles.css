@@ -1,0 +1,29 @@
+body{
+     margin:0;
+     padding:12px;
+     /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}  gontse to define*/
+main{
+    justify-content: center;
+}
+}
+#welcomeSection{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content: space-around;
+ 
+}
+#clinicText{
+    color:#17a2b8;
+    font-weight: bold;
+}
+#welcomeSection h1{
+    color: #333;
+    margin-bottom: 20px;
+}
+#loginBtn{
+    background-color: #007bff;
+    color:rgb(224, 222, 222);
+    border-radius: 16px;
+}
