@@ -1,27 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome </title>
+    <title>smartClinic - Welcome</title>
+    <!-- simple fonts to be changed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- front page icons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Community Clinic Appointment and Queue Management System">
 </head>
-<body>
-    <main>
-        <section id="welcomeSection">
-            <h2 id="nameId">Welcome to smart<span id="clinicText">Clinic</span></h2>
-            <h4 >Community Clinic Appointment and Queue Management System</h4>
-            <br>
-            <Button id="loginBtn">Login</Button>
 
-        </section>
-        <hr>
-        <footer>
-            <section id="featuresBlock"></section>
-            <p>&copy; 2026 smartClinic. All rights reserved.</p>
-        </footer>
+<body>
+    <main class="welcome-container">
+        <article class="welcome-card">
+            <header class="card-header">
+                <h1 class="logo-title">
+                    <span class="logo-text-welcome">Welcome to</span>
+                    <span class="logo-smart">smart</span><span class="logo-clinic">Clinic</span>
+                </h1>
+                <p class="subtitle">Community Clinic Appointment and Queue Management System</p>
+            </header>
+
+            <section class="auth-buttons">
+                <!-- logo should will be placed here -->
+                <button id="loginBtn" class="btn btn-primary">
+                    Login
+                </button>
+                <nav class="secondary-actions" aria-label="Alternative Login Roles">
+                    <button id="staffLoginBtn" class="btn btn-outline-cyan">Staff Login</button>
+                    <button id="adminLoginBtn" class="btn btn-outline-dark">Admin Login</button>
+                </nav>
+            </section>
+
+            <footer class="features-wrapper">
+                <figure class="feature-item">
+                    <i class='bx bx-pulse text-blue feature-icon bg-blue-light'></i>
+                    <figcaption>Real-time Queues</figcaption>
+                </figure>
+                <figure class="feature-item">
+                    <i class='bx bx-time-five text-cyan feature-icon bg-cyan-light'></i>
+                    <figcaption>Hourly Booking</figcaption>
+                </figure>
+                <figure class="feature-item">
+                    <i class='bx bx-shield-quarter text-dark feature-icon bg-gray-light'></i>
+                    <figcaption>Secure Access</figcaption>
+                </figure>
+            </footer>
+        </article>
     </main>
 
+    <script src="index.js"></script>
 </body>
-<script src="index.js"></script>
+
 </html>
