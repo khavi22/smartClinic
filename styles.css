@@ -133,10 +133,7 @@ body {
     transform: translateY(-2px);
 }
 
-.secondary-actions {
-    display: flex;
-    gap: 16px;
-}
+
 
 .btn-outline-cyan {
     flex: 1;
@@ -232,9 +229,7 @@ body {
         font-size: 1.8rem;
     }
 
-    .secondary-actions {
-        flex-direction: column;
-    }
+
 
     .features-wrapper {
         gap: 16px;
