@@ -1,0 +1,24 @@
+{
+  "name": "smartclinic",
+  "version": "1.0.0",
+  "description": "WIP app for Azure Web App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khavi22/smartClinic.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/khavi22/smartClinic/issues"
+  },
+  "homepage": "https://github.com/khavi22/smartClinic#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
