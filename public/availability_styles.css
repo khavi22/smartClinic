@@ -36,84 +36,91 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+
 }
 
 .container {
     width: 100%;
-    max-width: 1100px;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    gap: 16px;
 }
 
-/* Back Link */
-.back-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: var(--transition);
-}
-
-.back-link:hover {
-    color: var(--primary-blue);
-}
-
-/* Main Card */
+/* Main Content Card (Now Full Width) */
 .availability-card {
     background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-premium);
-    overflow: hidden;
+    width: 100%;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
 
-/* Header Section (Full Width Top) */
+/* Header Section (Now Compact) */
 #headerSection {
     background-image: linear-gradient(135deg, #007bff 0%, #00a3ff 100%);
-    padding: 32px 40px;
+    padding: 16px 2.5%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px; /* Greatly reduced gap */
     color: white;
+    flex-shrink: 0;
 }
 
-#topHeaderSection {
+.header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#middleSection {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hospital-brand {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
 .hospital-badge {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(8px);
-    padding: 6px 16px;
+    padding: 4px 12px;
     border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #hospitalName {
-    font-size: 2.2rem;
+    font-size: 1.6rem;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+    margin: 0;
 }
 
 #hospitalAddress {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 1rem;
-    opacity: 0.9;
+    gap: 6px;
+    font-size: 0.85rem;
+    opacity: 0.85;
 }
 
 /* Card Body Layout */
@@ -121,6 +128,27 @@ body {
     display: grid;
     grid-template-columns: 320px 1fr;
     min-height: 500px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Back Link (Restored with Header Polish) */
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: var(--transition);
+    margin-bottom: 12px;
+}
+
+.back-link:hover {
+    color: white;
+    transform: translateX(-4px);
 }
 
 /* Side Panel (Calendar & Policy) */
@@ -133,7 +161,8 @@ body {
     gap: 32px;
 }
 
-.selection-header, .header-left {
+.selection-header,
+.header-left {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -142,23 +171,48 @@ body {
     font-size: 0.95rem;
 }
 
-/* Calendar Box */
+/* Dynamic "Normal" Calendar Box (Classic Grid) */
 .calendar-box {
     background: white;
     border: 1px solid var(--gray-light);
     border-radius: var(--radius-md);
     padding: 16px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Premium shadow */
 }
 
-/* Logic for building calendar via CSS/JS grid */
 .cal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.cal-nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 6px;
+    border-radius: 8px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+}
+
+.cal-nav-btn:hover {
+    background: var(--primary-blue-light);
+    color: var(--primary-blue);
+    border-color: rgba(0, 123, 255, 0.1);
+}
+
+.month-title {
+    min-width: 140px;
+    text-align: center;
 }
 
 .cal-grid {
@@ -174,32 +228,62 @@ body {
     color: var(--text-muted);
     padding-bottom: 8px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .cal-day {
-    padding: 8px 0;
+    padding: 10px 0;
     font-size: 0.85rem;
-    color: #444;
+    color: #4b5563;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 8px;
     transition: var(--transition);
+    border: 1px solid transparent;
 }
 
 .cal-day:hover:not(.empty) {
     background: var(--primary-blue-light);
     color: var(--primary-blue);
+    border-color: rgba(0, 123, 255, 0.2);
+}
+
+.cal-day.available {
+    font-weight: 700;
+    color: var(--text-dark);
+    position: relative;
+}
+
+.cal-day.available::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: var(--primary-blue);
+    border-radius: 50%;
 }
 
 .cal-day.selected {
-    background: var(--primary-blue);
-    color: white;
-    font-weight: 600;
+    background: var(--primary-blue) !important;
+    color: white !important;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
 }
 
 .cal-day.today {
+    border: 1px solid var(--primary-blue);
     color: var(--primary-blue);
     font-weight: 700;
-    text-decoration: underline;
+}
+
+.cal-day.disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: transparent !important;
+    color: var(--text-muted) !important;
 }
 
 /* Booking Policy */
@@ -243,50 +327,88 @@ body {
     padding: 32px 40px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    height: calc(100vh - 200px);
+    /* Fill space but stay consistent */
+    min-height: 600px;
 }
 
 .slots-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 16px;
+    padding-bottom: 24px;
     border-bottom: 1px solid var(--gray-light);
+    flex-shrink: 0;
 }
 
 .current-date-label {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-muted);
     font-weight: 500;
 }
 
-/* Slots Grid */
+/* Slots Grid - Categorized Scroll */
 .slots-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    overflow-y: auto;
     flex-grow: 1;
+    padding: 10px 0;
+}
+
+/* Sticky Group Headers */
+.slot-group-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    padding: 16px 0;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.slot-group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    padding: 20px 0 32px 0;
+}
+
+/* Custom Scrollbar */
+.slots-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.slots-grid::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
 }
 
 .slot-card {
     border: 1px solid var(--gray-light);
-    padding: 20px;
+    padding: 16px;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: var(--transition);
+    background: white;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .slot-card:hover {
     border-color: var(--primary-blue);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .slot-card.selected {
     border-color: var(--primary-blue);
     background: var(--primary-blue-light);
+    box-shadow: 0 0 0 1px var(--primary-blue);
 }
 
 .slot-top {
@@ -297,7 +419,7 @@ body {
 
 .slot-time {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-dark);
 }
 
@@ -320,17 +442,18 @@ body {
 }
 
 .slot-capacity {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
 }
 
-/* Footer Section */
+/* Footer Section - Pinned */
 .card-footer {
     padding-top: 24px;
     border-top: 1px solid var(--gray-light);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .footer-hint {
@@ -394,6 +517,7 @@ body {
     .card-body {
         grid-template-columns: 1fr;
     }
+
     .side-panel {
         border-right: none;
         border-bottom: 1px solid var(--gray-light);
