@@ -12,7 +12,7 @@ exports.getClinics = async (req, res) => {
     Query = `${searchName} clinics in Johannesburg South Africa`;
   }
   //check if latitude and longitude exist if the patient search using location
-  if(latitude &  longitude){
+  if(latitude &&  longitude){
     Query =`clinic near ${latitude},${longitude} in Johannesburg South Africa`
   }
  
