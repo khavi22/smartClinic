@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="css/styleclinic.css" />
+  </head>
+  <body>
+    <form class="form_input_searchclinic">
+      <input
+        type="text"
+        placeholder="search by clinic name"
+        id="search_input"
+        autocomplete="off"
+        required
+        class="input_search_name"
+      />
+    </form>
+    <button type="button" id="Butt_SearchByName" class="Butt_SearchByName">
+      SearchByName
+    </button>
+    <button type="button" id="Butt_UseLocation" class="Butt_UseLocation">
+      UseLocation
+    </button>
+    <section id="searc_clinic_section">
+      <section class="card_view_clinics"></section>
+    </section>
+    <section id="section_id"></section>
+    <!-- no need for type module on serverApi because we don't import anything -->
+    <script src="js/clinics.js"></script>
+  </body>
+</html>

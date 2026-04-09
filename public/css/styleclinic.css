@@ -1,0 +1,35 @@
+.Butt_SearchByName,.Butt_UseLocation{
+    background-color: blue;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    padding-left: 45px;
+    padding-right: 45px;
+    margin-top: 20px;
+    color: white;
+    border-color: white;
+    border-radius: 12px;
+}
+.Butt_UseLocation{
+    margin-left: 40px;
+}
+.form_input_searchclinic{
+    display: flex;
+    align-items: center;
+    border:2px solid rgb(20, 18, 18);
+    border-radius: 20px;
+    width: 60%;
+
+}
+.input_search_name{
+    padding-left: 20px;
+    padding-right: 90px;
+    margin-left: 10px;
+    padding-bottom: 12px;
+    padding-top: 12px;
+    border-radius: 9px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.card{
+    
+}

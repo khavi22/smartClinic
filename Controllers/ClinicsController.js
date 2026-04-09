@@ -3,8 +3,8 @@ const axios = require("axios");
 exports.getClinics = async (req, res) => {
   console.log(process.env.GOOGLE_MAPS_API_KEY);
   const searchName=req.query.search;
-  const latitude = req.query.latitude;
-  const longitude = req.query.longitude;
+  const latitude = req.query.lat;
+  const longitude = req.query.lon;
   let  Query;
 
   ///search name exits checking if it has a value
@@ -12,10 +12,10 @@ exports.getClinics = async (req, res) => {
     Query = `${searchName} clinics in Johannesburg South Africa`;
   }
   //check if latitude and longitude exist if the patient search using location
-  if(latitude &  longitude){
+  if(latitude &&  longitude){
     Query =`clinic near ${latitude},${longitude} in Johannesburg South Africa`
   }
- 
+  console.log(process.env.GOOGLE_MAPS_API_KEY);
   try {
     const response = await axios.post(
       "https://places.googleapis.com/v1/places:searchText",
