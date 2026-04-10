@@ -1,7 +1,6 @@
 const axios = require("axios");
 
 exports.getClinics = async (req, res) => {
-  console.log(process.env.GOOGLE_MAPS_API_KEY);
   const searchName=req.query.search;
   const latitude = req.query.lat;
   const longitude = req.query.lon;
