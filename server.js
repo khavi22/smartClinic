@@ -1,12 +1,18 @@
 const express = require("express");
 const path = require("path");
+const cors = require("cors");
+
+
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/icons", express.static(path.join(__dirname, "icons")));
-app.use("/images", express.static(path.join(__dirname, "images")));
+app.use(cors());
+
+require("dotenv").config();
+const clinicsRoutes = require("./routes/clinics");
+app.use("/api/clinics", clinicsRoutes);
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
