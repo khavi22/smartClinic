@@ -1,5 +1,12 @@
 const { initializeApp } = require("firebase/app");
-const { getFirestore, collection, query, where, getDocs, addDoc } = require("firebase/firestore");
+const {
+    getFirestore,
+    collection,
+    query,
+    where,
+    getDocs,
+    addDoc,
+} = require("firebase/firestore");
 
 
 const firebaseConfig = {
@@ -144,6 +151,34 @@ exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
         };
     } catch (error) {
         console.error("Error creating booking:", error);
+        throw error;
+    }
+};
+
+exports.getBookingsByPatientId = async (patientId) => {
+    try {
+        const bookingsRef = collection(db, "bookings");
+
+        const q = query(
+            bookingsRef,
+            where("patientId", "==", patientId),
+            where("status", "==", "booked")
+        );
+
+        const snapshot = await getDocs(q);
+
+        const bookings = [];
+
+        snapshot.forEach((doc) => {
+            bookings.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        return bookings;
+    } catch (error) {
+        console.error("Error fetching bookings by patientId:", error);
         throw error;
     }
 };

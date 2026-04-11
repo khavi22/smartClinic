@@ -67,6 +67,9 @@ app.post("/api/bookings", async (req, res) => {
     }
 });
 
+const bookingsRoutes = require("./routes/bookings");
+app.use("/api", bookingsRoutes);
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
