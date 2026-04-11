@@ -1,4 +1,4 @@
-const { getAvailabilityForDate, createBooking, getBookingsByPatientId} = require("../services/firebaseService");
+const { getAvailabilityForDate, createBooking } = require("../services/firebaseService");
 
 
 exports.getAvailability = async (req, res) => {
@@ -47,22 +47,5 @@ exports.postBooking = async (req, res) => {
         }
 
         res.status(500).json({ error: "Failed to create booking. Please try again later." });
-    }
-};
-
-exports.getBookingsByPatientId = async (req, res) => {
-    try {
-        const patientId = req.params.patientId;
-
-        if (!patientId) {
-            return res.status(400).json({ error: "Missing patientId" });
-        }
-
-        const bookings = await getBookingsByPatientId(patientId);
-
-        res.json({ bookings });
-    } catch (error) {
-        console.error("Error fetching bookings:", error);
-        res.status(500).json({ error: "Failed to fetch bookings" });
     }
 };
