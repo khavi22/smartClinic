@@ -1,37 +1,4 @@
-// mock data
-const AVAILABILITY_DATA = {
-    "2026-04-05": [
-        { id: 0, time: "00:00 - 01:00", total: 10, taken: 0, status: "available" },
-        { id: 1, time: "01:00 - 02:00", total: 10, taken: 0, status: "available" },
-        { id: 2, time: "02:00 - 03:00", total: 10, taken: 0, status: "available" },
-        { id: 3, time: "03:00 - 04:00", total: 10, taken: 0, status: "available" },
-        { id: 4, time: "04:00 - 05:00", total: 10, taken: 0, status: "available" },
-        { id: 5, time: "05:00 - 06:00", total: 10, taken: 0, status: "available" },
-        { id: 6, time: "06:00 - 07:00", total: 10, taken: 0, status: "available" },
-        { id: 7, time: "07:00 - 08:00", total: 10, taken: 2, status: "available" },
-        { id: 8, time: "08:00 - 09:00", total: 10, taken: 5, status: "available" },
-        { id: 9, time: "09:00 - 10:00", total: 10, taken: 9, status: "limited" },
-        { id: 10, time: "10:00 - 11:00", total: 10, taken: 2, status: "available" },
-        { id: 11, time: "11:00 - 12:00", total: 10, taken: 0, status: "available" },
-        { id: 12, time: "12:00 - 13:00", total: 10, taken: 0, status: "available" },
-        { id: 13, time: "13:00 - 14:00", total: 10, taken: 3, status: "available" },
-        { id: 14, time: "14:00 - 15:00", total: 10, taken: 8, status: "limited" },
-        { id: 15, time: "15:00 - 16:00", total: 10, taken: 9, status: "limited" },
-        { id: 16, time: "16:00 - 17:00", total: 10, taken: 4, status: "available" },
-        { id: 17, time: "17:00 - 18:00", total: 10, taken: 1, status: "available" },
-        { id: 18, time: "18:00 - 19:00", total: 10, taken: 0, status: "available" },
-        { id: 19, time: "19:00 - 20:00", total: 10, taken: 0, status: "available" },
-        { id: 20, time: "20:00 - 21:00", total: 10, taken: 0, status: "available" },
-        { id: 21, time: "21:00 - 22:00", total: 10, taken: 0, status: "available" },
-        { id: 22, time: "22:00 - 23:00", total: 10, taken: 0, status: "available" },
-        { id: 23, time: "23:00 - 00:00", total: 10, taken: 0, status: "available" }
-    ],
-    "2026-04-06": [
-        { id: 24, time: "09:00 - 10:00", total: 10, taken: 5, status: "available" },
-        { id: 25, time: "14:00 - 15:00", total: 10, taken: 2, status: "available" }
-    ]
-};
-
+let cachedSlots = [];
 
 let today = new Date(2026, 3, 5); // demo selected date 
 let currentViewMonth = today.getMonth();
@@ -99,9 +66,9 @@ function renderCalendar() {
         const dateStr = `${currentViewYear}-${(currentViewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
         const isSelected = dateStr === selectedDate;
-        const isAvailable = AVAILABILITY_DATA[dateStr] && AVAILABILITY_DATA[dateStr].length > 0;
         const isToday = dateObj.toDateString() === today.toDateString();
         const isPast = dateObj < today && !isToday; // Disable strictly past dates
+        const isAvailable = !isPast; // Assume future dates are available for check
 
         html += `
             <div class="cal-day ${isSelected ? 'selected' : ''} ${isAvailable ? 'available' : ''} ${isToday ? 'today' : ''} ${isPast ? 'disabled' : ''}" 
@@ -128,7 +95,7 @@ function renderSlots() {
     const dateLabel = document.getElementById('selectedDateDisplay');
     if (!grid || !dateLabel) return;
 
-    const allSlots = AVAILABILITY_DATA[selectedDate] || [];
+    const allSlots = cachedSlots || [];
 
     // Grouping Logic
     const groups = {
@@ -175,9 +142,22 @@ function renderSlots() {
 
 
 
-window.handleDateSelection = function (dateStr) {
+window.handleDateSelection = async function (dateStr) {
     selectedDate = dateStr;
     selectedSlotId = null;
+
+    try {
+        const grid = document.getElementById('slotsGrid');
+        if (grid) grid.innerHTML = '<section class="no-slots">Loading...</section>';
+        
+        // Use realistic API delay / fetch
+        const res = await fetch(`/api/availability?date=${dateStr}`);
+        const data = await res.json();
+        cachedSlots = data.slots || [];
+    } catch (error) {
+        console.error("Failed to fetch slots", error);
+        cachedSlots = [];
+    }
 
     renderCalendar();
     renderSlots();
@@ -216,19 +196,23 @@ function updateConfirmButton() {
 }
 
 
-// load from local storage
+// load from URL or local storage
 function loadHospitalData() {
-    const name = localStorage.getItem('selectedHospitalName');
-    const address = localStorage.getItem('selectedHospitalAddress');
-    const type = localStorage.getItem('selectedHospitalType');
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    const name = urlParams.get('name') || localStorage.getItem('selectedHospitalName');
+    const address = urlParams.get('address') || localStorage.getItem('selectedHospitalAddress');
+    const type = urlParams.get('type') || localStorage.getItem('selectedHospitalType');
 
     if (name && document.getElementById('hospitalName')) {
         document.getElementById('hospitalName').textContent = name;
     }
-    if (address && document.getElementById('hospitalAddress')) {
-        // Find text node inside address p tag
+    if (address && document.getElementById('hospitalAddressText')) {
+        document.getElementById('hospitalAddressText').textContent = address;
+    } else if (address && document.getElementById('hospitalAddress')) {
+        // Fallback for older DOM structure just in case
         const addrNode = document.getElementById('hospitalAddress');
-        if (addrNode) addrNode.innerHTML = `<figure class="icon-box addr-icon"><img class="icons" src="/icons/location.svg" alt="Location Icon"></figure> ${address}`;
+        addrNode.innerHTML = `<figure class="icon-box addr-icon"><img class="icons" src="/icons/location.svg" alt="Location Icon"></figure> <span>${address}</span>`;
     }
     if (type && document.getElementById('hospitalType')) {
         document.getElementById('hospitalType').textContent = type;
@@ -244,8 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     today = await fetchTodayDate();
 
     // 3. Initial Render
-    renderCalendar();
-    renderSlots();
+    await window.handleDateSelection(selectedDate);
 
     const btn = document.getElementById('confirmBookingBtn');
     if (btn) {
