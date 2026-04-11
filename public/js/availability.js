@@ -1,21 +1,19 @@
 let cachedSlots = [];
 
-let today = new Date(2026, 3, 5); // demo selected date 
+const __now = new Date();
+let today = __now;
 let currentViewMonth = today.getMonth();
 let currentViewYear = today.getFullYear();
-let selectedDate = "2026-04-05";
+let selectedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
 let selectedSlotId = null;
 
 
 
-/**
- * SIMULATED API CALL: Get current date from server
- */
 async function fetchTodayDate() {
-    // In a real website use this to get current date return fetch('/api/today').then(res => res.json()); create the fetch function using express
+
     return new Promise(resolve => {
         setTimeout(() => {
-            resolve(new Date(2026, 3, 5)); // Apr 5, 2026
+            resolve(new Date()); // today's date
         }, 100);
     });
 }
@@ -42,47 +40,47 @@ function renderCalendar() {
             </button>
         </header>
         <section class="cal-grid">
-            <div class="cal-day-label">Su</div>
-            <div class="cal-day-label">Mo</div>
-            <div class="cal-day-label">Tu</div>
-            <div class="cal-day-label">We</div>
-            <div class="cal-day-label">Th</div>
-            <div class="cal-day-label">Fr</div>
-            <div class="cal-day-label">Sa</div>
+            <span class="cal-day-label">Su</span>
+            <span class="cal-day-label">Mo</span>
+            <span class="cal-day-label">Tu</span>
+            <span class="cal-day-label">We</span>
+            <span class="cal-day-label">Th</span>
+            <span class="cal-day-label">Fr</span>
+            <span class="cal-day-label">Sa</span>
     `;
 
-    // 1. Start of the current view month
+    // show current month slots
     const firstDayOfMonth = new Date(currentViewYear, currentViewMonth, 1).getDay();
     const daysInMonth = new Date(currentViewYear, currentViewMonth + 1, 0).getDate();
 
-    // 2. Preceding empty slots
+
     for (let i = 0; i < firstDayOfMonth; i++) {
-        html += '<div class="cal-day empty"></div>';
+        html += '<span class="cal-day empty"></span>';
     }
 
-    // 3. All days from 1st to end of month
+    //  All days from 1st to end of month
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(currentViewYear, currentViewMonth, day);
         const dateStr = `${currentViewYear}-${(currentViewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
         const isSelected = dateStr === selectedDate;
         const isToday = dateObj.toDateString() === today.toDateString();
-        const isPast = dateObj < today && !isToday; // Disable strictly past dates
-        const isAvailable = !isPast; // Assume future dates are available for check
+        const isPast = dateObj < today && !isToday; // disable strictly past dates
+        const isAvailable = !isPast;
 
         html += `
-            <div class="cal-day ${isSelected ? 'selected' : ''} ${isAvailable ? 'available' : ''} ${isToday ? 'today' : ''} ${isPast ? 'disabled' : ''}" 
+            <button type="button" class="cal-day ${isSelected ? 'selected' : ''} ${isAvailable ? 'available' : ''} ${isToday ? 'today' : ''} ${isPast ? 'disabled' : ''}" 
                  onclick="${isPast ? '' : `window.handleDateSelection('${dateStr}')`}">
-                ${day}
-            </div>
+                <time datetime="${dateStr}">${day}</time>
+            </button>
         `;
     }
 
-    // 4. Trailing empty slots to complete the 7-column grid
+
     const totalSlotsUsed = firstDayOfMonth + daysInMonth;
     const remainingSlots = (7 - (totalSlotsUsed % 7)) % 7;
     for (let i = 0; i < remainingSlots; i++) {
-        html += '<div class="cal-day empty"></div>';
+        html += '<span class="cal-day empty"></span>';
     }
 
     html += '</section>';
@@ -97,7 +95,7 @@ function renderSlots() {
 
     const allSlots = cachedSlots || [];
 
-    // Grouping Logic
+    // Grouping by morning ,afternoon and evening
     const groups = {
         "Morning (00:00 - 11:59)": allSlots.filter(s => s.id < 12),
         "Afternoon (12:00 - 17:59)": allSlots.filter(s => s.id >= 12 && s.id < 18),
@@ -111,30 +109,69 @@ function renderSlots() {
 
     let gridHtml = '';
 
+    // Check if the selected date is today or in the past
+    const realNow = new Date();
+    const todayDateObj = new Date(realNow.getFullYear(), realNow.getMonth(), realNow.getDate());
+
+    const selectedDateParts = selectedDate.split('-');
+    const selYear = parseInt(selectedDateParts[0], 10);
+    const selMonth = parseInt(selectedDateParts[1], 10) - 1;
+    const selDay = parseInt(selectedDateParts[2], 10);
+    const selDateObj = new Date(selYear, selMonth, selDay);
+
+    // Evaluate historic status
+    const isPastDate = selDateObj < todayDateObj;
+    const isToday = selDateObj.getTime() === todayDateObj.getTime();
+    const currentHour = realNow.getHours();
+
     for (const [title, slots] of Object.entries(groups)) {
         if (slots.length === 0) continue;
 
+        const isGroupUnavailable = slots.every(slot => {
+            const isPast = isPastDate || (isToday && slot.id <= currentHour);
+            return isPast || slot.status === 'full';
+        });
+
         gridHtml += `
-            <header class="slot-group-header">${title}</header>
-            <section class="slot-group-grid">
-                ${slots.map(slot => `
-                    <section class="slot-card ${selectedSlotId === slot.id ? 'selected' : ''}" 
-                         onclick="window.handleSlotSelection(${slot.id})">
-                        <header class="slot-top">
-                            <span class="slot-time">${slot.time}</span>
-                            <section class="slot-badge ${slot.status}">${slot.status}</section>
-                        </header>
-                        <section class="slot-capacity">
-                            ${slot.total - slot.taken} / ${slot.total} available
-                        </section>
-                    </section>
-                `).join('')}
-            </section>
+            <details class="slot-group-details" ${isGroupUnavailable ? '' : 'open'}>
+                <summary class="slot-group-header">
+                    <span>${title}</span>
+                    <mark class="group-status-badge ${isGroupUnavailable ? 'full' : 'available'}">${isGroupUnavailable ? 'Fully Booked' : 'Available Spaces'}</mark>
+                </summary>
+                <menu class="slot-group-grid">
+                    ${slots.map(slot => {
+            const isPast = isPastDate || (isToday && slot.id <= currentHour);
+            const displayStatus = isPast ? 'past' : slot.status;
+            const cssClass = isPast || slot.status === 'full' ? 'full' : '';
+            let capacityLabel = "";
+
+            if (isPast) {
+                capacityLabel = "Time Passed";
+            } else if (slot.total - slot.taken > 0) {
+                const remaining = slot.total - slot.taken;
+                capacityLabel = `${remaining} spot${remaining === 1 ? '' : 's'} available`;
+            } else {
+                capacityLabel = "Currently Unavailable";
+            }
+
+            return `
+                        <button type="button" class="slot-card ${selectedSlotId === slot.id ? 'selected' : ''} ${cssClass}" 
+                             onclick="${isPast ? '' : `window.handleSlotSelection(${slot.id})`}">
+                            <hgroup class="slot-top">
+                                <time class="slot-time">${slot.time}</time>
+                                <mark class="slot-badge ${displayStatus}">${displayStatus}</mark>
+                            </hgroup>
+                            <output class="slot-capacity">${capacityLabel}</output>
+                        </button>
+                        `;
+        }).join('')}
+                </menu>
+            </details>
         `;
     }
 
     if (!gridHtml) {
-        grid.innerHTML = '<section class="no-slots">No slots available for this date.</section>';
+        grid.innerHTML = '<article class="no-slots">No slots available for this date.</article>';
     } else {
         grid.innerHTML = gridHtml;
     }
@@ -146,22 +183,32 @@ window.handleDateSelection = async function (dateStr) {
     selectedDate = dateStr;
     selectedSlotId = null;
 
+    // Get selected clinic ID from the URL to properly filter Firebase
+    const urlParams = new URLSearchParams(window.location.search);
+    const clinicId = urlParams.get('id') || "default_clinic";
+
     try {
         const grid = document.getElementById('slotsGrid');
-        if (grid) grid.innerHTML = '<section class="no-slots">Loading...</section>';
-        
-        // Use realistic API delay / fetch
-        const res = await fetch(`/api/availability?date=${dateStr}`);
+        if (grid) grid.innerHTML = '<article class="no-slots">Loading...</article>';
+        const urlReq = `http://localhost:3000/api/availability?date=${dateStr}&clinicId=${encodeURIComponent(clinicId)}`;
+        const res = await fetch(urlReq);
+
+        if (!res.ok) throw new Error("Server returned " + res.status);
+
         const data = await res.json();
         cachedSlots = data.slots || [];
     } catch (error) {
         console.error("Failed to fetch slots", error);
         cachedSlots = [];
+        const grid = document.getElementById('slotsGrid');
+        if (grid) {
+            grid.innerHTML = `<output class="no-slots" style="color:red;">Error loading slots: ${error.message}. Is the server running?</output>`;
+        }
+        return;
     }
 
     renderCalendar();
     renderSlots();
-    updateConfirmButton();
 };
 
 window.changeMonth = function (delta) {
@@ -177,29 +224,27 @@ window.changeMonth = function (delta) {
 };
 
 window.handleSlotSelection = function (slotId) {
+    const slot = cachedSlots.find(s => s.id === slotId);
+    if (!slot || slot.status === 'full') {
+        return;
+    }
     selectedSlotId = slotId;
     renderSlots();
-    updateConfirmButton();
+
+    const dialog = document.getElementById('bookingModal');
+    const details = document.getElementById('dialogBookingDetails');
+    const displayDate = new Date(selectedDate).toLocaleDateString('default', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+
+    details.innerHTML = `Confirm your appointment for <br><time><strong>${displayDate}</strong> at <strong>${slot.time}</strong></time>?`;
+    dialog.showModal();
 };
-
-function updateConfirmButton() {
-    const btn = document.getElementById('confirmBookingBtn');
-    if (btn) {
-        if (selectedSlotId !== null) {
-            btn.classList.add('active');
-            btn.disabled = false;
-        } else {
-            btn.classList.remove('active');
-            btn.disabled = true;
-        }
-    }
-}
-
 
 // load from URL or local storage
 function loadHospitalData() {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     const name = urlParams.get('name') || localStorage.getItem('selectedHospitalName');
     const address = urlParams.get('address') || localStorage.getItem('selectedHospitalAddress');
     const type = urlParams.get('type') || localStorage.getItem('selectedHospitalType');
@@ -210,9 +255,9 @@ function loadHospitalData() {
     if (address && document.getElementById('hospitalAddressText')) {
         document.getElementById('hospitalAddressText').textContent = address;
     } else if (address && document.getElementById('hospitalAddress')) {
-        // Fallback for older DOM structure just in case
+
         const addrNode = document.getElementById('hospitalAddress');
-        addrNode.innerHTML = `<figure class="icon-box addr-icon"><img class="icons" src="/icons/location.svg" alt="Location Icon"></figure> <span>${address}</span>`;
+        addrNode.innerHTML = `<figure class="icon-box addr-icon" style="margin: 0;"><img class="icons" src="/icons/location.svg" alt="Location Icon"></figure> <span>${address}</span>`;
     }
     if (type && document.getElementById('hospitalType')) {
         document.getElementById('hospitalType').textContent = type;
@@ -221,22 +266,76 @@ function loadHospitalData() {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Load context from previous page
-    loadHospitalData();
 
-    // 2. Fetch Today's Date
-    today = await fetchTodayDate();
+    const dialog = document.getElementById('bookingModal');
+    const cancelBtn = document.getElementById('cancelBookingBtn');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
 
-    // 3. Initial Render
-    await window.handleDateSelection(selectedDate);
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            dialog.close();
+            selectedSlotId = null;
+            renderSlots();
+        });
+    }
 
-    const btn = document.getElementById('confirmBookingBtn');
-    if (btn) {
-        btn.addEventListener('click', () => {
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
             if (selectedSlotId !== null) {
-                alert(`Booking confirmed for ${selectedDate}!`);
+                const slot = cachedSlots.find(s => s.id === selectedSlotId);
+                const urlParams = new URLSearchParams(window.location.search);
+                const clinicId = urlParams.get('id') || "default_clinic";
+
+                confirmBtn.disabled = true;
+                cancelBtn.disabled = true;
+
+                const originalText = confirmBtn.textContent;
+                confirmBtn.innerHTML = '<span class="spinner"></span> Processing...';
+                confirmBtn.classList.add('loading');
+
+                try {
+                    const res = await fetch('http://localhost:3000/api/bookings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            clinicId: clinicId,
+                            date: selectedDate,
+                            timeSlot: slot.time
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        dialog.close();
+                        alert(`Booking successfully confirmed for ${selectedDate} at ${slot.time}!`);
+                        selectedSlotId = null;
+                        await window.handleDateSelection(selectedDate);
+                    } else {
+                        alert(`Booking failed: ${data.error}`);
+                    }
+                } catch (error) {
+                    console.error("Booking err:", error);
+                    alert("Error contacting the server.");
+                } finally {
+                    confirmBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    confirmBtn.textContent = originalText;
+                    confirmBtn.classList.remove('loading');
+                }
             }
         });
+    }
+
+
+    loadHospitalData();
+
+
+    try {
+        today = await fetchTodayDate();
+        await window.handleDateSelection(selectedDate);
+    } catch (err) {
+        console.error("Initial load failed", err);
     }
 });
 

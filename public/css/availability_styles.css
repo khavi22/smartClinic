@@ -1,24 +1,26 @@
 :root {
-    --primary-blue: #3b82f6; 
+    --primary-blue: #3b82f6;
     --primary-blue-hover: #2563eb;
-    --primary-blue-light: #eff6ff;
+    --primary-blue-light: rgba(59, 130, 246, 0.1);
 
-    --primary-cyan: #06b6d4; 
+    --primary-cyan: #06b6d4;
     --primary-cyan-hover: #0891b2;
-    --primary-cyan-light: #ecfeff;
+    --primary-cyan-light: rgba(6, 182, 212, 0.1);
 
     --success-green: #10b981;
-    --success-light: #d1fae5;
+    --success-light: rgba(16, 185, 129, 0.15);
 
     --text-dark: #1e293b;
     --text-muted: #64748b;
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
 
-    --gray-light: #f1f5f9;
+
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+
+    --gray-light: rgba(241, 245, 249, 0.6);
     --radius-lg: 24px;
     --radius-md: 16px;
-    --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -31,30 +33,19 @@
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: var(--text-dark);
-    background: var(--bg-main);
+    /* Clean layout */
+    background: var(--gray-light);
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
 }
 
-.container {
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
 
-/* Main Content Card */
+/* Main Content Card (Top Level) */
 .availability-card {
-    background: var(--bg-card);
+    background: window;
     width: 100%;
-    flex-grow: 1;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-premium);
     overflow: hidden;
 }
 
@@ -154,7 +145,7 @@ body {
     transform: translateX(-4px);
 }
 
-/* Side Panel (Calendar & Policy) */
+/* Side Panel -Calendar & Policy*/
 .side-panel {
     border-right: 1px solid var(--gray-light);
     padding: 32px;
@@ -174,13 +165,14 @@ body {
     font-size: 0.95rem;
 }
 
-/* Dynamic "Normal" Calendar Box (Classic Grid) */
+/* Dynamic  Calendar Box  */
 .calendar-box {
     background: white;
     border: 1px solid var(--gray-light);
     border-radius: var(--radius-md);
     padding: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Premium shadow */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    /* Premium shadow */
 }
 
 .cal-header {
@@ -237,11 +229,15 @@ body {
 .cal-day {
     padding: 10px 0;
     font-size: 0.85rem;
+    font-family: inherit;
     color: #4b5563;
     cursor: pointer;
     border-radius: 8px;
     transition: var(--transition);
     border: 1px solid transparent;
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .cal-day:hover:not(.empty) {
@@ -350,27 +346,59 @@ body {
     font-weight: 500;
 }
 
-/* Slots Grid - Categorized Scroll */
+
 .slots-grid {
     overflow-y: auto;
     flex-grow: 1;
     padding: 10px 0;
 }
 
-/* Sticky Group Headers */
+
+.slot-group-details {
+    margin-bottom: 8px;
+}
+
 .slot-group-header {
     position: sticky;
     top: 0;
-    background: white;
+    background: #f8fafc;
     z-index: 10;
     padding: 16px 0;
     margin-top: 10px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--gray-light);
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--glass-border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    outline: none;
+}
+
+.slot-group-header::-webkit-details-marker {
+    display: none;
+}
+
+.group-status-badge {
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+    background: transparent;
+}
+
+.group-status-badge.available {
+    background: var(--success-light);
+    color: var(--success-green);
+}
+
+.group-status-badge.full {
+    background: #f1f5f9;
+    color: #94a3b8;
 }
 
 .slot-group-grid {
@@ -378,6 +406,19 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 12px;
     padding: 20px 0 32px 0;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Custom Scrollbar */
@@ -386,32 +427,40 @@ body {
 }
 
 .slots-grid::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
+    background: rgba(226, 232, 240, 0.8);
     border-radius: 10px;
 }
 
+
 .slot-card {
-    border: 1px solid var(--gray-light);
+    border: 1px solid var(--glass-border);
     padding: 16px;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: var(--transition);
-    background: white;
+    background: rgba(255, 255, 255, 0.65);
     display: flex;
     flex-direction: column;
     gap: 10px;
+    text-align: left;
+    backdrop-filter: blur(4px);
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .slot-card:hover {
     border-color: var(--primary-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+    background: white;
 }
 
 .slot-card.selected {
     border-color: var(--primary-blue);
     background: var(--primary-blue-light);
-    box-shadow: 0 0 0 1px var(--primary-blue);
+    box-shadow: 0 0 0 2px var(--primary-blue);
+    transform: translateY(-2px);
 }
 
 .slot-top {
@@ -444,47 +493,147 @@ body {
     color: #ef6c00;
 }
 
+.slot-badge.full {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.slot-badge.past {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+
+.slot-card.full {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.slot-card.full:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #e2e8f0;
+}
+
 .slot-capacity {
     font-size: 0.75rem;
     color: var(--text-muted);
 }
 
-/* Footer Section - Pinned */
-.card-footer {
-    padding-top: 24px;
-    border-top: 1px solid var(--gray-light);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
 
-.footer-hint {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.confirm-btn {
-    padding: 12px 32px;
-    background: #e2e8f0;
-    color: #94a3b8;
+.booking-dialog {
+    margin: auto;
     border: none;
+    border-radius: var(--radius-lg);
+    background: white;
+    padding: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 400px;
+    width: 90%;
+    color: var(--text-dark);
+}
+
+.booking-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+.dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+}
+
+.dialog-header h2 {
+    font-size: 1.25rem;
+    color: var(--text-dark);
+}
+
+#dialogBookingDetails {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.dialog-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.dialog-actions button {
+    flex: 1;
+    padding: 12px;
     border-radius: 8px;
     font-weight: 600;
-    cursor: not-allowed;
+    cursor: pointer;
+    border: none;
     transition: var(--transition);
 }
 
-.confirm-btn.active {
+.cancel-btn {
+    background: var(--gray-light);
+    color: var(--text-dark);
+}
+
+.cancel-btn:hover {
+    background: #e2e8f0;
+}
+
+.confirm-btn {
     background: var(--primary-blue);
     color: white;
-    cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
 }
 
-.confirm-btn.active:hover {
+.confirm-btn:hover {
     background: var(--primary-blue-hover);
     transform: translateY(-1px);
+}
+
+.confirm-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.confirm-btn.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Loading Spinner */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* Icons Overrides */

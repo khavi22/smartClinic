@@ -3,10 +3,10 @@ const search_button_ByLocation = document.getElementById("Butt_UseLocation");
 const section_view_clinics = document.getElementById("search_clinic_section");
 const results_count_display = document.getElementById("resultsCountDisplay");
 
-// Helper to render clinics in a premium way
+// show returned clinics
 function renderClinics(clinicsArray) {
     section_view_clinics.innerHTML = "";
-    
+
     if (!clinicsArray || clinicsArray.length === 0) {
         section_view_clinics.innerHTML = `
             <article class="empty-state">
@@ -45,7 +45,8 @@ function renderClinics(clinicsArray) {
 
         // Click handler to navigate to Availability with URL params!
         card.addEventListener("click", () => {
-            const url = `Availability.html?name=${encodeURIComponent(clinicName)}&address=${encodeURIComponent(clinicAddress)}`;
+            const clinicId = clinic.id || "default_clinic";
+            const url = `Availability.html?id=${encodeURIComponent(clinicId)}&name=${encodeURIComponent(clinicName)}&address=${encodeURIComponent(clinicAddress)}`;
             window.location.href = url;
         });
 
@@ -56,7 +57,7 @@ function renderClinics(clinicsArray) {
 search_button_ByName.addEventListener("click", async function () {
     const search_input = document.getElementById("search_input");
     const input_value = search_input.value.trim();
-    
+
     if (!input_value) return;
 
     // Show loading state
@@ -115,7 +116,7 @@ search_button_ByLocation.addEventListener("click", async function () {
                 </article>
             `;
         }
-    }, function() {
+    }, function () {
         section_view_clinics.innerHTML = `
             <article class="empty-state" style="color: #ef4444;">
                 <p>Location access denied or unavailable.</p>
