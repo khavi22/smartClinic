@@ -3,71 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Bookings</title>
-  <link rel="stylesheet" href="css/appointments.css" />
+  <title>Your Care Journey | smartClinic Appointments</title>
+  <meta name="description" content="View and manage your upcoming and past clinic appointments at smartClinic.">
+  <link rel="stylesheet" href="css/appointments.css?v=2" />
+  <link rel="stylesheet" href="css/global_nav.css?v=1" />
+  <!-- Google Fonts for premium feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <main class="appointments-page">
-    <header class="page-header">
-      <section>
-        <h1>My Bookings</h1>
-        <p>Manage your upcoming visits and view past history.</p>
-      </section>
-      <nav aria-label="Primary actions">
-        <a href="Availability.html" class="button primary">Book New Appointment</a>
-      </nav>
+  <nav class="global-app-bar" aria-label="Main Navigation">
+    <section class="nav-container">
+      <a href="dashboard.html" class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        <span>smartClinic</span>
+      </a>
+      <menu class="nav-links">
+        <li><a href="dashboard.html" class="nav-link">Find Clinic</a></li>
+        <li><a href="apointments.html" class="nav-link active">My Appointments</a></li>
+      </menu>
+    </section>
+  </nav>
+
+  <main class="appointments-view">
+    <header class="view-header">
+      <hgroup>
+        <h1>My Appointments</h1>
+        <p>Manage and track your healthcare schedule</p>
+      </hgroup>
     </header>
 
-    <section class="tabs-section" aria-labelledby="appointments-heading">
-      <h2 id="appointments-heading" class="visually-hidden">Appointments</h2>
-
-      <nav class="tabs" aria-label="Appointment categories">
-        <button class="tab-button active" id="tab-upcoming" data-tab="upcoming" type="button">
-          Upcoming (<span id="upcoming-count">0</span>)
+    <article class="scheduling-dashboard">
+      <nav class="status-tabs" aria-label="Appointment category selection">
+        <button class="tab-trigger active" id="tab-upcoming" data-tab="upcoming" type="button" aria-selected="true" aria-controls="upcoming-panel">
+          Upcoming <mark id="upcoming-count" class="count-pill">0</mark>
         </button>
-        <button class="tab-button" id="tab-past" data-tab="past" type="button">
-          Past (<span id="past-count">0</span>)
+        <button class="tab-trigger" id="tab-past" data-tab="past" type="button" aria-selected="false" aria-controls="past-panel">
+          Past History <mark id="past-count" class="count-pill">0</mark>
         </button>
       </nav>
 
-      <section id="upcoming-panel" class="tab-panel active" aria-labelledby="tab-upcoming">
-        <section class="card-list" id="upcoming-list"></section>
+      <section id="upcoming-panel" class="tab-panel active" role="tabpanel" aria-labelledby="tab-upcoming">
+        <h2 class="visually-hidden">Upcoming Appointments</h2>
+        <section class="appointment-grid" id="upcoming-list"></section>
       </section>
 
-      <section id="past-panel" class="tab-panel" aria-labelledby="tab-past">
-        <section class="card-list" id="past-list"></section>
+      <section id="past-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-past" hidden>
+        <h2 class="visually-hidden">Past Appointment History</h2>
+        <section class="appointment-grid" id="past-list"></section>
       </section>
-    </section>
+    </article>
   </main>
 
-  <!-- Cancel Dialog -->
-  <dialog id="cancel-dialog">
-    <article class="dialog-content">
+  <!-- Interaction Dialogs -->
+  <dialog id="cancel-dialog" class="action-modal">
+    <form method="dialog">
       <header>
         <h2>Cancel Appointment</h2>
       </header>
-      <p>Are you sure you want to cancel this appointment? This action cannot be undone.</p>
-      <footer class="dialog-actions">
-        <button type="button" id="cancel-close" class="button secondary">Keep Appointment</button>
-        <button type="button" id="cancel-confirm" class="button danger">Yes, Cancel Appointment</button>
+      <p>Are you sure you want to cancel this visit? This action will release your time slot.</p>
+      <footer class="modal-footer">
+        <button type="submit" value="cancel" class="btn-subtle">Keep Appointment</button>
+        <button type="submit" id="cancel-confirm" value="confirm" class="btn-danger">Yes, Cancel Visit</button>
       </footer>
-    </article>
+    </form>
   </dialog>
 
-  <!-- Reschedule Dialog -->
-  <dialog id="reschedule-dialog">
-    <article class="dialog-content">
+  <dialog id="reschedule-dialog" class="action-modal">
+    <form method="dialog">
       <header>
         <h2>Reschedule Appointment</h2>
       </header>
-      <p>
-        This will cancel your current appointment and take you to the booking page to select a new time slot.
-      </p>
-      <footer class="dialog-actions">
-        <button type="button" id="reschedule-close" class="button secondary">Go Back</button>
-        <button type="button" id="reschedule-confirm" class="button info">Continue to Reschedule</button>
+      <p>This will cancel your current booking. You can then pick a new time that suits you better.</p>
+      <footer class="modal-footer">
+        <button type="submit" value="cancel" class="btn-subtle">Go Back</button>
+        <button type="submit" id="reschedule-confirm" value="confirm" class="btn-info">Change Time</button>
       </footer>
-    </article>
+    </form>
   </dialog>
 
   <script src="js/appointments.js"></script>

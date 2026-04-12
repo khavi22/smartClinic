@@ -1,4 +1,4 @@
-const { getAvailabilityForDate, createBooking, getBookingsByPatientId} = require("../services/firebaseService");
+const { getAvailabilityForDate, createBooking, getBookingsByPatientId, cancelBooking } = require("../services/firebaseService");
 
 
 exports.getAvailability = async (req, res) => {
@@ -21,21 +21,20 @@ exports.getAvailability = async (req, res) => {
 
 exports.postBooking = async (req, res) => {
     try {
-        const { clinicId, date, timeSlot } = req.body;
+        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, oldBookingId } = req.body;
 
         if (!date || !timeSlot) {
             return res.status(400).json({ error: "Missing date or timeSlot" });
         }
 
-        // Future Auth Extraction Logic:
-        // const token = req.headers.authorization;
-        // const decodedToken = await admin.auth().verifyIdToken(token);
-        // let patientId = decodedToken.uid;
+        // If this is a reschedule, cancel the old booking first
+        if (oldBookingId) {
+            console.log(`Rescheduling: Cancelling old booking ${oldBookingId}`);
+            await cancelBooking(oldBookingId);
+        }
 
-        // Current Mock patient ID for demo purposes
-        const patientId = "demo_patient_123";
-
-        const newBooking = await createBooking(clinicId, date, timeSlot, patientId);
+        // Pass oldBookingId to createBooking to indicate a reschedule
+        const newBooking = await createBooking(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldBookingId);
         res.json({ success: true, booking: newBooking });
     } catch (error) {
         console.error("Failed to create booking:", error);
@@ -64,5 +63,20 @@ exports.getBookingsByPatientId = async (req, res) => {
     } catch (error) {
         console.error("Error fetching bookings:", error);
         res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+};
+
+exports.deleteBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: "Missing booking ID" });
+        }
+
+        await cancelBooking(id);
+        res.json({ success: true, message: "Booking cancelled successfully" });
+    } catch (error) {
+        console.error("Failed to cancel booking:", error);
+        res.status(500).json({ error: "Failed to cancel booking" });
     }
 };

@@ -9,51 +9,27 @@ const pastCount = document.getElementById("past-count");
 const cancelDialog = document.getElementById("cancel-dialog");
 const rescheduleDialog = document.getElementById("reschedule-dialog");
 
-const APPOINTMENTS_URL = "http://localhost:3000/api/appointments/demo_patient_123"; 
-
-// stores fake clinic names like:
-// clinicIdA -> Clinic 1
-// clinicIdB -> Clinic 2
-const clinicNameMap = new Map();
 
 async function fetchAppointments() { 
   try {
-    const response = await fetch(APPOINTMENTS_URL);
+    const patientId = localStorage.getItem("patientId");
+
+    if (!patientId) {
+        window.location.href = "login.html";
+    }
+    const BOOKINGS_URL = `/api/bookings/${patientId}`;
+    const response = await fetch(BOOKINGS_URL);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch appointments: ${response.status}`); 
     }
 
     const data = await response.json();
-
-    appointments = Array.isArray(data) ? data : (data.appointments || []); 
-
-    buildClinicNameMap();
+    appointments = Array.isArray(data) ? data : (data.bookings || []);
   } catch (error) {
     console.error("Error loading appointments:", error);
     appointments = [];
   }
-}
-
-function buildClinicNameMap() {
-  clinicNameMap.clear();
-
-  let count = 1;
-
-  appointments.forEach(appointment => {
-    if (!clinicNameMap.has(appointment.clinicId)) {
-      clinicNameMap.set(appointment.clinicId, `Clinic ${count}`);
-      count++;
-    }
-  });
-}
-
-function getClinicName(clinicId) {
-  return clinicNameMap.get(clinicId) || "Unknown Clinic";
-}
-
-function getAppointmentTime(appointment) {
-  return appointment.timeSlot || "Time TBD";
 }
 
 function normalizeStatus(status) {
@@ -61,7 +37,10 @@ function normalizeStatus(status) {
 }
 
 function formatDateParts(dateString) {
+  // Parsing date string safely
   const date = new Date(dateString);
+  if (isNaN(date)) return { month: "N/A", day: "--", year: "----" };
+  
   const month = date.toLocaleString("en-US", { month: "short" });
   const day = String(date.getDate()).padStart(2, "0");
   const year = date.getFullYear();
@@ -89,20 +68,21 @@ function isPast(dateString) {
 
 function createEmptyState(title, text, buttonText) {
   const section = document.createElement("section");
-  section.className = "empty-state";
+  section.className = "empty-state-notice";
 
   section.innerHTML = `
     <h3>${title}</h3>
     <p>${text}</p>
-    ${buttonText ? `<a href="search.html" class="button primary">${buttonText}</a>` : ""}
+    ${buttonText ? `<a href="dashboard.html" class="button-cta primary">${buttonText}</a>` : ""}
   `;
 
   return section;
 }
 
 function createAppointmentCard(appointment, past = false) {
-  const clinicName = getClinicName(appointment.clinicId);
-  const time = getAppointmentTime(appointment);
+  const clinicName = appointment.clinicName || "Unknown Clinic";
+  const clinicAddress = appointment.clinicAddress || "Address not available";
+  const time = appointment.timeSlot || "Time TBD";
   const dateParts = formatDateParts(appointment.date);
 
   const status = normalizeStatus(appointment.status);
@@ -110,71 +90,84 @@ function createAppointmentCard(appointment, past = false) {
   const today = isToday(appointment.date);
 
   const article = document.createElement("article");
-  article.className = "appointment-card";
+  article.className = "appointment-entry";
 
-  if (past) article.classList.add("past");
-  if (cancelled) article.classList.add("cancelled");
-  if (today && !cancelled) article.classList.add("today");
+  if (past) article.classList.add("state-past");
+  if (cancelled) article.classList.add("state-cancelled");
+  if (today && !cancelled) article.classList.add("state-today");
 
-  let statusClass = "confirmed";
-  let statusText = "Booked";
+  let statusClass = "tag-confirmed";
+  let statusText = "Confirmed";
 
   if (cancelled) {
-    statusClass = "cancelled";
+    statusClass = "tag-cancelled";
     statusText = "Cancelled";
   } else if (past) {
-    statusClass = "completed";
+    statusClass = "tag-completed";
     statusText = "Completed";
   }
 
+  // Use semantic HTML: <time>, <address>, <section>, <header>, <footer>, <article>
   article.innerHTML = `
-    <section class="appointment-main">
-      <section class="appointment-date" aria-label="Appointment date">
-        <p class="month">${dateParts.month}</p>
-        <p class="day">${dateParts.day}</p>
-        <p class="year">${dateParts.year}</p>
-      </section>
+    <section class="entry-core">
+      <time datetime="${appointment.date}" class="entry-calendar" aria-label="Appointment date">
+        <span class="cal-month">${dateParts.month}</span>
+        <span class="cal-day">${dateParts.day}</span>
+        <span class="cal-year">${dateParts.year}</span>
+      </time>
 
-      <section class="appointment-details">
+      <section class="entry-info">
         <header>
           <h3>
             ${clinicName}
-            ${today && !cancelled ? `<span class="today-badge">Today</span>` : ""}
+            ${today && !cancelled ? `<mark class="badge-today">Today</mark>` : ""}
           </h3>
         </header>
 
-        <section class="details-meta" aria-label="Appointment details">
-          <p><strong>Clinic ID:</strong> ${appointment.clinicId}</p>
-          <p><strong>Time:</strong> ${time}</p>
-          <p><strong>Patient:</strong> ${appointment.patientId || "Unknown"}</p>
+        <section class="entry-metadata" aria-label="Appointment details">
+          <address class="clinic-address">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            ${clinicAddress}
+          </address>
+          <p class="time-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Scheduled for ${time}
+          </p>
         </section>
 
-        <p>
-          <span class="status-badge ${statusClass}">${statusText}</span>
-        </p>
+        <footer class="entry-status">
+          <span class="status-indicator ${statusClass}">${statusText}</span>
+        </footer>
       </section>
     </section>
   `;
 
   if (!past && !cancelled) {
-    const footer = document.createElement("footer");
-    footer.className = "appointment-actions";
-    footer.innerHTML = `
-      <button type="button" class="button secondary reschedule-button">Reschedule</button>
-      <button type="button" class="button danger cancel-button">Cancel</button>
-    `;
-
-    footer.querySelector(".cancel-button").addEventListener("click", () => {
-      selectedAppointmentId = appointment.id;
-      cancelDialog.showModal();
-    });
-
-    footer.querySelector(".reschedule-button").addEventListener("click", () => {
+    const actions = document.createElement("nav");
+    actions.className = "entry-actions";
+    actions.setAttribute("aria-label", "Appointment actions");
+    
+    const rescheduleBtn = document.createElement("button");
+    rescheduleBtn.type = "button";
+    rescheduleBtn.className = "btn-action secondary";
+    rescheduleBtn.textContent = "Reschedule";
+    rescheduleBtn.onclick = () => {
       selectedAppointmentId = appointment.id;
       rescheduleDialog.showModal();
-    });
+    };
 
-    article.appendChild(footer);
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn-action danger";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.onclick = () => {
+      selectedAppointmentId = appointment.id;
+      cancelDialog.showModal();
+    };
+
+    actions.appendChild(rescheduleBtn);
+    actions.appendChild(cancelBtn);
+    article.appendChild(actions);
   }
 
   return article;
@@ -198,16 +191,16 @@ function renderAppointments() {
   if (appointments.length === 0) {
     upcomingList.appendChild(
       createEmptyState(
-        "No appointments yet",
-        "No appointments were found for this patient.",
-        "Find a Clinic"
+        "No Active Care Plans",
+        "Your upcoming health visits will appear here once booked.",
+        "Find a Care Center"
       )
     );
 
     pastList.appendChild(
       createEmptyState(
-        "No past appointments",
-        "Your appointment history will appear here.",
+        "No Past History",
+        "Your completed appointments will be archived here.",
         ""
       )
     );
@@ -221,9 +214,9 @@ function renderAppointments() {
   } else {
     upcomingList.appendChild(
       createEmptyState(
-        "No upcoming appointments",
-        "You don't have any scheduled visits.",
-        "Find a Clinic"
+        "Clear Schedule",
+        "You have no upcoming appointments scheduled at this time.",
+        "Book a Visit"
       )
     );
   }
@@ -235,8 +228,8 @@ function renderAppointments() {
   } else {
     pastList.appendChild(
       createEmptyState(
-        "No past appointments",
-        "Your appointment history will appear here.",
+        "History Empty",
+        "We couldn't find any past appointment records.",
         ""
       )
     );
@@ -244,53 +237,67 @@ function renderAppointments() {
 }
 
 function setupTabs() {
-  const buttons = document.querySelectorAll(".tab-button");
+  const buttons = document.querySelectorAll(".tab-trigger");
   const panels = document.querySelectorAll(".tab-panel");
 
   buttons.forEach(button => {
     button.addEventListener("click", () => {
-      buttons.forEach(btn => btn.classList.remove("active"));
-      panels.forEach(panel => panel.classList.remove("active"));
+      buttons.forEach(btn => {
+        btn.classList.remove("active");
+        btn.setAttribute("aria-selected", "false");
+      });
+      panels.forEach(panel => {
+        panel.classList.remove("active");
+        panel.hidden = true;
+      });
 
       button.classList.add("active");
-      document.getElementById(`${button.dataset.tab}-panel`).classList.add("active");
+      button.setAttribute("aria-selected", "true");
+      
+      const targetPanel = document.getElementById(`${button.dataset.tab}-panel`);
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+        targetPanel.hidden = false;
+      }
     });
   });
 }
 
-document.getElementById("cancel-close").addEventListener("click", () => {
-  cancelDialog.close();
-  selectedAppointmentId = null;
-});
+document.getElementById("cancel-confirm").addEventListener("click", async () => {
+    if (!selectedAppointmentId) return;
 
-document.getElementById("cancel-confirm").addEventListener("click", () => {
-  const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+    try {
+        const response = await fetch(`/api/bookings/${selectedAppointmentId}`, {
+            method: 'DELETE'
+        });
 
-  if (appointment) {
-    appointment.status = "cancelled";
-  }
-
-  cancelDialog.close();
-  selectedAppointmentId = null;
-  renderAppointments();
-});
-
-document.getElementById("reschedule-close").addEventListener("click", () => {
-  rescheduleDialog.close();
-  selectedAppointmentId = null;
+        if (response.ok) {
+            const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+            if (appointment) {
+                appointment.status = "cancelled";
+            }
+            renderAppointments();
+        } else {
+            const err = await response.json();
+            alert(`Failed to cancel: ${err.error}`);
+        }
+    } catch (error) {
+        console.error("Cancellation error:", error);
+        alert("Error connecting to server for cancellation.");
+    }
 });
 
 document.getElementById("reschedule-confirm").addEventListener("click", () => {
-  const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
-
-  if (appointment) {
-    appointment.status = "cancelled";
-    alert(`Reschedule appointment for ${getClinicName(appointment.clinicId)} later.`); 
-  }
-
-  rescheduleDialog.close();
-  selectedAppointmentId = null;
-  renderAppointments();
+    const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+    if (appointment) {
+        const clinicId = appointment.clinicId;
+        const clinicName = encodeURIComponent(appointment.clinicName || "");
+        const clinicAddress = encodeURIComponent(appointment.clinicAddress || "");
+        const oldId = appointment.id;
+        
+        // Redirect to availability page with clinic info and old booking ID
+        window.location.href = `Availability.html?id=${clinicId}&name=${clinicName}&address=${clinicAddress}&oldBookingId=${oldId}`;
+    }
 });
 
 async function initAppointmentsPage() {

@@ -68,7 +68,7 @@ search_button_ByName.addEventListener("click", async function () {
     `;
 
     try {
-        const response = await fetch(`http://localhost:3000/api/clinics?search=${encodeURIComponent(input_value)}`);
+        const response = await fetch(`/api/clinics?search=${encodeURIComponent(input_value)}`);
         const data = await response.json();
         renderClinics(data.places);
         search_input.value = "";
@@ -105,7 +105,7 @@ search_button_ByLocation.addEventListener("click", async function () {
         `;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/clinics?lat=${latitude}&lon=${longitude}`);
+            const response = await fetch(`/api/clinics?lat=${latitude}&lon=${longitude}`);
             const data = await response.json()
             renderClinics(data.places);
         } catch (error) {

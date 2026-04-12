@@ -1,44 +1,68 @@
-const { initializeApp } = require("firebase/app");
-const {
-    getFirestore,
-    collection,
-    query,
-    where,
-    getDocs,
-    addDoc,
-} = require("firebase/firestore");
+const admin = require("firebase-admin");
 
+if (!admin.apps.length) {
+    const serviceAccount = {
+        type: "service_account",
+        project_id: "smartclinic-11971",
+        private_key_id: "32fe250b80b18310e9e84e7f7bf3ab18f7b98671",
+        private_key: `-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDXvtmgoZo7Uw+e
+H76sNyru/yns9HUYoTN4iKtPOhv9UYNvGihyPnIWOSaJloo/z5Moa0ijCiXgUwH9
+ziBOqShqdXxT4zzkQlrqRsoaS35zL8BVEmIl+TmD6ATZZZEFfrDqf2J5Dhy0rDa6
+ribs9RSoQ0VDwaQNAhzErAFNr17PB4uXlHv06pm5QXNLOmguRHbaWTQW7mpGpLhu
+7BIdCDyrk69pJ/NAi6H76PFSCirFjcx3iUR0A0h1Htce1psBXtg6RiffaiTO/8sj
+rJdpPmhzbFg07lbUBKmbfC0DNalOLHGD8u80EcuKZIXPpFNODKgmERJ3+Iz8IexY
+ifaN9GnxAgMBAAECggEAaq7GAKdIk+NLyr4Z1CDniw0EF1b+fDJiOE0koOW0J3xi
+SNMfgvacBZ83DjwxmsIzG36JiY2gEyAY0P9XfG4rPRFhbD3mw1yIhmaA06XXHnBT
+Y/3WKL7nkPFvTGzr3FK8ewiIkiHHUhQCcCdjujKqh1XUb1/WllQgE6SWdGqusCI7
+l9nEWsYALHMmBJ0E39/DZ9bb5CnVniFE9CCCModHjl0f/u+yZWvdzhuMRneqU+UY
+RQW3TPdSAugkQU3TFC5wnWetsqWlQaKyRSDO880h32iT07YHyANuORoVBU5BXAG1
+aEjCGUBbHxW8l1RtRldpuIp04uEO7ZKR/S4i5qsfvQKBgQDsrVOpUB7VjCVNJ/Iu
+hy2V3zChQQdnzeGLLhHN48Oi9Ms/v/EiAELQ6NdrnmHVRm+VZxlfvj7gbhSNIIVc
+XEk/FVNVpIvbzyzk6n/TakQfzbdgK2MuUxrTM6WDbAORcnDf0pTOnOH2bRlSRsi3
+SyVBEWJCMX/4Utbqq2XBOn5UBwKBgQDpXAsGgfzi0J6nQ/BAkMy9U2TlgQIhZg6l
+8G6HuZF+aHxAEuFxzt5sj6QmeQ0qSB5A18gi7+cf/WrX++I4wnlzKiTjOieV7DWs
+/h4MU8E2Vv4Ru28mh0FMmh/f02FHm+FZaqpk6+HKQ9AfDvnUB1qTyNqY56M7Vhtm
+SWSi3s0ERwKBgC2xxR5CTsGx/h2oYbSj+qQd5Dit4m0jLbF+YoeautHCa19Sgo6q
++Dt3SOgJOyA/KhnxPs/iXidceXFJ3xWW57lbN6yoSSxWEnfb4nQB50cwo3/YwJxY
+BSzTotf9ya6SJsK/2GUPmvzF0Ya2Ddh9lKK8ZXkcL3XVIJNMJigpT+yPAoGAZDEa
+or6ovxFnLNWkj3QcE6V8inUrXv+chm6GZkusRiPCRRhWJzD0mpPJnKMYnfC83IZI
+7YcnKrr5ZqZE6K3Gy0Vq9QyA9oOmQBITAKPtLtGG4EIjZN1pkeQSj10IRWCODoAX
+jKEiHl+jOdKKPRizMQRppoC9urorpW0Zgjw6tf0CgYA0/XQDdsMIuWJWkoWhaq8W
+LODqbXTKS85xJxw+CFrjz9B6j6u+7GWuC+S++pGTvBwRlD4tJ1MQ0ONB6IImfn98
+ETdJNyU+Ec80OmLnUgb+w0qk4vh/OQyYH3+GsA8fKUmee6xvXC2/yrgGU6Ub+/Wy
+HijTIW3z/E2h/ZAkNVYQ/Q==
+-----END PRIVATE KEY-----\n`,
+        client_email: "firebase-adminsdk-fbsvc@smartclinic-11971.iam.gserviceaccount.com",
+        client_id: "111145842828731529653",
+        auth_uri: "https://accounts.google.com/o/oauth2/auth",
+        token_uri: "https://oauth2.googleapis.com/token",
+        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+        client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40smartclinic-11971.iam.gserviceaccount.com"
+    };
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
-    authDomain: "smartclinic-11971.firebaseapp.com",
-    projectId: "smartclinic-11971",
-    storageBucket: "smartclinic-11971.firebasestorage.app",
-    messagingSenderId: "301262646979",
-    appId: "1:301262646979:web:6529009c676257565a7c76",
-    measurementId: "G-CZ0M6NZFV6"
-};
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
 
-// Initialize the Firebase application and connect to the Firestore database
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
+const db = admin.firestore();
 
 const MAX_CAPACITY_PER_SLOT = 10;
 
-// using clinic id fetch all appointments for that clinic and check each time slot count and determine its status
-exports.getAvailabilityForDate = async (clinicId, dateStr) => {
-    // Phase 1: Initialize an array for all 24 hours of the day
+// ======================= BOOKINGS =======================
+
+// Get availability
+const getAvailabilityForDate = async (clinicId, dateStr) => {
     const slots = [];
 
     for (let hour = 0; hour < 24; hour++) {
-        const start = hour.toString().padStart(2, '0') + ":00";
-        const end = ((hour + 1) % 24).toString().padStart(2, '0') + ":00";
-        const timeSlotString = `${start} - ${end}`;
+        const start = hour.toString().padStart(2, "0") + ":00";
+        const end = ((hour + 1) % 24).toString().padStart(2, "0") + ":00";
 
         slots.push({
             id: hour,
-            time: timeSlotString,
+            time: `${start} - ${end}`,
             total: MAX_CAPACITY_PER_SLOT,
             taken: 0,
             status: "available"
@@ -46,125 +70,123 @@ exports.getAvailabilityForDate = async (clinicId, dateStr) => {
     }
 
     try {
-        const appointmentsRef = collection(db, 'appointments');
-
-        //  Query Firestore for active 'booked' documents for this date/clinic
-        const queryConstraints = [
-            where('date', '==', dateStr),
-            where('status', '==', 'booked')
-        ];
+        let queryRef = db
+            .collection("bookings")
+            .where("date", "==", dateStr)
+            .where("status", "==", "booked");
 
         if (clinicId && clinicId !== "default") {
-            queryConstraints.push(where('clinicId', '==', clinicId));
+            queryRef = queryRef.where("clinicId", "==", clinicId);
         }
 
-        const finalQuery = query(appointmentsRef, ...queryConstraints);
-        const snapshot = await getDocs(finalQuery);
+        const snapshot = await queryRef.get();
 
-        // If no appointments exist, return the empty baseline slots
-        if (snapshot.empty) {
-            return slots;
-        }
+        if (snapshot.empty) return slots;
 
-        //  Roll up the appointment counts into the corresponding hourly slots
-        snapshot.forEach(doc => {
-            const appointment = doc.data(); 
-            const slot = slots.find(s => s.time === appointment.timeSlot);
+        snapshot.forEach((doc) => {
+            const booking = doc.data();
+            const slot = slots.find((s) => s.time === booking.timeSlot);
 
             if (slot) {
                 slot.taken += 1;
 
-                // Dynamically evaluate the status based on remaining capacity
                 if (slot.taken >= slot.total) {
                     slot.status = "full";
                 } else if (slot.taken >= slot.total - 3) {
-                    // indicates the slot is nearly booked (3 or fewer spots left)
                     slot.status = "limited";
-                } else {
-                    slot.status = "available";
                 }
             }
         });
 
         return slots;
     } catch (error) {
-        console.error("Error reading appointments from Firestore:", error); 
+        console.error("Error reading bookings:", error);
         throw error;
     }
 };
 
-// create an appointment
-exports.createAppointment = async (clinicId, dateStr, timeSlot, patientId) => {
+// Create booking
+const createBooking = async (
+    clinicId,
+    dateStr,
+    timeSlot,
+    patientId,
+    clinicName,
+    clinicAddress,
+    isReschedule = false
+) => {
     try {
-        const appointmentsRef = collection(db, 'appointments');
+        const bookingsRef = db.collection("bookings");
 
-        // Verify current patient does not already have an appointment for this specific day
-        const duplicateCheckQuery = query(
-            appointmentsRef,
-            where('patientId', '==', patientId),
-            where('date', '==', dateStr),
-            where('status', '==', 'booked')
-        );
-        const duplicateSnapshot = await getDocs(duplicateCheckQuery);
+        if (!isReschedule) {
+            const duplicateSnapshot = await bookingsRef
+                .where("patientId", "==", patientId)
+                .where("date", "==", dateStr)
+                .where("status", "==", "booked")
+                .get();
 
-        if (!duplicateSnapshot.empty) {
-            // error when user already has an appointment
-            throw new Error("You already have a booking for this day. Try rescheduling or deleting your existing booking before booking again.");
+            if (!duplicateSnapshot.empty) {
+                throw new Error("You already have a booking for this day.");
+            }
         }
 
-        // verify the chosen slot has not reached its maximum capacity
-        const queryConstraints = [
-            where('date', '==', dateStr),
-            where('timeSlot', '==', timeSlot),
-            where('status', '==', 'booked')
-        ];
+        let capacityQuery = bookingsRef
+            .where("date", "==", dateStr)
+            .where("timeSlot", "==", timeSlot)
+            .where("status", "==", "booked");
 
         if (clinicId && clinicId !== "default") {
-            queryConstraints.push(where('clinicId', '==', clinicId));
+            capacityQuery = capacityQuery.where("clinicId", "==", clinicId);
         }
 
-        const capacityQuery = query(appointmentsRef, ...queryConstraints);
-        const capacitySnapshot = await getDocs(capacityQuery);
+        const capacitySnapshot = await capacityQuery.get();
 
-        const currentCount = capacitySnapshot.size;
-
-        if (currentCount >= MAX_CAPACITY_PER_SLOT) {
-            throw new Error("This slot is full and unavailable.");
+        if (capacitySnapshot.size >= MAX_CAPACITY_PER_SLOT) {
+            throw new Error("This slot is full.");
         }
 
-        // save appointment
-        const newAppointment = {
+        const newBooking = {
             clinicId: clinicId || "default",
+            clinicName: clinicName || "Unknown Clinic",
+            clinicAddress: clinicAddress || "N/A",
             date: dateStr,
-            timeSlot: timeSlot,
-            patientId: patientId,
+            timeSlot,
+            patientId,
             status: "booked",
             createdAt: new Date().toISOString()
         };
 
-        const docRef = await addDoc(appointmentsRef, newAppointment);
+        const docRef = await bookingsRef.add(newBooking);
 
-        return {
-            id: docRef.id,
-            ...newAppointment
-        };
+        return { id: docRef.id, ...newBooking };
     } catch (error) {
         console.error("Error creating appointment:", error);
         throw error;
     }
 };
 
-exports.getAppointmentsByPatientId = async (patientId) => { 
+// Cancel booking
+const cancelBooking = async (bookingId) => {
     try {
-        const appointmentsRef = collection(db, "appointments");
+        await db.collection("bookings").doc(bookingId).update({
+            status: "cancelled",
+            updatedAt: new Date().toISOString()
+        });
 
-        const q = query(
-            appointmentsRef,
-            where("patientId", "==", patientId),
-            where("status", "==", "booked")
-        );
+        return { success: true };
+    } catch (error) {
+        console.error("Error cancelling booking:", error);
+        throw error;
+    }
+};
 
-        const snapshot = await getDocs(q);
+const getBookingsByPatientId = async (patientId) => {
+    try {
+        const snapshot = await db
+            .collection("bookings")
+            .where("patientId", "==", patientId)
+            .where("status", "==", "booked")
+            .get();
 
         const appointments = []; 
 
@@ -181,3 +203,21 @@ exports.getAppointmentsByPatientId = async (patientId) => {
         throw error;
     }
 };
+
+// ======================= PATIENTS =======================
+
+// Get profile
+const getUserProfileById = async (patientId) => {
+    try {
+        const docSnap = await db.collection("patients").doc(patientId).get();
+
+        if (!docSnap.exists) return null;
+
+        return { id: docSnap.id, ...docSnap.data() };
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+    }
+};
+
+module.exports = { admin, db, getUserProfileById, createBooking, getAvailabilityForDate, cancelBooking, getBookingsByPatientId };
