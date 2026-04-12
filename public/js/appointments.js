@@ -285,10 +285,10 @@ document.getElementById("cancel-confirm").addEventListener("click", async () => 
     }
 });
 
-document.getElementById("cancel-close").addEventListener("click", () => {
-  cancelDialog.close();
-  selectedAppointmentId = null;
-});
+// document.getElementById("cancel-close").addEventListener("click", () => {
+//   cancelDialog.close();
+//   selectedAppointmentId = null;
+// });
 
 document.getElementById("reschedule-confirm").addEventListener("click", () => {
     const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
@@ -302,10 +302,10 @@ document.getElementById("reschedule-confirm").addEventListener("click", () => {
     }
 });
 
-document.getElementById("reschedule-close").addEventListener("click", () => {
-  rescheduleDialog.close();
-  selectedAppointmentId = null;
-});
+// document.getElementById("reschedule-close").addEventListener("click", () => {
+//   rescheduleDialog.close();
+//   selectedAppointmentId = null;
+// });
 
 async function initAppointmentsPage() {
   setupTabs();
