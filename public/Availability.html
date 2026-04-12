@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Availability</title>
+    <!-- including google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/availability_styles.css?v=2">
+
+</head>
+
+<body>
+    <main class="availability-card">
+        <!-- Header Section -->
+        <header id="headerSection">
+            <nav class="header-top-row">
+                <!-- back achor link-->
+                <a href="dashboard.html" class="back-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Back to Clinics
+                </a>
+
+            </nav>
+
+            <hgroup id="middleSection">
+                <header class="title-wrap">
+                    <figure class="icon-box header-icon">
+                        <img class="icons" src="/icons/hospital.svg" alt="Hospital Icon">
+                    </figure>
+                    <!-- placeholder for clinic name -->
+                    <h1 id="hospitalName">Groote Schuur Hospital</h1>
+                </header>
+                <address id="hospitalAddress">
+                    <figure class="icon-box addr-icon" style="margin: 0;">
+                        <img class="icons" src="/icons/location.svg" alt="Location Icon">
+                    </figure>
+                    <!-- placeholder for clinic address -->
+                    <span id="hospitalAddressText">Observatory, Cape Town</span>
+                </address>
+            </hgroup>
+        </header>
+
+        <!-- Dashboard Body (Two Columns) -->
+        <section class="card-body">
+            <!--  Date Selection -->
+            <aside class="side-panel">
+                <header class="selection-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM16 2v4M8 2v4M3 10h18" />
+                    </svg>
+                    <span>Select Date</span>
+                </header>
+
+                <!--  Calendar grid -->
+                <output id="calendarContainer" class="calendar-box">
+                    <!-- Populated by JS  -->
+                </output>
+
+            </aside>
+
+            <!--  Available Slots block -->
+            <section class="slots-panel">
+                <header class="slots-header">
+                    <hgroup class="header-left">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l4 2" />
+                        </svg>
+                        <span>Available Slots</span>
+                    </hgroup>
+
+                    <aside class="header-right">
+                        <time id="selectedDateDisplay" class="current-date-label">Sunday, Apr 5</time>
+                    </aside>
+                </header>
+
+                <!-- Slots Grid -where users will click ana available slot-->
+                <menu id="slotsGrid" class="slots-grid">
+                    <!-- filled by JS -->
+                </menu>
+            </section>
+        </section>
+    </main>
+
+    <!-- booking dialogue triggered by click on the slot -->
+    <dialog id="bookingModal" class="booking-dialog">
+        <article class="dialog-content">
+            <header class="dialog-header">
+                <h2>Confirm Appointment</h2>
+            </header>
+            <p id="dialogBookingDetails">You are booking an appointment.</p>
+            <menu class="dialog-actions">
+                <button type="button" id="cancelBookingBtn" class="cancel-btn">Cancel</button>
+                <button type="button" id="modalConfirmBtn" class="confirm-btn active">Confirm Booking</button>
+            </menu>
+        </article>
+    </dialog>
+
+    <script src="js/availability.js?v=2"></script>
+</body>
+
+</html>
