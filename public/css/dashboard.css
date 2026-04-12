@@ -126,7 +126,7 @@ body {
     gap: 11px;
     padding: 10px 12px;
     border-radius: var(--radius-sm);
-    color: rgba(255,255,255,0.55);
+    color: #2563eb;
     font-size: 0.88rem;
     font-weight: 500;
     transition: var(--transition);
@@ -134,10 +134,7 @@ body {
 
 .nav-links li a i { font-size: 1.15rem; flex-shrink: 0; }
 
-.nav-links li a:hover {
-    color: var(--white);
-    background: rgba(255,255,255,0.08);
-}
+
 
 .nav-links li a.active,
 .nav-links li a[aria-current="page"] {
