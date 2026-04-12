@@ -14,6 +14,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
 
 require("dotenv").config();
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+
 const clinicsRoutes = require("./routes/clinics");
 app.use("/api/clinics", clinicsRoutes);
 
