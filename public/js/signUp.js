@@ -13,10 +13,8 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Guard: if no user is logged in, send them back to login
 auth.onAuthStateChanged((user) => {
     if (!user) {
         console.warn("No session — redirecting to login");
@@ -42,21 +40,34 @@ signupForm.addEventListener("submit", async (e) => {
 
     const patientData = {
         uid: user.uid,
-        fullName: user.displayName,
+        fullName: user.displayName || "Unknown User",
         email: user.email,
         role: document.getElementById("role").value,
         phone: document.getElementById("phone").value,
-        idNumber: document.getElementById("idNumber").value || "N/A",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        idNumber: document.getElementById("idNumber").value || "N/A"
     };
 
     try {
-        await db.collection("patients").doc(user.uid).set(patientData);
+        const response = await fetch("/api/user/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(patientData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Something went wrong");
+        }
+
         console.log("Patient record created successfully!");
+        localStorage.setItem("patientId", user.uid);
         window.location.href = "dashboard.html";
     } catch (error) {
         console.error("Error creating patient:", error);
-        alert("Database Error: " + error.message);
+        alert("Error: " + error.message);
         submitBtn.disabled = false;
         submitBtn.textContent = "Finalize Account";
     }
