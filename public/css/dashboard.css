@@ -56,6 +56,10 @@ body {
 }
 
 [hidden] { display: none !important; }
+.nav-user [hidden] { display: none !important; }
+.nav-user img:not([hidden]) { display: block; }
+.nav-user span:not([hidden]) { display: inline; }
+.nav-user button:not([hidden]) { display: inline-flex; }
 
 .visually-hidden {
     position: absolute; width: 1px; height: 1px;
@@ -550,3 +554,4 @@ footer.modal-actions {
     .top-bar h1 { font-size: 1.2rem; }
     .stats-grid { grid-template-columns: 1fr; }
 }
+

@@ -12,12 +12,16 @@
     <link rel="stylesheet" href="css/availability_styles.css?v=2">
     <link rel="stylesheet" href="css/styleclinic.css?v=2">
     <link rel="stylesheet" href="css/global_nav.css?v=1">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
     <nav class="global-app-bar" aria-label="Main Navigation">
         <section class="nav-container">
-            <a href="index.html" class="nav-brand">
+            <a href="dashboard.html" class="nav-brand">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
@@ -27,6 +31,15 @@
                 <li><a href="dashboard.html" class="nav-link active">Find Clinic</a></li>
                 <li><a href="apointments.html" class="nav-link">My Appointments</a></li>
             </menu>
+            <!-- User info + logout injected by dashboard.js -->
+            <section class="nav-user" aria-label="Account">
+                <img id="userAvatar" class="nav-avatar" src="" alt="Your profile picture" hidden>
+                <span id="userGreeting" class="nav-greeting" hidden></span>
+                <button id="logoutBtn" class="nav-logout-btn" type="button" hidden>
+                    <i class='bx bx-log-out' aria-hidden="true"></i>
+                    Logout
+                </button>
+            </section>
         </section>
     </nav>
 
@@ -106,8 +119,34 @@
             </section>
         </section>
     </main>
+    <!-- ── DANGER ZONE (outside main, full-width) ── -->
+    <section class="danger-zone" aria-labelledby="danger-heading">
+        <h2 id="danger-heading"><i class='bx bx-error-circle' aria-hidden="true"></i> Danger Zone</h2>
+        <p>Permanently deleting your account will remove all your medical records, bookings, and personal data. This action cannot be undone.</p>
+        <button id="deleteAccBtn" class="btn-delete" type="button">
+            <i class='bx bx-trash' aria-hidden="true"></i>
+            Delete My Account
+        </button>
+    </section>
+
+    <!-- ── DELETE CONFIRM MODAL ── -->
+    <dialog id="deleteModal" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+        <article class="modal-box">
+            <span class="modal-icon" aria-hidden="true"><i class='bx bx-trash'></i></span>
+            <h3 id="modalTitle">Delete your account?</h3>
+            <p id="modalDesc">This will permanently erase your profile, bookings, and all associated data. You'll need to sign in again to confirm.</p>
+            <footer class="modal-actions">
+                <button class="modal-cancel" id="modalCancel" type="button">Cancel</button>
+                <button class="modal-confirm" id="modalConfirm" type="button">
+                    <span id="confirmText">Yes, Delete</span>
+                </button>
+            </footer>
+        </article>
+    </dialog>
+
 
     <script src="js/clinics.js?v=2"></script>
+    <script src="js/dashboard.js?v=3"></script>
 </body>
 
 </html>

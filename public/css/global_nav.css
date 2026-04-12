@@ -33,6 +33,7 @@
     padding: 0 2rem;
     display: flex;
     justify-content: space-between;
+    gap: 1rem;
     align-items: center;
 }
 
@@ -95,4 +96,57 @@
     .nav-brand span {
         display: none;
     }
+}
+
+/* ── NAV USER SECTION ── */
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+}
+
+.nav-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-blue);
+}
+
+.nav-greeting {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+}
+
+.nav-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-logout-btn i { font-size: 1rem; }
+
+.nav-logout-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fff5f5;
+}
+
+@media (max-width: 640px) {
+    .nav-greeting { display: none; }
+    .nav-logout-btn span { display: none; }
 }
