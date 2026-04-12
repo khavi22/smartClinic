@@ -9,7 +9,7 @@ const pastCount = document.getElementById("past-count");
 const cancelDialog = document.getElementById("cancel-dialog");
 const rescheduleDialog = document.getElementById("reschedule-dialog");
 
-const BOOKINGS_URL = "http://localhost:3000/api/bookings/demo_patient_123";
+const BOOKINGS_URL = "/api/bookings/demo_patient_123";
 
 // stores fake clinic names like:
 // clinicIdA -> Clinic 1

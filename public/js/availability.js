@@ -190,7 +190,7 @@ window.handleDateSelection = async function (dateStr) {
     try {
         const grid = document.getElementById('slotsGrid');
         if (grid) grid.innerHTML = '<article class="no-slots">Loading...</article>';
-        const urlReq = `http://localhost:3000/api/availability?date=${dateStr}&clinicId=${encodeURIComponent(clinicId)}`;
+        const urlReq = `/api/availability?date=${dateStr}&clinicId=${encodeURIComponent(clinicId)}`;
         const res = await fetch(urlReq);
 
         if (!res.ok) throw new Error("Server returned " + res.status);
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 confirmBtn.classList.add('loading');
 
                 try {
-                    const res = await fetch('http://localhost:3000/api/bookings', {
+                    const res = await fetch('/api/bookings', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
