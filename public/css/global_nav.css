@@ -146,6 +146,37 @@
     background: #fff5f5;
 }
 
+.nav-appointment-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--primary-blue);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.nav-appointment-btn i {
+    font-size: 1.1rem;
+}
+
+.nav-appointment-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25);
+    color: white;
+}
+
+.nav-appointment-btn.active {
+    background: #1e40af;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 640px) {
     .nav-greeting { display: none; }
     .nav-logout-btn span { display: none; }

@@ -16,16 +16,21 @@
 <body>
     <nav class="global-app-bar" aria-label="Main Navigation">
         <section class="nav-container">
-            <a href="index.html" class="nav-brand">
+            <a href="dashboard.html" class="nav-brand">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
                 <span>smartClinic</span>
             </a>
             <menu class="nav-links">
-                <li><a href="dashboard.html" class="nav-link">Find Clinic</a></li>
-                <li><a href="apointments.html" class="nav-link">My Appointments</a></li>
+                <!-- Moved Appointments to corner -->
             </menu>
+            <section class="nav-user">
+                <a href="apointments.html" class="nav-appointment-btn">
+                    <i class='bx bx-calendar-event'></i>
+                    My Appointments
+                </a>
+            </section>
         </section>
     </nav>
 
@@ -36,14 +41,21 @@
             <hgroup id="middleSection">
                 <header class="title-wrap">
                     <figure class="icon-box header-icon">
-                        <img class="icons" src="/icons/hospital.svg" alt="Hospital Icon">
+                        <svg class="icons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
                     </figure>
                     <!-- placeholder for clinic name -->
                     <h1 id="hospitalName">Groote Schuur Hospital</h1>
                 </header>
                 <address id="hospitalAddress">
                     <figure class="icon-box addr-icon" style="margin: 0;">
-                        <img class="icons" src="/icons/location.svg" alt="Location Icon">
+                        <svg class="icons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
                     </figure>
                     <!-- placeholder for clinic address -->
                     <span id="hospitalAddressText">Observatory, Cape Town</span>

@@ -257,7 +257,7 @@ function loadHospitalData() {
     } else if (address && document.getElementById('hospitalAddress')) {
 
         const addrNode = document.getElementById('hospitalAddress');
-        addrNode.innerHTML = `<figure class="icon-box addr-icon" style="margin: 0;"><img class="icons" src="/icons/location.svg" alt="Location Icon"></figure> <span>${address}</span>`;
+        addrNode.innerHTML = `<figure class="icon-box addr-icon" style="margin: 0;"><svg class="icons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></figure> <span>${address}</span>`;
     }
     if (type && document.getElementById('hospitalType')) {
         document.getElementById('hospitalType').textContent = type;
