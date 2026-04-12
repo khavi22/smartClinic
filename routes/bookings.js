@@ -1,10 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const bookingController = require("../controllers/BookingController");
+const appointmentsController = require("../controllers/appointmentsController");
 
-// routing the so we can use url instead of calling the function directly
-router.get("/bookings/:patientId", bookingController.getBookingsByPatientId);
-router.get("/availability", bookingController.getAvailability);
-router.post("/bookings", bookingController.postBooking);
+router.get("/appointments/:patientId", appointmentsController.getAppointmentsByPatientId);
+router.get("/availability", appointmentsController.getAvailability);
+router.post("/appointments", appointmentsController.postAppointment);
 
 module.exports = router;

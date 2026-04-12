@@ -26,7 +26,7 @@ const db = getFirestore(app);
 
 const MAX_CAPACITY_PER_SLOT = 10;
 
-// using clinic id fetch all bookings for that clinic and check the each time slots and count vailable slots and determine its status
+// using clinic id fetch all appointments for that clinic and check each time slot count and determine its status
 exports.getAvailabilityForDate = async (clinicId, dateStr) => {
     // Phase 1: Initialize an array for all 24 hours of the day
     const slots = [];
@@ -46,7 +46,7 @@ exports.getAvailabilityForDate = async (clinicId, dateStr) => {
     }
 
     try {
-        const bookingsRef = collection(db, 'bookings');
+        const appointmentsRef = collection(db, 'appointments');
 
         //  Query Firestore for active 'booked' documents for this date/clinic
         const queryConstraints = [
@@ -54,23 +54,22 @@ exports.getAvailabilityForDate = async (clinicId, dateStr) => {
             where('status', '==', 'booked')
         ];
 
-
         if (clinicId && clinicId !== "default") {
             queryConstraints.push(where('clinicId', '==', clinicId));
         }
 
-        const finalQuery = query(bookingsRef, ...queryConstraints);
+        const finalQuery = query(appointmentsRef, ...queryConstraints);
         const snapshot = await getDocs(finalQuery);
 
-        // If no bookings exist, return the empty baseline slots
+        // If no appointments exist, return the empty baseline slots
         if (snapshot.empty) {
             return slots;
         }
 
-        //  Roll up the booking counts into the corresponding hourly slots
+        //  Roll up the appointment counts into the corresponding hourly slots
         snapshot.forEach(doc => {
-            const booking = doc.data();
-            const slot = slots.find(s => s.time === booking.timeSlot);
+            const appointment = doc.data(); 
+            const slot = slots.find(s => s.time === appointment.timeSlot);
 
             if (slot) {
                 slot.taken += 1;
@@ -79,7 +78,7 @@ exports.getAvailabilityForDate = async (clinicId, dateStr) => {
                 if (slot.taken >= slot.total) {
                     slot.status = "full";
                 } else if (slot.taken >= slot.total - 3) {
-                    //  indicates the slot is nearly booked (3 or fewer spots left)
+                    // indicates the slot is nearly booked (3 or fewer spots left)
                     slot.status = "limited";
                 } else {
                     slot.status = "available";
@@ -89,19 +88,19 @@ exports.getAvailabilityForDate = async (clinicId, dateStr) => {
 
         return slots;
     } catch (error) {
-        console.error("Error reading bookings from Firestore:", error);
+        console.error("Error reading appointments from Firestore:", error); 
         throw error;
     }
 };
 
-// create a booking
-exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
+// create an appointment
+exports.createAppointment = async (clinicId, dateStr, timeSlot, patientId) => {
     try {
-        const bookingsRef = collection(db, 'bookings');
+        const appointmentsRef = collection(db, 'appointments');
 
-        // Verify current patient does not already have a booking for this specific day
+        // Verify current patient does not already have an appointment for this specific day
         const duplicateCheckQuery = query(
-            bookingsRef,
+            appointmentsRef,
             where('patientId', '==', patientId),
             where('date', '==', dateStr),
             where('status', '==', 'booked')
@@ -109,7 +108,7 @@ exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
         const duplicateSnapshot = await getDocs(duplicateCheckQuery);
 
         if (!duplicateSnapshot.empty) {
-            //    booking error when user already have a booking
+            // error when user already has an appointment
             throw new Error("You already have a booking for this day. Try rescheduling or deleting your existing booking before booking again.");
         }
 
@@ -124,7 +123,7 @@ exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
             queryConstraints.push(where('clinicId', '==', clinicId));
         }
 
-        const capacityQuery = query(bookingsRef, ...queryConstraints);
+        const capacityQuery = query(appointmentsRef, ...queryConstraints);
         const capacitySnapshot = await getDocs(capacityQuery);
 
         const currentCount = capacitySnapshot.size;
@@ -133,52 +132,52 @@ exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
             throw new Error("This slot is full and unavailable.");
         }
 
-        // save booking
-        const newBooking = {
+        // save appointment
+        const newAppointment = {
             clinicId: clinicId || "default",
             date: dateStr,
             timeSlot: timeSlot,
             patientId: patientId,
-            status: "booked", // Successfully booked after passing validation
+            status: "booked",
             createdAt: new Date().toISOString()
         };
 
-        const docRef = await addDoc(bookingsRef, newBooking);
+        const docRef = await addDoc(appointmentsRef, newAppointment);
 
         return {
             id: docRef.id,
-            ...newBooking
+            ...newAppointment
         };
     } catch (error) {
-        console.error("Error creating booking:", error);
+        console.error("Error creating appointment:", error);
         throw error;
     }
 };
 
-exports.getBookingsByPatientId = async (patientId) => {
+exports.getAppointmentsByPatientId = async (patientId) => { 
     try {
-        const bookingsRef = collection(db, "bookings");
+        const appointmentsRef = collection(db, "appointments");
 
         const q = query(
-            bookingsRef,
+            appointmentsRef,
             where("patientId", "==", patientId),
             where("status", "==", "booked")
         );
 
         const snapshot = await getDocs(q);
 
-        const bookings = [];
+        const appointments = []; 
 
         snapshot.forEach((doc) => {
-            bookings.push({
+            appointments.push({
                 id: doc.id,
                 ...doc.data()
             });
         });
 
-        return bookings;
+        return appointments; 
     } catch (error) {
-        console.error("Error fetching bookings by patientId:", error);
+        console.error("Error fetching appointments by patientId:", error);
         throw error;
     }
 };
