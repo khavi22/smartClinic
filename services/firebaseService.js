@@ -180,6 +180,30 @@ const cancelBooking = async (bookingId) => {
     }
 };
 
+const getBookingsByPatientId = async (patientId) => {
+    try {
+        const snapshot = await db
+            .collection("bookings")
+            .where("patientId", "==", patientId)
+            .where("status", "==", "booked")
+            .get();
+
+        const bookings = [];
+
+        snapshot.forEach((doc) => {
+            bookings.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        return bookings;
+    } catch (error) {
+        console.error("Error fetching bookings by patientId:", error);
+        throw error;
+    }
+};
+
 // ======================= PATIENTS =======================
 
 // Get profile
@@ -196,4 +220,4 @@ const getUserProfileById = async (patientId) => {
     }
 };
 
-module.exports = { admin, db, getUserProfileById, createBooking, getAvailabilityForDate, cancelBooking };
+module.exports = { admin, db, getUserProfileById, createBooking, getAvailabilityForDate, cancelBooking, getBookingsByPatientId };

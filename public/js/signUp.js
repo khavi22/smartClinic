@@ -63,6 +63,7 @@ signupForm.addEventListener("submit", async (e) => {
         }
 
         console.log("Patient record created successfully!");
+        localStorage.setItem("patientId", user.uid);
         window.location.href = "dashboard.html";
     } catch (error) {
         console.error("Error creating patient:", error);

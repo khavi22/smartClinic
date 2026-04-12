@@ -9,10 +9,15 @@ const pastCount = document.getElementById("past-count");
 const cancelDialog = document.getElementById("cancel-dialog");
 const rescheduleDialog = document.getElementById("reschedule-dialog");
 
-const BOOKINGS_URL = "/api/bookings/demo_patient_123";
 
 async function fetchBookings() {
   try {
+    const patientId = localStorage.getItem("patientId");
+
+    if (!patientId) {
+        window.location.href = "login.html";
+    }
+    const BOOKINGS_URL = `/api/bookings/${patientId}`;
     const response = await fetch(BOOKINGS_URL);
 
     if (!response.ok) {

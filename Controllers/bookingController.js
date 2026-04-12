@@ -21,14 +21,11 @@ exports.getAvailability = async (req, res) => {
 
 exports.postBooking = async (req, res) => {
     try {
-        const { clinicId, date, timeSlot, clinicName, clinicAddress, oldBookingId } = req.body;
+        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, oldBookingId } = req.body;
 
         if (!date || !timeSlot) {
             return res.status(400).json({ error: "Missing date or timeSlot" });
         }
-
-        // Current Mock patient ID for demo purposes
-        const patientId = "demo_patient_123";
 
         // If this is a reschedule, cancel the old booking first
         if (oldBookingId) {

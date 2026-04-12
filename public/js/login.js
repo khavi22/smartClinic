@@ -24,6 +24,7 @@ async function redirectBasedOnUser(user) {
 
         if (response.ok && data.redirect) {
             window.location.href = data.redirect;
+            localStorage.setItem("patientId", user.uid);
         } else {
             alert(data.error || "Failed to check user login");
         }

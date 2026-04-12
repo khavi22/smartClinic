@@ -297,12 +297,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const originalText = confirmBtn.textContent;
                 confirmBtn.innerHTML = '<span class="spinner"></span> Processing...';
                 confirmBtn.classList.add('loading');
-
+                
                 try {
+                    const patientId = localStorage.getItem("patientId");
+
+                    if (!patientId) {
+                        window.location.href = "login.html";
+                    }
                     const res = await fetch('/api/bookings', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            patientId: patientId,
                             clinicId: clinicId,
                             clinicName: clinicName,
                             clinicAddress: clinicAddress,
