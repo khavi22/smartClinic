@@ -165,27 +165,11 @@ const createAppointment = async (
     }
 };
 
-// Cancel appointment
-const cancelAppointment = async (appointmentId) => {
-    try {
-        await db.collection("appointments").doc(appointmentId).update({
-            status: "cancelled",
-            updatedAt: new Date().toISOString()
-        });
-
-        return { success: true };
-    } catch (error) {
-        console.error("Error cancelling appointment:", error);
-        throw error;
-    }
-};
-
 const getAppointmentsByPatientId = async (patientId) => {
     try {
         const snapshot = await db
             .collection("appointments")
             .where("patientId", "==", patientId)
-            .where("status", "==", "booked")
             .get();
 
         const appointments = [];
@@ -220,4 +204,30 @@ const getUserProfileById = async (patientId) => {
     }
 };
 
-module.exports = { admin, db, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId };
+// make a method to update booking status to cancel which is gonna be used by the controller
+
+// Cancel booking by updating its status
+const cancelAppointment = async (appointmentId) =>{
+    try {
+        const bookingRef = db.collection("appointments").doc(appointmentId);
+
+        const bookingDoc = await bookingRef.get();
+
+        if (!bookingDoc.exists) {
+            throw new Error("Booking not found");
+        }
+
+        await bookingRef.update({
+            status: "cancelled",
+            updatedAt: new Date()
+        });
+
+        return { success: true, message: "Booking cancelled successfully" };
+
+    } catch (error) {
+        console.error("Error cancelling booking:", error);
+        throw error;
+    }
+};
+
+module.exports = { admin, db, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
