@@ -22,18 +22,21 @@
 <body>
     <nav class="global-app-bar" aria-label="Main Navigation">
         <section class="nav-container">
-            <a href="dashboard.html" class="nav-brand">
+            <a href="index.html" class="nav-brand">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
                 <span>smartClinic</span>
             </a>
             <menu class="nav-links">
-                <li><a href="dashboard.html" class="nav-link active">Find Clinic</a></li>
-                <li><a href="apointments.html" class="nav-link">My Appointments</a></li>
+                <!-- Removed Find Clinic and My Appointments (moved to corner) -->
             </menu>
             <!-- User info + logout injected by dashboard.js -->
             <section class="nav-user" aria-label="Account">
+                <a href="apointments.html" class="nav-appointment-btn">
+                    <i class='bx bx-calendar-event'></i>
+                    My Appointments
+                </a>
                 <img id="userAvatar" class="nav-avatar" src="" alt="Your profile picture" hidden>
                 <span id="userGreeting" class="nav-greeting" hidden></span>
                 <button id="logoutBtn" class="nav-logout-btn" type="button" hidden>
@@ -51,7 +54,10 @@
             <section id="middleSection" class="search-header-container">
                 <section class="title-wrap">
                     <figure class="icon-box header-icon">
-                        <img class="icons" src="/icons/search_icon.png" alt="Search Icon" style="filter: invert(1);">
+                        <svg class="icons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
                     </figure>
                     <h1 id="hospitalName">Find a Clinic</h1>
                 </section>
