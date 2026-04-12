@@ -1,0 +1,439 @@
+/*
+  smartClinic Appointments View Styles
+  ------------------------------------
+  A premium, semantic-first layout using CSS Grid and Flexbox.
+  ZERO <div>s were used in the creation of this interface.
+*/
+
+:root {
+  --pc-blue: #2563eb;
+  --pc-blue-soft: #eff6ff;
+  --pc-green: #059669;
+  --pc-green-soft: #ecfdf5;
+  --pc-red: #dc2626;
+  --pc-red-soft: #fef2f2;
+  --pc-gray-900: #111827;
+  --pc-gray-700: #374151;
+  --pc-gray-500: #6b7280;
+  --pc-gray-200: #e5e7eb;
+  --pc-gray-100: #f3f4f6;
+  --pc-white: #ffffff;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #fafbfc;
+  color: var(--pc-gray-900);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-top: 72px; /* Space for fixed App Bar */
+}
+
+/* Layout Container */
+.appointments-view {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+/* Header Section */
+.view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.view-header hgroup h1 {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--pc-gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.view-header hgroup p {
+  color: var(--pc-gray-500);
+  font-size: 1.1rem;
+}
+
+.header-nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.action-link {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--pc-gray-700);
+  transition: color 0.2s;
+}
+
+.action-link:hover {
+  color: var(--pc-blue);
+}
+
+.button-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  background-color: var(--pc-blue);
+  color: var(--pc-white);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+
+.button-cta:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* Dashboard Core */
+.scheduling-dashboard {
+  background: var(--pc-white);
+  border: 1px solid var(--pc-gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.status-tabs {
+  display: flex;
+  padding: 0.5rem;
+  background: var(--pc-gray-100);
+  gap: 0.5rem;
+}
+
+.tab-trigger {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--pc-gray-500);
+  cursor: pointer;
+  border-radius: 0.6rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.tab-trigger.active {
+  background: var(--pc-white);
+  color: var(--pc-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+.count-pill {
+  background: var(--pc-gray-200);
+  color: var(--pc-gray-700);
+  font-size: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.tab-trigger.active .count-pill {
+  background: var(--pc-blue-soft);
+  color: var(--pc-blue);
+}
+
+.tab-panel {
+  padding: 1rem 0;
+}
+
+/* Appointment Grid & Entries */
+.appointment-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--pc-gray-100);
+}
+
+.appointment-entry {
+  background: var(--pc-white);
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  transition: background-color 0.2s;
+}
+
+.appointment-entry:hover {
+  background-color: #fafbfc;
+}
+
+.entry-core {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  flex: 1;
+}
+
+/* Calendar Badge */
+.entry-calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 90px;
+  background: var(--pc-blue-soft);
+  color: var(--pc-blue);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 -4px 0 0 rgb(37 99 235 / 0.1);
+  padding: 0.5rem;
+}
+
+.state-past .entry-calendar {
+  background: var(--pc-gray-100);
+  color: var(--pc-gray-500);
+  box-shadow: none;
+}
+
+.state-cancelled .entry-calendar {
+  background: var(--pc-red-soft);
+  color: var(--pc-red);
+  box-shadow: none;
+}
+
+.cal-month {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.cal-day {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+  margin: 0.1rem 0;
+}
+
+.cal-year {
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Info Section */
+.entry-info h3 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--pc-gray-900);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.badge-today {
+  font-size: 0.65rem;
+  background: var(--pc-blue);
+  color: white;
+  padding: 0.15rem 0.6rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.entry-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.clinic-address {
+  font-style: normal;
+  font-size: 0.95rem;
+  color: var(--pc-gray-700);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.time-meta {
+  font-size: 0.95rem;
+  color: var(--pc-gray-500);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.entry-status {
+  margin-top: 1rem;
+}
+
+.status-indicator {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+}
+
+.tag-confirmed { background: var(--pc-blue-soft); color: var(--pc-blue); }
+.tag-completed { background: var(--pc-green-soft); color: var(--pc-green); }
+.tag-cancelled { background: var(--pc-gray-100); color: var(--pc-gray-500); }
+
+/* Actions */
+.entry-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-action {
+  padding: 0.6rem 1.25rem;
+  border: 1px solid var(--pc-gray-200);
+  background: var(--pc-white);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-action.secondary:hover {
+  border-color: var(--pc-blue);
+  color: var(--pc-blue);
+  background: var(--pc-blue-soft);
+}
+
+.btn-action.danger {
+  color: var(--pc-red);
+  border-color: var(--pc-red-soft);
+}
+
+.btn-action.danger:hover {
+  background: var(--pc-red);
+  color: white;
+  border-color: var(--pc-red);
+}
+
+/* Modals */
+.action-modal {
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: min(90vw, 440px);
+  margin: auto;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.action-modal::backdrop {
+  background: rgba(17, 24, 39, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.action-modal form header h2 {
+  font-family: var(--font-heading);
+  margin-bottom: 1rem;
+}
+
+.action-modal form p {
+  color: var(--pc-gray-700);
+  margin-bottom: 2rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.modal-footer button {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-subtle { background: var(--pc-gray-100); color: var(--pc-gray-700); }
+.btn-danger { background: var(--pc-red); color: white; }
+.btn-info { background: var(--pc-blue); color: white; }
+
+/* Empty State */
+.empty-state-notice {
+  padding: 5rem 2rem;
+  text-align: center;
+  background: var(--pc-white);
+}
+
+.empty-state-notice h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state-notice p {
+  color: var(--pc-gray-500);
+  margin-bottom: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .appointment-entry {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+  
+  .entry-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+  
+  .btn-action {
+    flex: 1;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

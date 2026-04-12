@@ -1,526 +1,193 @@
+/*
+  smartClinic Landing Page Styles
+  -------------------------------
+  A state-of-the-art, immersive entrance experience.
+  Uses CSS Grid, Flexbox, and Backdrop Filters.
+*/
+
 :root {
-    --primary-blue: #007bff;
-    --primary-blue-hover: #0062cc;
-    --primary-blue-light: #e6f2ff;
-
-    --primary-cyan: #17a2b8;
-    --primary-cyan-hover: #138496;
-    --primary-cyan-light: #e6f6f8;
-
-    --text-dark: #343a40;
-    --text-muted: #6c757d;
-    --bg-main: #f8f9fa;
-    --bg-card: #ffffff;
-
-    --gray-light: #f1f3f5;
-    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --primary-blue: #2563eb;
+  --primary-blue-hover: #1d4ed8;
+  --secondary-cyan: #06b6d4;
+  --glass-white: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
 }
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: var(--text-dark);
-    background-color: var(--bg-main);
-    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+  font-family: var(--font-body);
+  color: #1e293b;
+  overflow-x: hidden;
+  background-color: #f8fafc;
 }
 
-.welcome-container {
-    width: 100%;
-    max-width: 600px;
+/* Immersive Hero Wrapper */
+.landing-hero {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url('../images/hero.png') center/cover no-repeat;
+  padding: 2rem;
 }
 
-.welcome-card {
-    background: var(--bg-card);
-    border-radius: 24px;
-    padding: 48px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    animation: slideUpFade 0.6s ease-out forwards;
+/* Overlay for better readability */
+.landing-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%);
+  pointer-events: none;
 }
 
-@keyframes slideUpFade {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Welcome Card - Glassmorphism */
+.welcome-entrance {
+  position: relative;
+  max-width: 640px;
+  background: var(--glass-white);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 4rem;
+  border-radius: 2rem;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-premium);
+  text-align: center;
+  animation: entranceFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.card-header {
-    margin-bottom: 40px;
+@keyframes entranceFade {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.logo-title {
+/* Branding & Text */
+.logo-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.logo-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--primary-blue);
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+}
+
+.welcome-entrance h1 {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.welcome-entrance h1 span {
+  color: var(--primary-blue);
+}
+
+.welcome-entrance p {
+  font-size: 1.125rem;
+  color: #475569;
+  margin: 1.5rem 0 3rem;
+  line-height: 1.6;
+}
+
+/* Action Section */
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.btn-premium {
+  padding: 1.25rem 2rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.btn-primary-flow {
+  background-color: var(--primary-blue);
+  color: white;
+  border: none;
+  box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary-flow:hover {
+  background-color: var(--primary-blue-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.5);
+}
+
+/* Feature Ribbons */
+.highlights-ribbon {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.highlight-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.highlight-tag svg {
+  width: 18px;
+  height: 18px;
+  color: var(--secondary-cyan);
+}
+
+.highlight-tag span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Responsive Fixes */
+@media (max-width: 640px) {
+  .welcome-entrance {
+    padding: 2.5rem 1.5rem;
+    border-radius: 1.5rem;
+  }
+  
+  .welcome-entrance h1 {
     font-size: 2.25rem;
-    font-weight: 800;
-    margin-bottom: 12px;
-    letter-spacing: -0.5px;
-}
-
-.logo-text-welcome {
-    color: var(--text-dark);
-}
-
-.logo-smart {
-    color: var(--primary-blue);
-}
-
-.logo-clinic {
-    color: var(--primary-cyan);
-}
-
-.subtitle {
-    color: var(--text-muted);
-    font-size: 1rem;
-    line-height: 1.5;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.auth-buttons {
-    width: 100%;
-    display: flex;
+  }
+  
+  .highlights-ribbon {
     flex-direction: column;
-    gap: 16px;
-    margin-bottom: 48px;
-}
-
-.btn {
-    display: flex;
+    gap: 1rem;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    padding: 16px 24px;
-    font-size: 1.05rem;
-    font-weight: 600;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.btn:active {
-    transform: scale(0.98);
-}
-
-.btn-primary {
-    background-color: var(--primary-blue);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
-
-.btn-primary:hover {
-    background-color: var(--primary-blue-hover);
-    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
-    transform: translateY(-2px);
-}
-
-
-
-.btn-outline-cyan {
-    flex: 1;
-    background-color: transparent;
-    color: var(--primary-cyan);
-    border: 2px solid var(--primary-cyan);
-}
-
-.btn-outline-cyan:hover {
-    background-color: var(--primary-cyan-light);
-    transform: translateY(-2px);
-}
-
-.btn-outline-dark {
-    flex: 1;
-    background-color: transparent;
-    color: var(--text-dark);
-    border: 2px solid var(--text-dark);
-}
-
-.btn-outline-dark:hover {
-    background-color: var(--gray-light);
-    transform: translateY(-2px);
-}
-
-.features-wrapper {
-    display: flex;
-    justify-content: center;
-    gap: 32px;
-    width: 100%;
-    border-top: 1px solid #eaeaea;
-    padding-top: 32px;
-}
-
-.feature-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-}
-
-.feature-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    transition: var(--transition);
-}
-
-.feature-item:hover .feature-icon {
-    transform: scale(1.1);
-}
-
-.feature-item figcaption {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-muted);
-}
-
-.bg-blue-light {
-    background-color: var(--primary-blue-light);
-}
-
-.text-blue {
-    color: var(--primary-blue);
-}
-
-.bg-cyan-light {
-    background-color: var(--primary-cyan-light);
-}
-
-.text-cyan {
-    color: var(--primary-cyan);
-}
-
-.bg-gray-light {
-    background-color: var(--gray-light);
-}
-
-.text-dark {
-    color: var(--text-dark);
-}
-
-@media (max-width: 480px) {
-    .welcome-card {
-        padding: 32px 24px;
-    }
-
-    .logo-title {
-        font-size: 1.8rem;
-    }
-
-
-
-    .features-wrapper {
-        gap: 16px;
-    }
-
-    .feature-item span {
-        font-size: 0.75rem;
-    }
-}
-.login-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: absolute; top: 0;left: 0;right: 0;
-    gap: 16px;
-    padding: 10px;
-    background-color: var(--bg-card);
-    border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-* {
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, white, #27ccd4);
-}
-
-.auth-container {
-    width: 100%;
-    max-width: 400px;
-    padding: 1rem;
-}
-
-.auth-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-header h1 {
-    margin-bottom: 0.25rem;
-}
-
-header p {
-    color: gray;
-    margin-bottom: 1.5rem;
-}
-
-fieldset {
-    border: none;
-    padding: 0;
-}
-
-label {
-    display: block;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-}
-
-input {
-    width: 100%;
-    padding: 0.7rem;
-    margin-top: 0.3rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
-
-input:focus {
-    outline: none;
-    border-color: #4facfe;
-}
-
-button[type="submit"] {
-    width: 100%;
-    margin-top: 1.5rem;
-    padding: 0.8rem;
-    border: none;
-    border-radius: 6px;
-    background: #4facfe;
-    color: white;
-    cursor: pointer;
-}
-
-button[type="submit"]:hover {
-    background: #3a8ee6;
-}
-
-hr {
-    margin: 2rem 0;
-}
-
-[aria-label="Alternative login options"] button {
-    width: 100%;
-    padding: 0.7rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    background: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-}
-
-[aria-label="Alternative login options"] img {
-    width: 18px;
-}
-
-footer {
-    margin-top: 1.5rem;
-    text-align: center;
-    font-size: 0.9rem;
-}
-
-footer a {
-    color: #4facfe;
-    text-decoration: none;
-}
-
-.visually-hidden {
-    position: absolute;
-    left: -9999px;
-}
-
-.signup-flow {
-    max-width: 450px;
-    margin: 40px auto;
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.field {
-    margin-bottom: 1.2rem;
-}
-
-.field label {
-    display: block;
-    margin-bottom: 0.4rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.field input, .field select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-}
-
-.btn-primary {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 12px;
-    width: 100%;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-}
-
-.btn-primary:disabled {
-    background: #bdc3c7;
-    cursor: not-allowed;
-}
-
-/* ══════════════════════════════════════════
-   LOGIN PAGE  (login.html)
-══════════════════════════════════════════ */
-body:has(.login-container) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-}
-
-.login-container { width: 100%; max-width: 440px; }
-
-.login-card {
-    background: var(--card-bg);
-    border-radius: var(--radius-lg);
-    padding: 48px 44px;
-    box-shadow: var(--shadow-lg);
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.login-header { text-align: center; }
-
-.login-header h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 8px;
-}
-
-.login-header p {
-    color: var(--text-muted);
-    font-size: 0.92rem;
-}
-
-/* Google button */
-.btn-google {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    padding: 14px 20px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--white);
-    color: var(--text);
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: var(--transition);
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-google img {
-    width: 20px;
-    height: 20px;
-}
-
-.btn-google:hover {
-    border-color: var(--blue);
-    background: var(--blue-light);
-    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
-    transform: translateY(-1px);
-}
-
-.btn-google:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Divider */
-.login-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-}
-
-.login-divider::before,
-.login-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-/* Footer */
-.login-footer {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.login-footer p {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    line-height: 1.6;
-}
-
-.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--blue);
-    transition: var(--transition);
-}
-
-.back-link:hover {
-    color: var(--blue-hover);
-    gap: 8px;
+  }
 }

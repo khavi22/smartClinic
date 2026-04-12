@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head></head>
+  <body>
+    <form>
+      <input
+        type="text"
+        placeholder="search for clinic"
+        id="search_input"
+        autocomplete="off"
+        required
+      />
+      <button type="button" id="Butt_SearchByName">SearchByName</button>
+      <button type="button" id="Butt_UseLocation">UseLocation</button>
+    </form>
+    <section id="searc_clinic_section"></section>
+    <section id="section_id"></section>
+    <script type="module" src="TodoAuth.js"></script>
+    <script type="module" src="clinics.js"></script>
+    <!-- no need for type module on serverApi because we don't import anything -->
+    <script src="js/clinics.js"></script>
+    <script src="server.js"></script>
+    <script src="/Controllers/ClinicsController.js"></script>
+  </body>
+</html>

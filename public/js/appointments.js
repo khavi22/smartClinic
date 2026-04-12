@@ -1,0 +1,304 @@
+let appointments = [];
+let selectedAppointmentId = null;
+
+const upcomingList = document.getElementById("upcoming-list");
+const pastList = document.getElementById("past-list");
+const upcomingCount = document.getElementById("upcoming-count");
+const pastCount = document.getElementById("past-count");
+
+const cancelDialog = document.getElementById("cancel-dialog");
+const rescheduleDialog = document.getElementById("reschedule-dialog");
+
+const BOOKINGS_URL = "/api/bookings/demo_patient_123";
+
+async function fetchBookings() {
+  try {
+    const response = await fetch(BOOKINGS_URL);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch bookings: ${response.status}`);
+    }
+
+    const data = await response.json();
+    appointments = Array.isArray(data) ? data : (data.bookings || []);
+  } catch (error) {
+    console.error("Error loading bookings:", error);
+    appointments = [];
+  }
+}
+
+function normalizeStatus(status) {
+  return String(status || "").toLowerCase();
+}
+
+function formatDateParts(dateString) {
+  // Parsing date string safely
+  const date = new Date(dateString);
+  if (isNaN(date)) return { month: "N/A", day: "--", year: "----" };
+  
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+  return { month, day, year };
+}
+
+function isToday(dateString) {
+  const today = new Date();
+  const date = new Date(dateString);
+
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+}
+
+function isPast(dateString) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const date = new Date(dateString);
+  return date < today;
+}
+
+function createEmptyState(title, text, buttonText) {
+  const section = document.createElement("section");
+  section.className = "empty-state-notice";
+
+  section.innerHTML = `
+    <h3>${title}</h3>
+    <p>${text}</p>
+    ${buttonText ? `<a href="dashboard.html" class="button-cta primary">${buttonText}</a>` : ""}
+  `;
+
+  return section;
+}
+
+function createAppointmentCard(appointment, past = false) {
+  const clinicName = appointment.clinicName || "Unknown Clinic";
+  const clinicAddress = appointment.clinicAddress || "Address not available";
+  const time = appointment.timeSlot || "Time TBD";
+  const dateParts = formatDateParts(appointment.date);
+
+  const status = normalizeStatus(appointment.status);
+  const cancelled = status === "cancelled";
+  const today = isToday(appointment.date);
+
+  const article = document.createElement("article");
+  article.className = "appointment-entry";
+
+  if (past) article.classList.add("state-past");
+  if (cancelled) article.classList.add("state-cancelled");
+  if (today && !cancelled) article.classList.add("state-today");
+
+  let statusClass = "tag-confirmed";
+  let statusText = "Confirmed";
+
+  if (cancelled) {
+    statusClass = "tag-cancelled";
+    statusText = "Cancelled";
+  } else if (past) {
+    statusClass = "tag-completed";
+    statusText = "Completed";
+  }
+
+  // Use semantic HTML: <time>, <address>, <section>, <header>, <footer>, <article>
+  article.innerHTML = `
+    <section class="entry-core">
+      <time datetime="${appointment.date}" class="entry-calendar" aria-label="Appointment date">
+        <span class="cal-month">${dateParts.month}</span>
+        <span class="cal-day">${dateParts.day}</span>
+        <span class="cal-year">${dateParts.year}</span>
+      </time>
+
+      <section class="entry-info">
+        <header>
+          <h3>
+            ${clinicName}
+            ${today && !cancelled ? `<mark class="badge-today">Today</mark>` : ""}
+          </h3>
+        </header>
+
+        <section class="entry-metadata" aria-label="Appointment details">
+          <address class="clinic-address">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            ${clinicAddress}
+          </address>
+          <p class="time-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Scheduled for ${time}
+          </p>
+        </section>
+
+        <footer class="entry-status">
+          <span class="status-indicator ${statusClass}">${statusText}</span>
+        </footer>
+      </section>
+    </section>
+  `;
+
+  if (!past && !cancelled) {
+    const actions = document.createElement("nav");
+    actions.className = "entry-actions";
+    actions.setAttribute("aria-label", "Appointment actions");
+    
+    const rescheduleBtn = document.createElement("button");
+    rescheduleBtn.type = "button";
+    rescheduleBtn.className = "btn-action secondary";
+    rescheduleBtn.textContent = "Reschedule";
+    rescheduleBtn.onclick = () => {
+      selectedAppointmentId = appointment.id;
+      rescheduleDialog.showModal();
+    };
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn-action danger";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.onclick = () => {
+      selectedAppointmentId = appointment.id;
+      cancelDialog.showModal();
+    };
+
+    actions.appendChild(rescheduleBtn);
+    actions.appendChild(cancelBtn);
+    article.appendChild(actions);
+  }
+
+  return article;
+}
+
+function renderAppointments() {
+  upcomingList.innerHTML = "";
+  pastList.innerHTML = "";
+
+  const upcomingAppointments = appointments
+    .filter(appt => normalizeStatus(appt.status) !== "cancelled" && !isPast(appt.date))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const pastAppointments = appointments
+    .filter(appt => isPast(appt.date) || normalizeStatus(appt.status) === "cancelled")
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  upcomingCount.textContent = upcomingAppointments.length;
+  pastCount.textContent = pastAppointments.length;
+
+  if (appointments.length === 0) {
+    upcomingList.appendChild(
+      createEmptyState(
+        "No Active Care Plans",
+        "Your upcoming health visits will appear here once booked.",
+        "Find a Care Center"
+      )
+    );
+
+    pastList.appendChild(
+      createEmptyState(
+        "No Past History",
+        "Your completed appointments will be archived here.",
+        ""
+      )
+    );
+    return;
+  }
+
+  if (upcomingAppointments.length > 0) {
+    upcomingAppointments.forEach(appt => {
+      upcomingList.appendChild(createAppointmentCard(appt, false));
+    });
+  } else {
+    upcomingList.appendChild(
+      createEmptyState(
+        "Clear Schedule",
+        "You have no upcoming appointments scheduled at this time.",
+        "Book a Visit"
+      )
+    );
+  }
+
+  if (pastAppointments.length > 0) {
+    pastAppointments.forEach(appt => {
+      pastList.appendChild(createAppointmentCard(appt, true));
+    });
+  } else {
+    pastList.appendChild(
+      createEmptyState(
+        "History Empty",
+        "We couldn't find any past appointment records.",
+        ""
+      )
+    );
+  }
+}
+
+function setupTabs() {
+  const buttons = document.querySelectorAll(".tab-trigger");
+  const panels = document.querySelectorAll(".tab-panel");
+
+  buttons.forEach(button => {
+    button.addEventListener("click", () => {
+      buttons.forEach(btn => {
+        btn.classList.remove("active");
+        btn.setAttribute("aria-selected", "false");
+      });
+      panels.forEach(panel => {
+        panel.classList.remove("active");
+        panel.hidden = true;
+      });
+
+      button.classList.add("active");
+      button.setAttribute("aria-selected", "true");
+      
+      const targetPanel = document.getElementById(`${button.dataset.tab}-panel`);
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+        targetPanel.hidden = false;
+      }
+    });
+  });
+}
+
+document.getElementById("cancel-confirm").addEventListener("click", async () => {
+    if (!selectedAppointmentId) return;
+
+    try {
+        const response = await fetch(`/api/bookings/${selectedAppointmentId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+            if (appointment) {
+                appointment.status = "cancelled";
+            }
+            renderAppointments();
+        } else {
+            const err = await response.json();
+            alert(`Failed to cancel: ${err.error}`);
+        }
+    } catch (error) {
+        console.error("Cancellation error:", error);
+        alert("Error connecting to server for cancellation.");
+    }
+});
+
+document.getElementById("reschedule-confirm").addEventListener("click", () => {
+    const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+    if (appointment) {
+        const clinicId = appointment.clinicId;
+        const clinicName = encodeURIComponent(appointment.clinicName || "");
+        const clinicAddress = encodeURIComponent(appointment.clinicAddress || "");
+        const oldId = appointment.id;
+        
+        // Redirect to availability page with clinic info and old booking ID
+        window.location.href = `Availability.html?id=${clinicId}&name=${clinicName}&address=${clinicAddress}&oldBookingId=${oldId}`;
+    }
+});
+
+async function initAppointmentsPage() {
+  setupTabs();
+  await fetchBookings();
+  renderAppointments();
+}
+
+initAppointmentsPage();
