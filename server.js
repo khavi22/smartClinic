@@ -20,6 +20,9 @@ const bookingRoutes = require("./routes/bookings");
 app.use(express.json()); // Allows parsing of application/json POST bodies
 app.use("/api",bookingRoutes);
 
+const userRoutes = require("./routes/user");
+app.use("/api/user", userRoutes);
+
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
