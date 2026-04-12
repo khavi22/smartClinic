@@ -95,7 +95,7 @@ function renderSlots() {
 
     const allSlots = cachedSlots || [];
 
-    // Grouping by morning ,afternoon and evening
+    // Grouping by morning, afternoon and evening
     const groups = {
         "Morning (00:00 - 11:59)": allSlots.filter(s => s.id < 12),
         "Afternoon (12:00 - 17:59)": allSlots.filter(s => s.id >= 12 && s.id < 18),
@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const slot = cachedSlots.find(s => s.id === selectedSlotId);
                 const urlParams = new URLSearchParams(window.location.search);
                 const clinicId = urlParams.get('id') || "default_clinic";
-                const oldBookingId = urlParams.get('oldBookingId');
+                const oldAppointmentId = urlParams.get('oldAppointmentId');
                 const clinicName = document.getElementById('hospitalName')?.textContent || "Unknown Clinic";
                 const clinicAddress = document.getElementById('hospitalAddressText')?.textContent || 
                                      document.getElementById('hospitalAddress')?.querySelector('span')?.textContent || 
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!patientId) {
                         window.location.href = "login.html";
                     }
-                    const res = await fetch('/api/bookings', {
+                    const res = await fetch('/api/appointments', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clinicAddress: clinicAddress,
                             date: selectedDate,
                             timeSlot: slot.time,
-                            oldBookingId: oldBookingId
+                            oldAppointmentId: oldAppointmentId
                         })
                     });
 
@@ -322,16 +322,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     if (res.ok) {
                         dialog.close();
-                        if (oldBookingId) {
+                        if (oldAppointmentId) {
                             alert(`Your appointment has been successfully rescheduled to ${selectedDate} at ${slot.time}!`);
                         } else {
-                            alert(`Booking successfully confirmed for ${selectedDate} at ${slot.time}!`);
+                            alert(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`);
                         }
                         selectedSlotId = null;
                         await window.handleDateSelection(selectedDate);
                         
                         // If rescheduled, redirect back to appointments page after a short delay
-                        if (oldBookingId) {
+                        if (oldAppointmentId) {
                            setTimeout(() => { window.location.href = 'apointments.html'; }, 1500);
                         }
                     } else {
@@ -361,4 +361,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Initial load failed", err);
     }
 });
-
