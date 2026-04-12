@@ -50,7 +50,7 @@ const db = admin.firestore();
 
 const MAX_CAPACITY_PER_SLOT = 10;
 
-// ======================= BOOKINGS =======================
+// ======================= APPOINTMENTS =======================
 
 // Get availability
 const getAvailabilityForDate = async (clinicId, dateStr) => {
@@ -71,7 +71,7 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
 
     try {
         let queryRef = db
-            .collection("bookings")
+            .collection("appointments")
             .where("date", "==", dateStr)
             .where("status", "==", "booked");
 
@@ -84,8 +84,8 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
         if (snapshot.empty) return slots;
 
         snapshot.forEach((doc) => {
-            const booking = doc.data();
-            const slot = slots.find((s) => s.time === booking.timeSlot);
+            const appointment = doc.data();
+            const slot = slots.find((s) => s.time === appointment.timeSlot);
 
             if (slot) {
                 slot.taken += 1;
@@ -100,13 +100,13 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
 
         return slots;
     } catch (error) {
-        console.error("Error reading bookings:", error);
+        console.error("Error reading appointments:", error);
         throw error;
     }
 };
 
-// Create booking
-const createBooking = async (
+// Create appointment
+const createAppointment = async (
     clinicId,
     dateStr,
     timeSlot,
@@ -116,10 +116,10 @@ const createBooking = async (
     isReschedule = false
 ) => {
     try {
-        const bookingsRef = db.collection("bookings");
+        const appointmentsRef = db.collection("appointments");
 
         if (!isReschedule) {
-            const duplicateSnapshot = await bookingsRef
+            const duplicateSnapshot = await appointmentsRef
                 .where("patientId", "==", patientId)
                 .where("date", "==", dateStr)
                 .where("status", "==", "booked")
@@ -130,7 +130,7 @@ const createBooking = async (
             }
         }
 
-        let capacityQuery = bookingsRef
+        let capacityQuery = appointmentsRef
             .where("date", "==", dateStr)
             .where("timeSlot", "==", timeSlot)
             .where("status", "==", "booked");
@@ -145,7 +145,7 @@ const createBooking = async (
             throw new Error("This slot is full.");
         }
 
-        const newBooking = {
+        const newAppointment = {
             clinicId: clinicId || "default",
             clinicName: clinicName || "Unknown Clinic",
             clinicAddress: clinicAddress || "N/A",
@@ -156,39 +156,39 @@ const createBooking = async (
             createdAt: new Date().toISOString()
         };
 
-        const docRef = await bookingsRef.add(newBooking);
+        const docRef = await appointmentsRef.add(newAppointment);
 
-        return { id: docRef.id, ...newBooking };
+        return { id: docRef.id, ...newAppointment };
     } catch (error) {
         console.error("Error creating appointment:", error);
         throw error;
     }
 };
 
-// Cancel booking
-const cancelBooking = async (bookingId) => {
+// Cancel appointment
+const cancelAppointment = async (appointmentId) => {
     try {
-        await db.collection("bookings").doc(bookingId).update({
+        await db.collection("appointments").doc(appointmentId).update({
             status: "cancelled",
             updatedAt: new Date().toISOString()
         });
 
         return { success: true };
     } catch (error) {
-        console.error("Error cancelling booking:", error);
+        console.error("Error cancelling appointment:", error);
         throw error;
     }
 };
 
-const getBookingsByPatientId = async (patientId) => {
+const getAppointmentsByPatientId = async (patientId) => {
     try {
         const snapshot = await db
-            .collection("bookings")
+            .collection("appointments")
             .where("patientId", "==", patientId)
             .where("status", "==", "booked")
             .get();
 
-        const appointments = []; 
+        const appointments = [];
 
         snapshot.forEach((doc) => {
             appointments.push({
@@ -197,7 +197,7 @@ const getBookingsByPatientId = async (patientId) => {
             });
         });
 
-        return appointments; 
+        return appointments;
     } catch (error) {
         console.error("Error fetching appointments by patientId:", error);
         throw error;

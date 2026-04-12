@@ -1,55 +1,78 @@
-const Appointment = require('../models/appointment');
+const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment } = require("../services/firebaseService");
 
-// Helper: check if date is in the past
-const isPastDate = (date, timeSlot) => {
-  const appointmentDateTime = new Date(`${date}T${timeSlot}`);
-  const now = new Date();
+exports.getAvailability = async (req, res) => {
+    try {
+        const dateObj = req.query.date;
+        const clinicId = req.query.clinicId || "default";
 
-  return appointmentDateTime < now;
+        if (!dateObj) {
+            return res.status(400).json({ error: "Missing date parameter" });
+        }
+
+        const slots = await getAvailabilityForDate(clinicId, dateObj);
+        res.json({ date: dateObj, slots });
+    } catch (error) {
+        console.error("Failed to get availability:", error);
+        res.status(500).json({ error: "Failed to fetch availability data." });
+    }
 };
 
-// BOOK APPOINTMENT
-exports.bookAppointment = (req, res) => {
-  const { clinicId, date, timeSlot } = req.body;
+exports.postAppointment = async (req, res) => {
+    try {
+        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, oldAppointmentId } = req.body;
 
-  // 1. Validate input
-  if (!clinicId || !date || !timeSlot) {
-    return res.status(400).json({
-      message: "clinicId, date and timeSlot are required"
-    });
-  }
+        if (!date || !timeSlot) {
+            return res.status(400).json({ error: "Missing date or timeSlot" });
+        }
 
-  // 2. Prevent booking in the past
-  if (isPastDate(date, timeSlot)) {
-    return res.status(400).json({
-      message: "Cannot book an appointment in the past"
-    });
-  }
+        // If this is a reschedule, cancel the old appointment first
+        if (oldAppointmentId) {
+            console.log(`Rescheduling: Cancelling old appointment ${oldAppointmentId}`);
+            await cancelAppointment(oldAppointmentId);
+        }
 
-  // 3. Prevent double booking
-  const existing = appointments.find(a =>
-    a.clinicId === clinicId &&
-    a.date === date &&
-    a.timeSlot === timeSlot &&
-    a.status !== "cancelled"
-  );
+        const newAppointment = await createAppointment(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId);
+        res.json({ success: true, appointment: newAppointment });
+    } catch (error) {
+        console.error("Failed to create appointment:", error);
 
-  if (existing) {
-    return res.status(400).json({
-      message: "Time slot already booked"
-    });
-  }
+        if (error.message.includes("full and unavailable") ||
+            error.message.includes("already have a booking")) {
+            return res.status(400).json({ error: error.message });
+        }
 
-  // 4. Create appointment
-  const newAppointment = new Appointment({ 
-    date,
-    timeSlot
-  });
+        res.status(500).json({ error: "Failed to create appointment. Please try again later." });
+    }
+};
 
-  appointments.push(newAppointment);
+exports.getAppointmentsByPatientId = async (req, res) => {
+    try {
+        const patientId = req.params.patientId;
 
-  return res.status(201).json({
-    message: "Appointment booked successfully",
-    appointment: newAppointment
-  });
+        if (!patientId) {
+            return res.status(400).json({ error: "Missing patientId" });
+        }
+
+        const appointments = await getAppointmentsByPatientId(patientId);
+        res.json({ appointments });
+    } catch (error) {
+        console.error("Error fetching appointments:", error);
+        res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+};
+
+exports.deleteAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ error: "Missing appointment ID" });
+        }
+
+        await cancelAppointment(id);
+        res.json({ success: true, message: "Appointment cancelled successfully" });
+    } catch (error) {
+        console.error("Failed to cancel appointment:", error);
+        res.status(500).json({ error: "Failed to cancel appointment" });
+    }
 };
