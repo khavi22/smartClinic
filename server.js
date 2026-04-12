@@ -20,7 +20,7 @@ app.use(express.json()); // Allows parsing of application/json POST bodies
 app.use("/api",bookingRoutes);
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
 app.listen(port, () => {
