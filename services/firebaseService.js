@@ -220,4 +220,4 @@ const getUserProfileById = async (patientId) => {
     }
 };
 
-module.exports = { admin, db, getUserProfileById, createBooking, getAvailabilityForDate, cancelBooking, getBookingsByPatientId };
+module.exports = { admin, db, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId };
