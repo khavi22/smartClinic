@@ -29,16 +29,9 @@ exports.getClinics = async (req, res) => {
       }
     );
 
-    console.log("Google success");
-    return res.json(response.data);
+    res.json(response.data);
   } catch (err) {
-    console.error("Google status:", err.response?.status);
-    console.error("Google data:", JSON.stringify(err.response?.data, null, 2));
-    console.error("Google message:", err.message);
-
-    return res.status(500).json({
-      error: "Error fetching clinics",
-      details: err.response?.data || err.message
-    });
+    console.error("Google Places error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Error fetching clinics" });
   }
 };
