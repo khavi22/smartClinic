@@ -2,34 +2,28 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 
-
+require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
-app.use(express.static(path.join(__dirname, "public")));
-app.use(cors());
 
-require("dotenv").config();
-//Routes
-//clinic
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-
+// Routes
 const clinicsRoutes = require("./routes/clinics");
 app.use("/api/clinics", clinicsRoutes);
-//appointments
-const appointmentRoutes = require('./routes/appointments');
-app.use('/appointments', appointmentRoutes);
 
-
-
-// use the routes instead
-const bookingRoutes = require("./routes/bookings");
-app.use(express.json()); // Allows parsing of application/json POST bodies
-app.use("/api",bookingRoutes);
+const appointmentRoutes = require("./routes/appointments");
+app.use("/api", appointmentRoutes); 
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
