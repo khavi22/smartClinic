@@ -4,7 +4,9 @@
   "description": "WIP app for Azure Web App",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -26,5 +28,8 @@
     "firebase": "^12.12.0",
     "firebase-admin": "^13.8.0",
     "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
   }
 }
