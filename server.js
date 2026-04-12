@@ -7,6 +7,9 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
 
@@ -18,10 +21,6 @@ app.use("/api/clinics", clinicsRoutes);
 const bookingRoutes = require("./routes/bookings");
 app.use(express.json()); // Allows parsing of application/json POST bodies
 app.use("/api",bookingRoutes);
-
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
