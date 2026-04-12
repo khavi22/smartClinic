@@ -1,57 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>smartClinic - Welcome</title>
-    <!-- simple fonts to be changed -->
+    <title>smartClinic | Future of Community Healthcare</title>
+    <meta name="description" content="State-of-the-art Community Clinic Appointment and Queue Management System. Experience seamless healthcare access.">
+    <!-- Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- front page icons -->
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css?v=2">
-    <meta name="description" content="Community Clinic Appointment and Queue Management System">
+    <link rel="stylesheet" href="css/global_nav.css?v=1">
 </head>
-
 <body>
-    <main class="welcome-container">
-        <article class="welcome-card">
-            <header class="card-header">
-                <h1 class="logo-title">
-                    <span class="logo-text-welcome">Welcome to</span>
-                    <span class="logo-smart">smart</span><span class="logo-clinic">Clinic</span>
-                </h1>
-                <p class="subtitle">Community Clinic Appointment and Queue Management System</p>
+    <!-- Immersive Entrance -->
+    <main class="landing-hero">
+        <article class="welcome-entrance">
+            <header class="logo-stack">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <h1>Welcome to <span>smart</span>Clinic</h1>
             </header>
+            
+            <p>Experience the next generation of community healthcare access. Book appointments, track real-time queues, and manage your health journey with ease.</p>
 
-            <section class="auth-buttons">
-                <!-- logo should will be placed here -->
-                <button id="loginBtn" class="btn btn-primary">
-                    Login
-                </button>
-
-            </section>
-
-            <footer class="features-wrapper">
-                <figure class="feature-item">
-                    <i class='bx bx-pulse text-blue feature-icon bg-blue-light'></i>
-                    <figcaption>Real-time Queues</figcaption>
-                </figure>
-                <figure class="feature-item">
-                    <i class='bx bx-time-five text-cyan feature-icon bg-cyan-light'></i>
-                    <figcaption>Hourly Booking</figcaption>
-                </figure>
-                <figure class="feature-item">
-                    <i class='bx bx-shield-quarter text-dark feature-icon bg-gray-light'></i>
-                    <figcaption>Secure Access</figcaption>
-                </figure>
-            </footer>
+            <nav class="hero-actions">
+                <a href="dashboard.html" class="btn-premium btn-primary-flow" id="getStartedBtn">
+                    Get Started Now
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </nav>
         </article>
     </main>
 
-    <script src="js/index.js?v=2"></script>
+    <script src="js/index.js"></script>
 </body>
-
-</html>
+</html>

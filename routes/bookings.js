@@ -6,5 +6,6 @@ const bookingController = require("../controllers/BookingController");
 router.get("/bookings/:patientId", bookingController.getBookingsByPatientId);
 router.get("/availability", bookingController.getAvailability);
 router.post("/bookings", bookingController.postBooking);
+router.delete("/bookings/:id", bookingController.deleteBooking);
 
 module.exports = router;

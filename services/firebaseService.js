@@ -6,6 +6,8 @@ const {
     where,
     getDocs,
     addDoc,
+    doc,
+    updateDoc
 } = require("firebase/firestore");
 
 
@@ -95,22 +97,24 @@ exports.getAvailabilityForDate = async (clinicId, dateStr) => {
 };
 
 // create a booking
-exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
+exports.createBooking = async (clinicId, dateStr, timeSlot, patientId, clinicName, clinicAddress, isReschedule = false) => {
     try {
         const bookingsRef = collection(db, 'bookings');
 
         // Verify current patient does not already have a booking for this specific day
-        const duplicateCheckQuery = query(
-            bookingsRef,
-            where('patientId', '==', patientId),
-            where('date', '==', dateStr),
-            where('status', '==', 'booked')
-        );
-        const duplicateSnapshot = await getDocs(duplicateCheckQuery);
+        if (!isReschedule) {
+            const duplicateCheckQuery = query(
+                bookingsRef,
+                where('patientId', '==', patientId),
+                where('date', '==', dateStr),
+                where('status', '==', 'booked')
+            );
+            const duplicateSnapshot = await getDocs(duplicateCheckQuery);
 
-        if (!duplicateSnapshot.empty) {
-            //    booking error when user already have a booking
-            throw new Error("You already have a booking for this day. Try rescheduling or deleting your existing booking before booking again.");
+            if (!duplicateSnapshot.empty) {
+                //    booking error when user already have a booking
+                throw new Error("You already have a booking for this day. Try rescheduling or deleting your existing booking before booking again.");
+            }
         }
 
         // verify the chosen slot has not reached its maximum capacity
@@ -136,6 +140,8 @@ exports.createBooking = async (clinicId, dateStr, timeSlot, patientId) => {
         // save booking
         const newBooking = {
             clinicId: clinicId || "default",
+            clinicName: clinicName || "Unknown Clinic",
+            clinicAddress: clinicAddress || "Address not provided",
             date: dateStr,
             timeSlot: timeSlot,
             patientId: patientId,
@@ -179,6 +185,20 @@ exports.getBookingsByPatientId = async (patientId) => {
         return bookings;
     } catch (error) {
         console.error("Error fetching bookings by patientId:", error);
+        throw error;
+    }
+};
+
+exports.cancelBooking = async (bookingId) => {
+    try {
+        const bookingRef = doc(db, 'bookings', bookingId);
+        await updateDoc(bookingRef, {
+            status: 'cancelled',
+            updatedAt: new Date().toISOString()
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error cancelling booking from Firestore:", error);
         throw error;
     }
 };
