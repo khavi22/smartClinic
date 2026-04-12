@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>smartClinic - Login</title>
+    <title>smartClinic — Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,31 +14,34 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <main>
-        <header class="login-placeholder">
-            <h1>Login Page - Under Construction</h1>
-        </header>
-        <nav>
-            <button type="button" onclick="goBack()">← Back</button>
-        </nav>
-        <section class="login-content">
-            <p>We are working hard to bring you the login functionality soon. Stay tuned!</p>
-            <!-- Alternative login -->
-            <section aria-label="Alternative login options">
+    <main class="login-container">
+        <article class="login-card">
 
-                <button id="googleLogin" type="button">
-                    <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="">
+            <header class="login-header">
+                <h1><span class="logo-smart">smart</span><span class="logo-clinic">Clinic</span></h1>
+                <p>Sign in to access your dashboard</p>
+            </header>
+
+            <section class="login-body" aria-label="Sign in options">
+                <button id="googleLogin" class="btn-google" type="button">
+                    <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="" aria-hidden="true">
                     <span>Continue with Google</span>
                 </button>
-
             </section>
 
-            <footer>
-                <p>Don't have an account? <a href="#">Sign up</a></p>
+            <footer class="login-footer">
+                <p>New here? Your account is created automatically on first sign-in.</p>
+                <nav aria-label="Page navigation">
+                    <a href="index.html" class="back-link">
+                        <i class='bx bx-arrow-back' aria-hidden="true"></i>
+                        Back to home
+                    </a>
+                </nav>
             </footer>
 
-        </section>
+        </article>
     </main>
+
     <script src="js/login.js"></script>
 </body>
 </html>

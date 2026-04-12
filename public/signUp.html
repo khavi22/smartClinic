@@ -22,10 +22,10 @@
         <section class="signup-flow" aria-labelledby="form-title">
             <header class="section-header">
                 <h1 id="form-title">Complete Your Profile</h1>
-                <p>Welcome! Since this is your first time, please provide the details below to access the clinic dashboard.</p>
+                <p>Welcome! Please provide the details below to access your dashboard.</p>
             </header>
 
-            <form id="signUpForm">
+            <form id="signupForm">
                 <fieldset>
                     <legend>User Credentials & Role</legend>
                     
@@ -35,16 +35,14 @@
                             <option value="" disabled selected>Select your role...</option>
                             <option value="Patient">Patient</option>
                             <option value="Staff">Clinic Staff</option>
-                            <option value="Admin">Administrator</option>
+                            <option value="Admin">Admin</option>
                         </select>
-                        <small>Staff accounts require admin verification after signup.</small>
                     </div>
 
                     <div class="field">
                         <label for="phone">Contact Number</label>
                         <input type="tel" id="phone" name="phone" 
-                               placeholder="081 234 5678" pattern="[0-9]{10}" 
-                               title="Please enter a 10-digit phone number" required>
+                               placeholder="081 234 5678" pattern="[0-9]{10}" required>
                     </div>
                 </fieldset>
 
@@ -59,15 +57,10 @@
 
                 <footer class="form-actions">
                     <button type="submit" class="btn-primary">Finalize Account</button>
-                    <p class="terms">By finalizing, you agree to our <a href="#">Clinic Data Policy</a>.</p>
                 </footer>
             </form>
         </section>
     </main>
-
-    <footer role="contentinfo">
-        <p>&copy; 2026 SmartClinic - University of the Witwatersrand Software Design Project</p>
-    </footer>
 
     <script src="js/signUp.js"></script>
 </body>

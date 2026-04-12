@@ -6,74 +6,107 @@
     <title>SmartClinic | Dashboard</title>
     <link rel="stylesheet" href="css/dashboard.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <div class="dashboard-wrapper">
-        <aside class="sidebar" role="navigation">
-            <div class="logo-details">
-                <i class='bx bx-plus-medical'></i>
-                <span class="logo_name">SmartClinic</span>
-            </div>
-            <ul class="nav-links">
-                <li><a href="#" class="active"><i class='bx bx-grid-alt'></i><span>Overview</span></a></li>
-                <li class="patient-only"><a href="#"><i class='bx bx-calendar'></i><span>My Bookings</span></a></li>
-                <li class="staff-only"><a href="#"><i class='bx bx-list-ul'></i><span>Queue Manager</span></a></li>
-                <li><a href="#" id="logoutBtn"><i class='bx bx-log-out'></i><span>Logout</span></a></li>
-            </ul>
-        </aside>
+    <!-- SIDEBAR NAV -->
+    <nav class="sidebar" aria-label="Main navigation">
+        <a href="index.html" class="logo-details" aria-label="SmartClinic home">
+            <i class='bx bx-plus-medical' aria-hidden="true"></i>
+            <strong class="logo_name">SmartClinic</strong>
+        </a>
+        <ul class="nav-links" role="list">
+            <li><a href="#overview" class="active" aria-current="page"><i class='bx bx-grid-alt' aria-hidden="true"></i><span>Overview</span></a></li>
+            <li class="patient-only" hidden><a href="#bookings"><i class='bx bx-calendar' aria-hidden="true"></i><span>My Bookings</span></a></li>
+            <li class="staff-only" hidden><a href="#queue"><i class='bx bx-list-ul' aria-hidden="true"></i><span>Queue Manager</span></a></li>
+            <li><a href="#" id="logoutBtn"><i class='bx bx-log-out' aria-hidden="true"></i><span>Logout</span></a></li>
+        </ul>
+    </nav>
 
-        <main class="main-content">
-            <header class="top-bar">
-                <h1 id="greeting">Loading Dashboard...</h1>
-                <div class="user-profile">
-                    <span id="displayRole" class="role-badge"></span>
-                    <img id="userAvatar" src="images/default-avatar.png" alt="Profile Picture">
-                </div>
-            </header>
+    <!-- PAGE CONTENT -->
+    <main class="main-content" id="overview">
 
-            <section id="patientView" class="role-section" style="display: none;">
-                <article class="stats-grid">
-                    <div class="card">
-                        <h3>Your Queue Position</h3>
-                        <p class="stat-value">--</p>
-                    </div>
-                    <div class="card">
-                        <h3>Next Appointment</h3>
-                        <p id="nextAppt">No upcoming bookings</p>
-                    </div>
-                </article>
-                <button class="btn-primary">Book New Appointment</button>
-            </section>
+        <!-- TOP BAR -->
+        <header class="top-bar">
+            <h1 id="greeting">Loading...</h1>
+            <figure class="user-profile">
+                <figcaption id="displayRole" class="role-badge"></figcaption>
+                <img id="userAvatar" src="" alt="Your profile picture">
+            </figure>
+        </header>
 
-            <section id="staffView" class="role-section" style="display: none;">
-                <h2>Daily Patient Queue</h2>
-                <div class="table-container">
-                    <table id="queueTable">
-                        <thead>
-                            <tr>
-                                <th>Patient Name</th>
-                                <th>Time Slot</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="queueBody">
-                            </tbody>
-                    </table>
-                </div>
-            </section>
-            <section class="danger-zone">
-                <h2>Account Settings</h2>
-                <p>Warning: Deleting your account will remove all your medical records and future bookings.</p>
-                <button id="deleteAccBtn" class="btn-delete">Delete My Account</button>
-            </section>
-        </main>
-    </div>
+        <!-- PATIENT SECTION -->
+        <section id="patientView" class="role-section" aria-labelledby="overview-heading" hidden>
+            <h2 id="overview-heading" class="section-label">Overview</h2>
+            <ol class="stats-grid" role="list" aria-label="Your stats">
+                <li class="stat-card">
+                    <span class="stat-icon" aria-hidden="true"><i class='bx bx-sort-a-z'></i></span>
+                    <h3>Queue Position</h3>
+                    <p class="stat-value">--</p>
+                    <p class="stat-sub">Updated in real-time</p>
+                </li>
+                <li class="stat-card">
+                    <span class="stat-icon blue" aria-hidden="true"><i class='bx bx-calendar-check'></i></span>
+                    <h3>Next Appointment</h3>
+                    <p class="stat-value" id="nextAppt" style="font-size:1rem;margin-top:4px">No bookings yet</p>
+                </li>
+            </ol>
+            <button class="book-btn" type="button">
+                <i class='bx bx-plus' aria-hidden="true"></i>
+                Book New Appointment
+            </button>
+        </section>
+
+        <!-- STAFF SECTION -->
+        <section id="staffView" id="queue" class="role-section" aria-labelledby="queue-heading" hidden>
+            <h2 id="queue-heading" class="section-label">Daily Queue</h2>
+            <figure class="table-wrapper">
+                <table id="queueTable">
+                    <caption class="visually-hidden">Today's booked patient queue</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Patient</th>
+                            <th scope="col">Time Slot</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="queueBody">
+                        <tr><td colspan="4" class="table-empty">Loading queue…</td></tr>
+                    </tbody>
+                </table>
+            </figure>
+        </section>
+
+        <!-- DANGER ZONE -->
+        <section class="danger-zone" aria-labelledby="danger-heading">
+            <h2 id="danger-heading"><i class='bx bx-error-circle' aria-hidden="true"></i> Danger Zone</h2>
+            <p>Permanently deleting your account will remove all your medical records, bookings, and personal data. This action cannot be undone.</p>
+            <button id="deleteAccBtn" class="btn-delete" type="button">
+                <i class='bx bx-trash' aria-hidden="true"></i>
+                Delete My Account
+            </button>
+        </section>
+
+    </main>
+
+    <!-- DELETE CONFIRM MODAL -->
+    <dialog id="deleteModal" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+        <article class="modal-box">
+            <span class="modal-icon" aria-hidden="true"><i class='bx bx-trash'></i></span>
+            <h3 id="modalTitle">Delete your account?</h3>
+            <p id="modalDesc">This will permanently erase your profile, bookings, and all associated data. You'll need to sign in again to confirm.</p>
+            <footer class="modal-actions">
+                <button class="modal-cancel" id="modalCancel" type="button">Cancel</button>
+                <button class="modal-confirm" id="modalConfirm" type="button">
+                    <span id="confirmText">Yes, Delete</span>
+                </button>
+            </footer>
+        </article>
+    </dialog>
 
     <script src="js/dashboard.js"></script>
 </body>

@@ -1,4 +1,3 @@
-// --- Firebase Config (Copy from login.js) ---
 const firebaseConfig = {
     apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
     authDomain: "smartclinic-11971.firebaseapp.com",
@@ -8,75 +7,148 @@ const firebaseConfig = {
     appId: "1:301262646979:web:6529009c676257565a7c76"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-// 1. Monitor Auth State
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── AUTH GUARD ──────────────────────────────────────────────
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        console.log("Logged in as:", user.email);
-        loadUserProfile(user);
+        await loadUserProfile(user);
     } else {
-        // Not logged in - kick to login page
         window.location.href = "login.html";
     }
 });
 
-// 2. Load User Data and Toggle UI
+// ── LOAD PROFILE ────────────────────────────────────────────
 async function loadUserProfile(user) {
     try {
         const doc = await db.collection("patients").doc(user.uid).get();
-        
-        if (doc.exists) {
-            const userData = doc.data();
-            
-            // Update UI Elements
-            document.getElementById("greeting").innerText = `Hello, ${userData.fullName}`;
-            document.getElementById("displayRole").innerText = userData.role;
-            document.getElementById("userAvatar").src = userData.profilePic || user.photoURL;
 
-            // Role-Based Toggle
-            if (userData.role === "Patient") {
-                document.getElementById("patientView").style.display = "block";
-                document.querySelectorAll(".patient-only").forEach(el => el.style.display = "block");
-            } else if (userData.role === "Staff") {
-                document.getElementById("staffView").style.display = "block";
-                document.querySelectorAll(".staff-only").forEach(el => el.style.display = "block");
-                loadStaffQueue(); // Specific staff function
-            }
-        } else {
-            // Document missing? Send to signup
-            window.location.href = "signup.html";
+        if (!doc.exists) {
+            window.location.href = "signUp.html";
+            return;
         }
-    } catch (error) {
-        console.error("Error loading dashboard:", error);
+
+        const data = doc.data();
+        const firstName = (data.fullName || "there").split(" ")[0];
+
+        document.getElementById("greeting").innerHTML =
+            `Hello, <span>${firstName}</span> 👋`;
+
+        const badge = document.getElementById("displayRole");
+        badge.textContent = data.role;
+        if (data.role === "Staff") badge.classList.add("staff");
+
+        const avatar = document.getElementById("userAvatar");
+        avatar.src = data.profilePic || user.photoURL || "";
+        avatar.alt = data.fullName;
+
+        if (data.role === "Patient") {
+            document.getElementById("patientView").hidden = false;
+            document.querySelectorAll(".patient-only").forEach(el => el.hidden = false);
+        } else if (data.role === "Staff") {
+            document.getElementById("staffView").hidden = false;
+            document.querySelectorAll(".staff-only").forEach(el => el.hidden = false);
+            loadStaffQueue();
+        }
+
+    } catch (err) {
+        console.error("Error loading profile:", err);
     }
 }
 
-// 3. Staff Specific: Load Queue Data
+// ── STAFF QUEUE ─────────────────────────────────────────────
 async function loadStaffQueue() {
     const queueBody = document.getElementById("queueBody");
-    // This looks at the 'bookings' collection from your screenshot
-    const snapshot = await db.collection("bookings").where("status", "==", "booked").get();
-    
-    queueBody.innerHTML = ""; // Clear loader
-    snapshot.forEach(doc => {
-        const booking = doc.data();
-        queueBody.innerHTML += `
-            <tr>
-                <td>${booking.patientId}</td>
-                <td>${booking.timeSlot}</td>
-                <td><span class="status-tag">${booking.status}</span></td>
-                <td><button onclick="updateStatus('${doc.id}')">Check In</button></td>
-            </tr>
-        `;
-    });
+    if (!queueBody) return;
+
+    try {
+        const snapshot = await db.collection("bookings")
+            .where("status", "==", "booked").get();
+
+        if (snapshot.empty) {
+            queueBody.innerHTML = `<tr><td colspan="4" class="table-empty">No bookings for today</td></tr>`;
+            return;
+        }
+
+        queueBody.innerHTML = "";
+        snapshot.forEach(doc => {
+            const b = doc.data();
+            queueBody.innerHTML += `
+                <tr>
+                    <td>${b.patientId || "—"}</td>
+                    <td>${b.timeSlot  || "—"}</td>
+                    <td><span class="status-tag">${b.status}</span></td>
+                    <td><button class="checkin-btn" type="button" onclick="updateStatus('${doc.id}')">Check In</button></td>
+                </tr>`;
+        });
+    } catch (err) {
+        console.error("Error loading queue:", err);
+    }
 }
 
-// 4. Logout Logic
-document.getElementById("logoutBtn").addEventListener("click", () => {
-    auth.signOut().then(() => {
-        window.location.href = "login.html";
-    });
+// ── LOGOUT ──────────────────────────────────────────────────
+document.getElementById("logoutBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    auth.signOut().then(() => window.location.href = "login.html");
+});
+
+// ── DELETE ACCOUNT ──────────────────────────────────────────
+const deleteModal  = document.getElementById("deleteModal");
+const confirmText  = document.getElementById("confirmText");
+const modalConfirm = document.getElementById("modalConfirm");
+
+// Open — native dialog API
+document.getElementById("deleteAccBtn").addEventListener("click", () => {
+    deleteModal.showModal();
+});
+
+// Close via Cancel
+document.getElementById("modalCancel").addEventListener("click", () => {
+    deleteModal.close();
+});
+
+// Close on backdrop click — check if click landed outside .modal-box
+deleteModal.addEventListener("click", (e) => {
+    const box = deleteModal.querySelector(".modal-box");
+    if (!box.contains(e.target)) deleteModal.close();
+});
+
+// Confirm deletion
+modalConfirm.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) { window.location.href = "login.html"; return; }
+
+    modalConfirm.disabled  = true;
+    confirmText.textContent = "Deleting…";
+
+    try {
+        // 1. Remove Firestore record
+        await db.collection("patients").doc(user.uid).delete();
+
+        // 2. Delete Auth account (re-auth if session is stale)
+        try {
+            await user.delete();
+        } catch (authErr) {
+            if (authErr.code === "auth/requires-recent-login") {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+                await auth.currentUser.delete();
+            } else {
+                throw authErr;
+            }
+        }
+
+        window.location.href = "index.html";
+
+    } catch (err) {
+        console.error("Delete account error:", err);
+        alert("Could not delete account: " + err.message);
+        modalConfirm.disabled   = false;
+        confirmText.textContent = "Yes, Delete";
+    }
 });

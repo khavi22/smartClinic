@@ -405,3 +405,122 @@ footer a {
     background: #bdc3c7;
     cursor: not-allowed;
 }
+
+/* ══════════════════════════════════════════
+   LOGIN PAGE  (login.html)
+══════════════════════════════════════════ */
+body:has(.login-container) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.login-container { width: 100%; max-width: 440px; }
+
+.login-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: 48px 44px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.login-header { text-align: center; }
+
+.login-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+}
+
+.login-header p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+/* Google button */
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 20px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-google img {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-google:hover {
+    border-color: var(--blue);
+    background: var(--blue-light);
+    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
+    transform: translateY(-1px);
+}
+
+.btn-google:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Divider */
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* Footer */
+.login-footer {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.login-footer p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--blue);
+    transition: var(--transition);
+}
+
+.back-link:hover {
+    color: var(--blue-hover);
+    gap: 8px;
+}
