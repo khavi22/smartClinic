@@ -11,10 +11,9 @@ exports.getClinics = async (req, res) => {
     Query = `clinic named ${searchName}`;
   }
   //check if latitude and longitude exist if the patient search using location
-  if (latitude && longitude) {
+  else if (latitude && longitude) {
     Query = `clinic near ${latitude},${longitude}`
   }
-  console.log(process.env.GOOGLE_MAPS_API_KEY);
   try {
     const response = await axios.post(
       "https://places.googleapis.com/v1/places:searchText",
@@ -24,7 +23,7 @@ exports.getClinics = async (req, res) => {
       {
         headers: {
           "Content-Type": "application/json",
-          "X-Goog-Api-Key": process.env.GOOGLE_MAPS_API_KEY,
+          "X-Goog-Api-Key":"AIzaSyAKqDTfRFmKVJw2W3PQDGyIgcm_BVpeWBk",
           "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.id"
         }
       }

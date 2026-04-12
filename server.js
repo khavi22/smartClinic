@@ -2,8 +2,7 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 
-
-
+require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -12,9 +11,6 @@ app.get("/", (req, res) => {
 });
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
-
-require("dotenv").config();
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 const clinicsRoutes = require("./routes/clinics");
 app.use("/api/clinics", clinicsRoutes);
