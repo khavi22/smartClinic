@@ -9,24 +9,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <header class="login-placeholder">
-        <h1>Login Page - Under Construction</h1>
-    </header>
+    <main>
+        <header class="login-placeholder">
+            <h1>Login Page - Under Construction</h1>
+        </header>
+        <nav>
+            <button type="button" onclick="goBack()">← Back</button>
+        </nav>
+        <section class="login-content">
+            <p>We are working hard to bring you the login functionality soon. Stay tuned!</p>
+            <!-- Alternative login -->
+            <section aria-label="Alternative login options">
 
-    <section class="login-content">
-        <p>We are working hard to bring you the login functionality soon. Stay tuned!</p>
-        <label for="uname"><b>Username</b></label>
-        <input type="text" placeholder="Enter Username" name="uname" required>
+                <button id="googleLogin" type="button">
+                    <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="">
+                    <span>Continue with Google</span>
+                </button>
 
-        <label for="psw"><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="psw" required>
-            
-        <button type="submit">Login</button>
-        <label>
-        <input type="checkbox" checked="checked" name="remember"> Remember me
-        </label>
+            </section>
+
+            <footer>
+                <p>Don't have an account? <a href="#">Sign up</a></p>
+            </footer>
+
+        </section>
+    </main>
     <script src="js/login.js"></script>
 </body>
 </html>
