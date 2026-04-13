@@ -68,7 +68,7 @@
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: #64748b;
     transition: all 0.2s ease;
     padding: 0.5rem 0.75rem;
     border-radius: 0.5rem;
@@ -144,6 +144,58 @@
     border-color: #ef4444;
     color: #ef4444;
     background: #fff5f5;
+}
+
+.nav-search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1.5px solid var(--nav-border);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.nav-search-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.nav-appointment-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--primary-blue);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.nav-appointment-btn i {
+    font-size: 1.1rem;
+}
+
+.nav-appointment-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25);
+    color: white;
+}
+
+.nav-appointment-btn.active {
+    background: #1e40af;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 640px) {

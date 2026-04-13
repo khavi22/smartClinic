@@ -10,24 +10,24 @@ const cancelDialog = document.getElementById("cancel-dialog");
 const rescheduleDialog = document.getElementById("reschedule-dialog");
 
 
-async function fetchBookings() {
+async function fetchAppointments() {
   try {
     const patientId = localStorage.getItem("patientId");
 
     if (!patientId) {
         window.location.href = "login.html";
     }
-    const BOOKINGS_URL = `/api/bookings/${patientId}`;
-    const response = await fetch(BOOKINGS_URL);
+    const APPOINTMENTS_URL = `/api/appointments/${patientId}`;
+    const response = await fetch(APPOINTMENTS_URL);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch bookings: ${response.status}`);
+      throw new Error(`Failed to fetch appointments: ${response.status}`);
     }
 
     const data = await response.json();
-    appointments = Array.isArray(data) ? data : (data.bookings || []);
+    appointments = Array.isArray(data) ? data : (data.appointments || []);
   } catch (error) {
-    console.error("Error loading bookings:", error);
+    console.error("Error loading appointments:", error);
     appointments = [];
   }
 }
@@ -37,7 +37,6 @@ function normalizeStatus(status) {
 }
 
 function formatDateParts(dateString) {
-  // Parsing date string safely
   const date = new Date(dateString);
   if (isNaN(date)) return { month: "N/A", day: "--", year: "----" };
   
@@ -107,7 +106,6 @@ function createAppointmentCard(appointment, past = false) {
     statusText = "Completed";
   }
 
-  // Use semantic HTML: <time>, <address>, <section>, <header>, <footer>, <article>
   article.innerHTML = `
     <section class="entry-core">
       <time datetime="${appointment.date}" class="entry-calendar" aria-label="Appointment date">
@@ -265,44 +263,57 @@ function setupTabs() {
 
 document.getElementById("cancel-confirm").addEventListener("click", async () => {
     if (!selectedAppointmentId) return;
-
+    
     try {
-        const response = await fetch(`/api/bookings/${selectedAppointmentId}`, {
-            method: 'DELETE'
+      // change to put/post request to update status to cancelled instead of deleting;
+       const response = await fetch(`/api/appointments/${selectedAppointmentId}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            }
         });
 
-        if (response.ok) {
-            const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
-            if (appointment) {
-                appointment.status = "cancelled";
-            }
-            renderAppointments();
-        } else {
-            const err = await response.json();
-            alert(`Failed to cancel: ${err.error}`);
+      if (response.ok) {
+        const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+        if (appointment) {
+            appointment.status = "cancelled";
         }
+        renderAppointments();
+      } else {
+        const err = await response.json();
+        alert(`Failed to cancel: ${err.error}`);
+      }
     } catch (error) {
-        console.error("Cancellation error:", error);
-        alert("Error connecting to server for cancellation.");
+    console.error("Cancellation error:", error);
+    alert("Error connecting to server for cancellation.");
     }
-});
+  })
+
+// document.getElementById("cancel-close").addEventListener("click", () => {
+//   cancelDialog.close();
+//   selectedAppointmentId = null;
+// });
 
 document.getElementById("reschedule-confirm").addEventListener("click", () => {
     const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
     if (appointment) {
         const clinicId = appointment.clinicId;
         const clinicName = encodeURIComponent(appointment.clinicName || "");
-        const clinicAddress = encodeURIComponent(appointment.clinicAddress || "");
+   ;     const clinicAddress = encodeURIComponent(appointment.clinicAddress || "");
         const oldId = appointment.id;
         
-        // Redirect to availability page with clinic info and old booking ID
-        window.location.href = `Availability.html?id=${clinicId}&name=${clinicName}&address=${clinicAddress}&oldBookingId=${oldId}`;
+        window.location.href = `Availability.html?id=${clinicId}&name=${clinicName}&address=${clinicAddress}&oldAppointmentId=${oldId}`;
     }
 });
 
+// document.getElementById("reschedule-close").addEventListener("click", () => {
+//   rescheduleDialog.close();
+//   selectedAppointmentId = null;
+// });
+
 async function initAppointmentsPage() {
   setupTabs();
-  await fetchBookings();
+  await fetchAppointments();
   renderAppointments();
 }
 

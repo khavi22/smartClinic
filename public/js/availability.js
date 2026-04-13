@@ -95,7 +95,7 @@ function renderSlots() {
 
     const allSlots = cachedSlots || [];
 
-    // Grouping by morning ,afternoon and evening
+    // Grouping by morning, afternoon and evening
     const groups = {
         "Morning (00:00 - 11:59)": allSlots.filter(s => s.id < 12),
         "Afternoon (12:00 - 17:59)": allSlots.filter(s => s.id >= 12 && s.id < 18),
@@ -257,7 +257,7 @@ function loadHospitalData() {
     } else if (address && document.getElementById('hospitalAddress')) {
 
         const addrNode = document.getElementById('hospitalAddress');
-        addrNode.innerHTML = `<figure class="icon-box addr-icon" style="margin: 0;"><img class="icons" src="/icons/location.svg" alt="Location Icon"></figure> <span>${address}</span>`;
+        addrNode.innerHTML = `<figure class="icon-box addr-icon" style="margin: 0;"><svg class="icons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></figure> <span>${address}</span>`;
     }
     if (type && document.getElementById('hospitalType')) {
         document.getElementById('hospitalType').textContent = type;
@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const slot = cachedSlots.find(s => s.id === selectedSlotId);
                 const urlParams = new URLSearchParams(window.location.search);
                 const clinicId = urlParams.get('id') || "default_clinic";
-                const oldBookingId = urlParams.get('oldBookingId');
+                const oldAppointmentId = urlParams.get('oldAppointmentId');
                 const clinicName = document.getElementById('hospitalName')?.textContent || "Unknown Clinic";
                 const clinicAddress = document.getElementById('hospitalAddressText')?.textContent || 
                                      document.getElementById('hospitalAddress')?.querySelector('span')?.textContent || 
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!patientId) {
                         window.location.href = "login.html";
                     }
-                    const res = await fetch('/api/bookings', {
+                    const res = await fetch('/api/appointments', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clinicAddress: clinicAddress,
                             date: selectedDate,
                             timeSlot: slot.time,
-                            oldBookingId: oldBookingId
+                            oldAppointmentId: oldAppointmentId
                         })
                     });
 
@@ -322,16 +322,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     if (res.ok) {
                         dialog.close();
-                        if (oldBookingId) {
+                        if (oldAppointmentId) {
                             alert(`Your appointment has been successfully rescheduled to ${selectedDate} at ${slot.time}!`);
                         } else {
-                            alert(`Booking successfully confirmed for ${selectedDate} at ${slot.time}!`);
+                            alert(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`);
                         }
                         selectedSlotId = null;
                         await window.handleDateSelection(selectedDate);
                         
                         // If rescheduled, redirect back to appointments page after a short delay
-                        if (oldBookingId) {
+                        if (oldAppointmentId) {
                            setTimeout(() => { window.location.href = 'apointments.html'; }, 1500);
                         }
                     } else {
@@ -361,4 +361,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Initial load failed", err);
     }
 });
-

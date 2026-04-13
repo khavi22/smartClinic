@@ -362,37 +362,54 @@ footer a {
    LOGIN PAGE  (login.html)
 ══════════════════════════════════════════ */
 body:has(.login-container) {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px;
+    /* Light airy gradient — blue to cyan, matches brand */
+    background:
+        radial-gradient(ellipse 70% 60% at 15% 10%,  rgba(0, 123, 255, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 70% at 85% 90%,  rgba(23, 162, 184, 0.15) 0%, transparent 60%),
+        linear-gradient(160deg, #eef4ff 0%, #f0fbfd 50%, #e8f7f9 100%);
 }
 
-.login-container { width: 100%; max-width: 440px; }
+.login-container {
+    width: 100%;
+    max-width: 420px;
+}
 
 .login-card {
-    background: var(--card-bg);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: var(--radius-lg);
-    padding: 48px 44px;
-    box-shadow: var(--shadow-lg);
+    padding: 52px 44px 44px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 4px 24px rgba(0, 123, 255, 0.08),
+        0 1px 4px rgba(0, 0, 0, 0.04),
+        0 20px 48px rgba(0, 0, 0, 0.07);
     display: flex;
     flex-direction: column;
     gap: 32px;
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Header */
 .login-header { text-align: center; }
 
 .login-header h1 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 800;
     letter-spacing: -0.5px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    line-height: 1;
 }
 
 .login-header p {
     color: var(--text-muted);
-    font-size: 0.92rem;
+    font-size: 0.9rem;
 }
 
 /* Google button */
@@ -402,28 +419,33 @@ body:has(.login-container) {
     justify-content: center;
     gap: 12px;
     width: 100%;
-    padding: 14px 20px;
+    padding: 15px 20px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--white);
     color: var(--text);
-    font-size: 0.95rem;
+    font-family: inherit;
+    font-size: 0.97rem;
     font-weight: 600;
+    cursor: pointer;
     transition: var(--transition);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .btn-google img {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
 }
 
 .btn-google:hover {
     border-color: var(--blue);
     background: var(--blue-light);
-    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
-    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.18);
+    transform: translateY(-2px);
 }
+
+.btn-google:active { transform: scale(0.99); }
 
 .btn-google:disabled {
     opacity: 0.6;
@@ -431,36 +453,13 @@ body:has(.login-container) {
     transform: none;
 }
 
-/* Divider */
-.login-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-}
-
-.login-divider::before,
-.login-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-/* Footer */
+/* Footer — back link only, no "New here" text */
 .login-footer {
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
 }
 
-.login-footer p {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    line-height: 1.6;
-}
+/* hide the "New here" paragraph via CSS since HTML is unchanged */
+.login-footer > p { display: none; }
 
 .back-link {
     display: inline-flex;
@@ -468,11 +467,20 @@ body:has(.login-container) {
     gap: 6px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: var(--blue);
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
     transition: var(--transition);
 }
 
 .back-link:hover {
-    color: var(--blue-hover);
-    gap: 8px;
+    color: var(--blue);
+    background: var(--blue-light);
+    gap: 9px;
+}
+
+@media (max-width: 480px) {
+    .login-card { padding: 40px 24px 36px; }
+    .login-header h1 { font-size: 1.9rem; }
 }
