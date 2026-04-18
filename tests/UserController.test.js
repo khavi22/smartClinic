@@ -1,5 +1,5 @@
 const  firebaseService = require("../services/firebaseService");
-const { checkUserLogin , createPatientProfileController} = require("../Controllers/userController");
+const { checkUserLogin , createPatientProfileController} = require("../Controllers/UserController");
 
 jest.mock("../services/firebaseService");
 
