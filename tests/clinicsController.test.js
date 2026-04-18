@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { getClinics } = require("../controllers/ClinicsController");
+const { getClinics } = require("../Controllers/ClinicsController");
 
 jest.mock("axios");
 
