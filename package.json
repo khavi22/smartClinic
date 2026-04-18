@@ -8,6 +8,16 @@
     "test": "jest",
     "test:coverage": "jest --coverage"
   },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/khavi22/smartClinic.git"

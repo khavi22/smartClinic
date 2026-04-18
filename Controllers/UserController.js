@@ -1,4 +1,4 @@
-const { getUserProfileById } = require("../services/firebaseService");
+const { getUserProfileById, createPatientProfile } = require("../services/firebaseService");
 
 exports.checkUserLogin = async (req, res) => {
     try {
@@ -31,9 +31,7 @@ exports.checkUserLogin = async (req, res) => {
     }
 };
 
-const { db, admin } = require("../services/firebaseService");
-
-exports.createPatientProfile = async (req, res) => {
+exports.createPatientProfileController = async (req, res) => {
     try {
         const { uid, fullName, email, role, phone, idNumber } = req.body;
 
@@ -44,17 +42,7 @@ exports.createPatientProfile = async (req, res) => {
             });
         }
 
-        const patientData = {
-            uid,
-            fullName,
-            email,
-            role,
-            phone,
-            idNumber: idNumber || "N/A",
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
-        };
-
-        await db.collection("patients").doc(uid).set(patientData);
+        await createPatientProfile(uid, fullName, email, role, phone, idNumber);
 
         return res.status(201).json({
             success: true,

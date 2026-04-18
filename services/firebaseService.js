@@ -181,4 +181,21 @@ const cancelAppointment = async (appointmentId) =>{
     }
 };
 
-module.exports = { getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
+const createPatientProfile = async (uid, fullName, email, role, phone, idNumber) => {
+    const patientData = {
+        uid,
+        fullName,
+        email,
+        role,
+        phone,
+        idNumber: idNumber || "N/A",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("patients").doc(uid).set(patientData);
+
+    return patientData;
+};
+
+
+module.exports = { getUserProfileById, createAppointment, getAvailabilityForDate, getAppointmentsByPatientId, cancelAppointment, createPatientProfile };

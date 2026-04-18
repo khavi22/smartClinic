@@ -1,5 +1,5 @@
-const { getAppointmentsByPatientId, getAvailabilityForDate, createAppointment, cancelAppointment } = require("../services/firebaseService");
-const { db } = require("../services/config/firebase");
+const { getAppointmentsByPatientId, getAvailabilityForDate, createAppointment, cancelAppointment, getUserProfileById, createPatientProfile } = require("../services/firebaseService");
+const { db, admin} = require("../services/config/firebase");
 
 jest.mock("../services/config/firebase", () => ({
   db: {
@@ -674,4 +674,323 @@ describe("cancelAppointment (service)", () => {
 
     await expect(cancelAppointment("appt123")).rejects.toThrow("Update failed");
   });
+});
+
+describe("getUserProfileById (service)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("should return user profile if user exists", async () => {
+    const mockGet = jest.fn();
+    const mockDoc = jest.fn();
+
+    const mockDocSnap = {
+      exists: true,
+      id: "user123",
+      data: () => ({
+        name: "Martin",
+        email: "martin@example.com"
+      })
+    };
+
+    mockGet.mockResolvedValue(mockDocSnap);
+
+    const docRef = {
+      get: mockGet
+    };
+
+    mockDoc.mockReturnValue(docRef);
+
+    db.collection.mockReturnValue({
+      doc: mockDoc
+    });
+
+    const result = await getUserProfileById("user123");
+
+    expect(db.collection).toHaveBeenCalledWith("patients");
+    expect(mockDoc).toHaveBeenCalledWith("user123");
+    expect(mockGet).toHaveBeenCalled();
+
+    expect(result).toEqual({
+      id: "user123",
+      name: "Martin",
+      email: "martin@example.com"
+    });
+  });
+
+  it("should return null if user does not exist", async () => {
+    const mockGet = jest.fn();
+    const mockDoc = jest.fn();
+
+    const mockDocSnap = {
+      exists: false
+    };
+
+    mockGet.mockResolvedValue(mockDocSnap);
+
+    const docRef = {
+      get: mockGet
+    };
+
+    mockDoc.mockReturnValue(docRef);
+
+    db.collection.mockReturnValue({
+      doc: mockDoc
+    });
+
+    const result = await getUserProfileById("user999");
+
+    expect(result).toBeNull();
+  });
+
+  it("should throw error if database fails", async () => {
+    const mockGet = jest.fn();
+    const mockDoc = jest.fn();
+
+    mockGet.mockRejectedValue(new Error("DB error"));
+
+    const docRef = {
+      get: mockGet
+    };
+
+    mockDoc.mockReturnValue(docRef);
+
+    db.collection.mockReturnValue({
+      doc: mockDoc
+    });
+
+    await expect(getUserProfileById("user123")).rejects.toThrow("DB error");
+  });
+});
+
+describe("createPatientProfile (service)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("should create a patient profile successfully", async () => {
+    const mockSet = jest.fn();
+    const mockDoc = jest.fn();
+
+    const mockTimestamp = "mock-server-timestamp";
+
+    const docRef = {
+      set: mockSet
+    };
+
+    mockSet.mockResolvedValue();
+    mockDoc.mockReturnValue(docRef);
+
+    db.collection.mockReturnValue({
+      doc: mockDoc
+    });
+
+    admin.firestore = {
+      FieldValue: {
+        serverTimestamp: jest.fn().mockReturnValue(mockTimestamp)
+      }
+    };
+
+    const result = await createPatientProfile(
+      "user123",
+      "Martin Mulweli",
+      "martin@example.com",
+      "patient",
+      "0712345678",
+      "1234567890123"
+    );
+
+    expect(db.collection).toHaveBeenCalledWith("patients");
+    expect(mockDoc).toHaveBeenCalledWith("user123");
+    expect(admin.firestore.FieldValue.serverTimestamp).toHaveBeenCalled();
+
+    expect(mockSet).toHaveBeenCalledWith({
+      uid: "user123",
+      fullName: "Martin Mulweli",
+      email: "martin@example.com",
+      role: "patient",
+      phone: "0712345678",
+      idNumber: "1234567890123",
+      createdAt: mockTimestamp
+    });
+
+    expect(result).toEqual({
+      uid: "user123",
+      fullName: "Martin Mulweli",
+      email: "martin@example.com",
+      role: "patient",
+      phone: "0712345678",
+      idNumber: "1234567890123",
+      createdAt: mockTimestamp
+    });
+  });
+
+  it("should use N/A if idNumber is not provided", async () => {
+    const mockSet = jest.fn();
+    const mockDoc = jest.fn();
+
+    const mockTimestamp = "mock-server-timestamp";
+
+    const docRef = {
+      set: mockSet
+    };
+
+    mockSet.mockResolvedValue();
+    mockDoc.mockReturnValue(docRef);
+
+    db.collection.mockReturnValue({
+      doc: mockDoc
+    });
+
+    admin.firestore = {
+      FieldValue: {
+        serverTimestamp: jest.fn().mockReturnValue(mockTimestamp)
+      }
+    };
+
+    const result = await createPatientProfile(
+      "user123",
+      "Martin Mulweli",
+      "martin@example.com",
+      "patient",
+      "0712345678"
+    );
+
+    expect(mockSet).toHaveBeenCalledWith({
+      uid: "user123",
+      fullName: "Martin Mulweli",
+      email: "martin@example.com",
+      role: "patient",
+      phone: "0712345678",
+      idNumber: "N/A",
+      createdAt: mockTimestamp
+    });
+
+    expect(result).toEqual({
+      uid: "user123",
+      fullName: "Martin Mulweli",
+      email: "martin@example.com",
+      role: "patient",
+      phone: "0712345678",
+      idNumber: "N/A",
+      createdAt: mockTimestamp
+    });
+  });
+
+  it("should throw error if database fails", async () => {
+    const mockSet = jest.fn();
+    const mockDoc = jest.fn();
+
+    const docRef = {
+      set: mockSet
+    };
+
+    mockSet.mockRejectedValue(new Error("DB error"));
+    mockDoc.mockReturnValue(docRef);
+
+    db.collection.mockReturnValue({
+      doc: mockDoc
+    });
+
+    admin.firestore = {
+      FieldValue: {
+        serverTimestamp: jest.fn().mockReturnValue("mock-server-timestamp")
+      }
+    };
+
+    await expect(
+      createPatientProfile(
+        "user123",
+        "Martin Mulweli",
+        "martin@example.com",
+        "patient",
+        "0712345678"
+      )
+    ).rejects.toThrow("DB error");
+  });
+
+  it("should ignore appointments with invalid timeSlot", async () => {
+    const mockGet = jest.fn();
+    const mockWhere = jest.fn();
+
+    const mockSnapshot = {
+      empty: false,
+      forEach: (callback) => {
+        callback({
+          data: () => ({
+            timeSlot: "99:00 - 100:00" // ❌ invalid slot
+          })
+        });
+      }
+    };
+
+    mockGet.mockResolvedValue(mockSnapshot);
+
+    const queryRef = {
+      where: mockWhere,
+      get: mockGet
+    };
+
+    mockWhere.mockReturnValue(queryRef);
+    db.collection.mockReturnValue(queryRef);
+
+    const result = await getAvailabilityForDate("clinic123", "2026-04-20");
+
+    const slot = result.find((s) => s.time === "09:00 - 10:00");
+
+    expect(slot.taken).toBe(0); // nothing should change
+  });
+
+  it("should use default clinicId when clinicId is not provided", async () => {
+    const mockAdd = jest.fn();
+    const mockGetDuplicate = jest.fn();
+    const mockGetCapacity = jest.fn();
+    const mockWhere = jest.fn();
+
+    const duplicateQuery = {
+      where: jest.fn(),
+      get: mockGetDuplicate
+    };
+
+    const capacityQuery = {
+      where: jest.fn(),
+      get: mockGetCapacity
+    };
+
+    const appointmentsRef = {
+      where: mockWhere,
+      add: mockAdd
+    };
+
+    mockGetDuplicate.mockResolvedValue({ empty: true });
+    mockGetCapacity.mockResolvedValue({ size: 0 });
+    mockAdd.mockResolvedValue({ id: "appt999" });
+
+    duplicateQuery.where
+      .mockReturnValueOnce(duplicateQuery)
+      .mockReturnValueOnce(duplicateQuery);
+
+    capacityQuery.where
+      .mockReturnValueOnce(capacityQuery)
+      .mockReturnValueOnce(capacityQuery);
+
+    mockWhere
+      .mockReturnValueOnce(duplicateQuery)
+      .mockReturnValueOnce(capacityQuery);
+
+    db.collection.mockReturnValue(appointmentsRef);
+
+    const result = await createAppointment(
+      undefined,   // 🔥 IMPORTANT (not "default", not string)
+      "2026-04-20",
+      "09:00 - 10:00",
+      "patient123"
+    );
+
+    expect(result.clinicId).toBe("default");
+  });
+
 });
