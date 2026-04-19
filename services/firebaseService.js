@@ -1,4 +1,5 @@
 const { db, admin } = require("./config/firebase");
+const { v4: uuidv4 } = require('uuid');
 const MAX_CAPACITY_PER_SLOT = 10;
 
 // ======================= APPOINTMENTS =======================
@@ -138,22 +139,26 @@ const getAppointmentsByPatientId = async (patientId) => {
         throw error;
     }
 };
+// ======================= USERS =======================
+//TODO: remove the patient implementation
+const getUserProfileById = async (userId) => {
+    const doc = await db.collection("users").doc(userId).get();
+    return doc.exists ? doc.data() : null;
+};
 
+const createUserProfile = async (userData, roleData = {}) => {
+    const { uid } = userData;
+
+    await db.collection("users").doc(uid).set({
+        ...userData,
+        ...roleData,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
 // ======================= PATIENTS =======================
 
 // Get profile
-const getUserProfileById = async (patientId) => {
-    try {
-        const docSnap = await db.collection("patients").doc(patientId).get();
 
-        if (!docSnap.exists) return null;
-
-        return { id: docSnap.id, ...docSnap.data() };
-    } catch (error) {
-        console.error("Error fetching profile:", error);
-        throw error;
-    }
-};
 
 // make a method to update booking status to cancel which is gonna be used by the controller
 
@@ -180,5 +185,68 @@ const cancelAppointment = async (appointmentId) =>{
         throw error;
     }
 };
+// ======================= ADMINS =======================
 
-module.exports = { getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
+
+// ======================= VALIDATION =======================
+
+// Checks a pre-generated admin code exists for the given clinic
+const validateAdminCode = async (adminCode, clinicId) => {
+    const snapshot = await db.collection("adminCodes")
+        .where("code", "==", adminCode)
+        .where("clinicId", "==", clinicId)
+        .where("used", "==", false)
+        .get();
+
+    return !snapshot.empty;
+};
+// ======================= CLINICS =======================
+
+const createClinic = async ({ placeId, clinicName, city }) => {
+    const code = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
+
+    await db.collection("clinics").doc(placeId).set({
+        placeId,
+        clinicName,
+        city,
+        operatingHours: {
+            monday:    { open: "08:00", close: "17:00", isOpen: true },
+            tuesday:   { open: "08:00", close: "17:00", isOpen: true },
+            wednesday: { open: "08:00", close: "17:00", isOpen: true },
+            thursday:  { open: "08:00", close: "17:00", isOpen: true },
+            friday:    { open: "08:00", close: "17:00", isOpen: true },
+            saturday:  { open: "08:00", close: "13:00", isOpen: true },
+            sunday:    { open: "00:00", close: "00:00", isOpen: false }
+        },
+        adminCode: code,
+        adminUid: null,
+        isActive: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { clinicId: placeId, adminCode: code };
+};
+
+
+// Validates the code and returns the clinicId if valid
+const getClinicIdFromAdminCode = async (adminCode) => {
+    const snapshot = await db.collection("clinics")
+        .where("adminCode", "==", adminCode)
+        .where("adminUid", "==", null)      // not yet claimed
+        .where("isActive", "==", false)     // not yet active
+        .get();
+
+    if (snapshot.empty) return null;
+
+    return snapshot.docs[0].id;
+};
+
+// Links the admin to the clinic on successful signup
+const claimClinic = async (clinicId, uid) => {
+    await db.collection("clinics").doc(clinicId).update({
+        adminUid: uid,
+        isActive: true
+    });
+};
+
+module.exports = {createUserProfile, createClinic, claimClinic, getClinicIdFromAdminCode, validateAdminCode, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
