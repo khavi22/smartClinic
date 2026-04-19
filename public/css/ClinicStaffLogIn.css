@@ -131,3 +131,19 @@
   margin-top: 10px;
   display: none;
 }
+.success-btn {
+  width: 100%;
+  padding: 11px;
+  background: #1D9E75;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.success-btn:hover {
+  background: #085041;
+}

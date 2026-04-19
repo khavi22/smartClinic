@@ -1,18 +1,3 @@
-// Mock Firebase so tests don't need real connection
-jest.mock('../public/js/ClinicStaffFirebase.js', () => ({
-    db: {}
-}));
-
-// Mock Firestore functions
-jest.mock('firebase/firestore', () => ({
-    collection: jest.fn(),
-    query: jest.fn(),
-    where: jest.fn(),
-    getDocs: jest.fn()
-}));
-
-const { getDocs } = require('firebase/firestore');
-
 const { validateStaffData } = require('./validateStaffLogic.cjs');
 
 
