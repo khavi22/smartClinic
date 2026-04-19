@@ -30,12 +30,12 @@
                     <legend>User Credentials & Role</legend>
                     
                     <div class="field">
-                        <label for="role">Project Role</label>
+                        <label for="role">I am a</label>
                         <select id="role" name="role" required>
                             <option value="" disabled selected>Select your role...</option>
-                            <option value="Patient">Patient</option>
-                            <option value="Staff">Clinic Staff</option>
-                            <option value="Admin">Admin</option>
+                            <option value="patient">patient</option>
+                            <option value="staff">Clinic Staff</option>
+                            <option value="admin">admin</option>
                         </select>
                     </div>
 
@@ -46,14 +46,17 @@
                     </div>
                 </fieldset>
 
-                <fieldset>
-                    <legend>Verification Details</legend>
+                <fieldset id="roleCodeFields" hidden aria-hidden="true">
+                    <legend id="roleCodeLegend">Role Verification</legend>
+                    <p id="roleCodeHelp">Your clinic will be linked automatically from your code.</p>
                     <div class="field">
-                        <label for="idNumber">SA ID Number</label>
-                        <input type="text" id="idNumber" name="idNumber" 
-                               placeholder="YYMMDDXXXXXXX" maxlength="13">
+                        <label for="roleCode" id="roleCodeLabel">Verification Code</label>
+                        <input type="text" id="roleCode" name="roleCode"
+                               autocomplete="off"
+                               maxlength="20">
                     </div>
                 </fieldset>
+                
 
                 <footer class="form-actions">
                     <button type="submit" class="btn-primary">Finalize Account</button>

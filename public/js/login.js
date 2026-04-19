@@ -17,14 +17,32 @@ const provider = new firebase.auth.GoogleAuthProvider();
 
 let signingIn = false;
 
+function storeUserSession(user, profile) {
+    localStorage.setItem("userId", user.uid);
+    localStorage.setItem("userEmail", profile?.email || user.email || "");
+
+    if (profile?.role) {
+        localStorage.setItem("userRole", profile.role);
+    } else {
+        localStorage.removeItem("userRole");
+    }
+
+    if (profile?.role === "patient") {
+        localStorage.setItem("patientId", user.uid);
+    } else {
+        localStorage.removeItem("patientId");
+    }
+}
+
 async function redirectBasedOnUser(user) {
     try {
-        const response = await fetch(`/api/user/login/${user.uid}`);
+        const emailQuery = encodeURIComponent(user.email || "");
+        const response = await fetch(`/api/user/login/${user.uid}?email=${emailQuery}`);
         const data = await response.json();
 
         if (response.ok && data.redirect) {
+            storeUserSession(user, data.profile);
             window.location.href = data.redirect;
-            localStorage.setItem("patientId", user.uid);
         } else {
             alert(data.error || "Failed to check user login");
         }
