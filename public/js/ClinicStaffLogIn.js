@@ -41,7 +41,7 @@ verify_button.addEventListener("click" , async function(){
     verify_button.style.display = "none";
     
     // if the staff code is valid show success button
-    document.getElementById("success-btn").style.display = "block";
+    //document.getElementById("success-btn").style.display = "block";
     GoToClinicStaffDashboard();
     }
     else{
