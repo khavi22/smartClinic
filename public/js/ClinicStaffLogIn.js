@@ -11,7 +11,9 @@ import {
 
 console.log("JS file loaded!");
 
-export async function validateStaffNumber(StaffNumber){
+import { validateStaffData } from './validateStaffLogic.js';
+
+async function validateStaffNumber(StaffNumber){
     console.log("hi");
     const q_staff_number=query(collection(db,"ClinicStaff") , 
                               where("StaffNumber","==",StaffNumber) 
@@ -19,15 +21,7 @@ export async function validateStaffNumber(StaffNumber){
 
     const snapshot_firebase = await getDocs(q_staff_number);
 
-    if(!snapshot_firebase.empty){
-        const Staff_Data=snapshot_firebase.docs[0].data();
-        console.log(Staff_Data);
-
-        return Staff_Data;
-    }
-    else{
-        return null;
-    }
+    return validateStaffData(snapshot_firebase);
 }
 
 
@@ -62,4 +56,3 @@ function GoToClinicStaffDashboard(){
     window.location.href="ClinicStaffDashboard.html";
 }
 
-export { validateStaffNumber };

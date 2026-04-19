@@ -1,5 +1,5 @@
 // Mock Firebase so tests don't need real connection
-jest.mock('../js/ClinicStaffFirebase.js', () => ({
+jest.mock('../public/js/ClinicStaffFirebase.js', () => ({
     db: {}
 }));
 
@@ -12,7 +12,8 @@ jest.mock('firebase/firestore', () => ({
 }));
 
 const { getDocs } = require('firebase/firestore');
-const { validateStaffNumber } = require('../js/ClinicStaffFirebase.js');
+
+const { validateStaffData } = require('../public/js/validateStaffLogic');
 
 describe("Test Clinic Staff Login", function () {
     test("invalid staff number returns error message", async function () {
@@ -24,28 +25,28 @@ describe("Test Clinic Staff Login", function () {
     //test the function validatestaff number
     test("validate staff number return null if invalid staff number is entered", async function () {
 
-        getDocs.mockResolvedValue({
+       const mockSnapshot = {
             empty: true,
             docs: []
-        });
-        const result = await validateStaffNumber("invalid");
+        };
+
+        const result = await validateStaffData(mockSnapshot);
         expect(result).toBeNull();
     })
 
     test("validate staff number returns data for valid staff number", async function () {
-        getDocs.mockResolvedValue({
+        const mockSnapshot = {
             empty: false,
             docs: [{
-                data: function () {
+                data: function() {
                     return {
                         StaffNumber: 12345,
                         ClinicID: "ChIJExgRGs4NlR4RMcO4P5F8umc"
                     }
-
                 }
             }]
-        });
-        const result = await validateStaffNumber(12345);
+        };
+        const result = await validateStaffData(mockSnapshot);
         expect(result).not.toBeNull();
         expect(result.StaffNumber).toBe(12345);
     })
