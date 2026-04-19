@@ -1,4 +1,4 @@
-const { getUserProfileById } = require("../services/firebaseService");
+const { getUserProfileById, createPatientProfile } = require("../services/firebaseService");
 const firebaseService = require('../services/firebaseService');
 
 exports.checkUserLogin = async (req, res) => {
@@ -75,7 +75,7 @@ exports.createAdminProfile = async (req, res) => {
         if (!clinicId) {
             return res.status(403).json({
                 success: false,
-                message: "Invalid admin code"
+                message: "Invalid or already used admin code"
             });
         }
 
@@ -83,6 +83,7 @@ exports.createAdminProfile = async (req, res) => {
         const roleData = { adminCode, clinicId };
 
         await firebaseService.createUserProfile(userData, roleData);
+        await firebaseService.claimClinic(clinicId, uid);
 
         return res.status(201).json({
             success: true,
