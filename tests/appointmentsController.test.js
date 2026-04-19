@@ -4,8 +4,7 @@ const {
     postAppointment,
     getAppointmentsByPatientId,
     cancelAppointmentController
-} = require("../Controllers/appointmentsController");
-
+} = require("../controllers/appointmentsController");
 jest.mock("../services/firebaseService");
 
 describe("appointmentsController", () => {

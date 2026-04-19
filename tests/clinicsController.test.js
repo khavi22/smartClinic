@@ -5,7 +5,7 @@ const {
     ensureClinicExistsController,
     updateClinicHoursController,
     getClinics
-} = require("../Controllers/ClinicsController");
+} = require("../controllers/ClinicsController");
 
 jest.mock("axios");
 jest.mock("../services/firebaseService");
