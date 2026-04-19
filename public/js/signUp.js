@@ -1,18 +1,3 @@
-console.log("signUp.js loaded");
-
-const firebaseConfig = {
-    apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
-    authDomain: "smartclinic-11971.firebaseapp.com",
-    projectId: "smartclinic-11971",
-    storageBucket: "smartclinic-11971.firebasestorage.app",
-    messagingSenderId: "301262646979",
-    appId: "1:301262646979:web:6529009c676257565a7c76"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
 const auth = firebase.auth();
 const signupForm = document.getElementById("signupForm");
 const roleSelect = document.getElementById("role");
@@ -36,35 +21,33 @@ function storeUserSession(user, profile = {}) {
 
 function updateRoleCodeField() {
     const role = roleSelect.value;
-    const needsCode = role === "admin" || role === "staff";
+    const isSpecialRole = role === "admin" || role === "staff";
 
-    roleCodeFields.hidden = !needsCode;
-    roleCodeFields.setAttribute("aria-hidden", String(!needsCode));
-    roleCodeInput.required = needsCode;
+    // Explicitly toggle display to avoid browser-specific hidden attribute bugs
+    roleCodeFields.style.display = isSpecialRole ? "block" : "none";
+    roleCodeFields.setAttribute("aria-hidden", String(!isSpecialRole));
+    roleCodeInput.required = isSpecialRole;
 
-    if (!needsCode) {
+    if (!isSpecialRole) {
         roleCodeInput.value = "";
         return;
     }
 
     const isAdmin = role === "admin";
     roleCodeLegend.textContent = isAdmin ? "Admin Verification" : "Staff Verification";
-    roleCodeHelp.textContent = isAdmin
-        ? "Your clinic ID will be retrieved automatically from your admin code."
-        : "Your clinic assignment will be retrieved automatically from your staff code.";
     roleCodeLabel.textContent = isAdmin ? "Admin Code" : "Staff Code";
-    roleCodeInput.placeholder = isAdmin ? "Enter your admin code" : "Enter your staff code";
 }
 
-auth.onAuthStateChanged((user) => {
+updateRoleCodeField();
+roleSelect.addEventListener("change", updateRoleCodeField);
+
+// --- Auth Guard ---
+auth.onAuthStateChanged(user => {
     if (!user) {
-        console.warn("No session - redirecting to login");
+        console.warn("No active session found on signUp.html. Redirecting...");
         window.location.href = "login.html";
     }
 });
-
-roleSelect.addEventListener("change", updateRoleCodeField);
-updateRoleCodeField();
 
 signupForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -77,48 +60,51 @@ signupForm.addEventListener("submit", async (e) => {
         return;
     }
 
-    const submitBtn = signupForm.querySelector("button[type='submit']");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Saving...";
-
     const role = roleSelect.value;
     const roleCode = roleCodeInput.value.trim();
 
-    const userData = {
+    if ((role === "admin" || role === "staff") && !roleCode) {
+        alert(`Please enter your ${role} verification code.`);
+        return;
+    }
+
+    const submitBtn = signupForm.querySelector("button[type='submit']");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving Profile...";
+
+    const registrationData = {
         uid: user.uid,
         fullName: user.displayName || "Unknown User",
         email: user.email,
-        role,
-        phone: document.getElementById("phone").value
+        role: role,
+        phone: document.getElementById("phone").value,
+        verificationCode: roleCode || null
     };
 
-    if (role === "admin") {
-        userData.adminCode = roleCode;
-    }
-
-    if (role === "staff") {
-        userData.staffCode = roleCode;
-    }
-
     try {
-        const response = await fetch("/api/user/signup", {
+        const response = await fetch("/api/user/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(userData)
+            body: JSON.stringify(registrationData)
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.message || "Something went wrong");
+            throw new Error(result.message || "Something went wrong during registration.");
         }
 
-        storeUserSession(user, result.profile || userData);
-        window.location.href = "dashboard.html";
+        console.log(`${role} record created successfully!`);
+        storeUserSession(user, result.profile || registrationData);
+        
+        // Wait for token refresh then redirect to the correct dashboard
+        await user.getIdToken(true);
+        window.location.href = result.redirect || "dashboard.html";
+
     } catch (error) {
-        console.error("Error creating user profile:", error);
+        console.error("Error during registration:", error);
         alert("Error: " + error.message);
         submitBtn.disabled = false;
         submitBtn.textContent = "Finalize Account";

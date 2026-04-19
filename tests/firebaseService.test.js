@@ -1,22 +1,43 @@
-const mockServerTimestamp = jest.fn(() => "SERVER_TIMESTAMP");
-const mockDeleteUser = jest.fn();
+const { 
+    getAppointmentsByPatientId, 
+    getAvailabilityForDate, 
+    createAppointment, 
+    cancelAppointment, 
+    getUserProfileById, 
+    createUserProfile,
+    getClinicIdFromVerificationCode,
+    claimClinic,
+    ensureClinicExists,
+    updateClinicOperatingHours,
+    deleteUserAccount,
+    getUserProfileByEmail,
+    getClinicNameById,
+    createClinic,
+    validateAdminCode
+} = require("../services/firebaseService");
+const { db, admin } = require("../services/config/firebase");
+
+const mockSetCustomUserClaims = jest.fn().mockResolvedValue();
+const mockDeleteUser = jest.fn().mockResolvedValue();
 
 jest.mock("../services/config/firebase", () => ({
-    db: {
-        collection: jest.fn()
-    },
-    admin: {
-        firestore: {
-            FieldValue: {
-                serverTimestamp: mockServerTimestamp
-            }
-        },
-        auth: () => ({
-            deleteUser: mockDeleteUser
-        })
+  db: {
+    collection: jest.fn()
+  },
+  admin: {
+    auth: jest.fn(() => ({
+        setCustomUserClaims: mockSetCustomUserClaims,
+        deleteUser: mockDeleteUser
+    })),
+    firestore: {
+        FieldValue: {
+            serverTimestamp: jest.fn().mockReturnValue("mock-server-timestamp")
+        }
     }
+  }
 }));
 
+<<<<<<< HEAD
 const {
     getAvailabilityForDate,
     createAppointment,
@@ -33,217 +54,56 @@ const {
     deleteUserAccount
 } = require("../services/firebaseService");
 const { db } = require("../services/config/firebase");
+=======
+describe("firebaseService Tests", () => {
+    let mockGet, mockWhere, mockSet, mockUpdate, mockDoc, mockAdd, mockDelete;
+>>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
 
-function createLoopQuery(snapshot) {
-    const query = {
-        where: jest.fn(),
-        get: jest.fn().mockResolvedValue(snapshot)
-    };
-    query.where.mockReturnValue(query);
-    return query;
-}
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.spyOn(console, "error").mockImplementation(() => {});
 
-
-beforeEach(() => {
-    jest.clearAllMocks();
-});
-
-describe("getAvailabilityForDate", () => {
-    it("should return the default slots when there are no bookings", async () => {
-        const query = createLoopQuery({ empty: true });
-        db.collection.mockReturnValue(query);
-
-        const slots = await getAvailabilityForDate("default", "2026-04-19");
-
-        expect(db.collection).toHaveBeenCalledWith("appointments");
-        expect(query.where).toHaveBeenCalledWith("date", "==", "2026-04-19");
-        expect(query.where).toHaveBeenCalledWith("status", "==", "booked");
-        expect(slots).toHaveLength(24);
-        expect(slots[0]).toEqual({
-            id: 0,
-            time: "00:00 - 01:00",
-            total: 10,
-            taken: 0,
-            status: "available"
-        });
-    });
-
-    it("should mark slots as limited and full for clinic-specific bookings", async () => {
-        const query = createLoopQuery({
-            empty: false,
-            forEach: (callback) => {
-                for (let i = 0; i < 7; i += 1) {
-                    callback({
-                        data: () => ({ timeSlot: "09:00 - 10:00" })
-                    });
-                }
-
-                for (let i = 0; i < 10; i += 1) {
-                    callback({
-                        data: () => ({ timeSlot: "10:00 - 11:00" })
-                    });
-                }
-
-                callback({
-                    data: () => ({ timeSlot: "does-not-match" })
-                });
-            }
-        });
-        db.collection.mockReturnValue(query);
-
-        const slots = await getAvailabilityForDate("clinic-123", "2026-04-19");
-
-        expect(query.where).toHaveBeenCalledWith("clinicId", "==", "clinic-123");
-        expect(slots.find((slot) => slot.time === "09:00 - 10:00")).toMatchObject({
-            taken: 7,
-            status: "limited"
-        });
-        expect(slots.find((slot) => slot.time === "10:00 - 11:00")).toMatchObject({
-            taken: 10,
-            status: "full"
-        });
-    });
-
-    it("should throw when reading availability fails", async () => {
-        const query = createLoopQuery({ empty: true });
-        query.get.mockRejectedValue(new Error("Availability failed"));
-        db.collection.mockReturnValue(query);
-
-        await expect(getAvailabilityForDate("default", "2026-04-19")).rejects.toThrow("Availability failed");
-    });
-});
-
-describe("createAppointment", () => {
-    it("should create an appointment for a clinic when checks pass", async () => {
-        const duplicateQuery = createLoopQuery({ empty: true });
-        const capacityQuery = createLoopQuery({ size: 0 });
-        const add = jest.fn().mockResolvedValue({ id: "appt-1" });
-        const appointmentsRef = {
-            where: jest.fn()
-                .mockImplementationOnce(() => duplicateQuery)
-                .mockImplementationOnce(() => capacityQuery),
-            add
+        mockGet = jest.fn();
+        mockSet = jest.fn();
+        mockUpdate = jest.fn();
+        mockWhere = jest.fn();
+        mockAdd = jest.fn();
+        mockDelete = jest.fn();
+        mockDoc = jest.fn(() => ({ 
+            set: mockSet, 
+            get: mockGet, 
+            update: mockUpdate, 
+            delete: mockDelete,
+            ref: { update: mockUpdate, delete: mockDelete }
+        }));
+        
+        const queryRef = {
+            where: mockWhere,
+            get: mockGet,
+            doc: mockDoc,
+            add: mockAdd
         };
+        mockWhere.mockReturnValue(queryRef);
+        db.collection.mockReturnValue(queryRef);
+    });
 
-        db.collection.mockReturnValue(appointmentsRef);
-
-        const result = await createAppointment(
-            "clinic-123",
-            "2026-04-20",
-            "09:00 - 10:00",
-            "patient-1",
-            "Smart Clinic",
-            "123 Main Rd"
-        );
-
-        expect(capacityQuery.where).toHaveBeenCalledWith("clinicId", "==", "clinic-123");
-        expect(add).toHaveBeenCalledWith({
-            clinicId: "clinic-123",
-            clinicName: "Smart Clinic",
-            clinicAddress: "123 Main Rd",
-            date: "2026-04-20",
-            timeSlot: "09:00 - 10:00",
-            patientId: "patient-1",
-            status: "booked",
-            createdAt: expect.any(String)
-        });
-        expect(result).toMatchObject({
-            id: "appt-1",
-            clinicId: "clinic-123",
-            clinicName: "Smart Clinic",
-            clinicAddress: "123 Main Rd",
-            patientId: "patient-1"
+    describe("getAvailabilityForDate", () => {
+        it("should handle full and limited statuses", async () => {
+            mockGet.mockResolvedValueOnce({ exists: false });
+            const mockDocs = Array(10).fill({ data: () => ({ timeSlot: "08:00 - 09:00" }) });
+            mockGet.mockResolvedValueOnce({ empty: false, forEach: (cb) => mockDocs.forEach(cb) });
+            const res = await getAvailabilityForDate("c1", "d1");
+            expect(res.find(s => s.time === "08:00 - 09:00").status).toBe("full");
         });
     });
 
-    it("should skip duplicate checks when rescheduling and use default clinic values", async () => {
-        const capacityQuery = createLoopQuery({ size: 0 });
-        const add = jest.fn().mockResolvedValue({ id: "appt-2" });
-        const appointmentsRef = {
-            where: jest.fn().mockImplementationOnce(() => capacityQuery),
-            add
-        };
-
-        db.collection.mockReturnValue(appointmentsRef);
-
-        const result = await createAppointment(
-            "",
-            "2026-04-20",
-            "11:00 - 12:00",
-            "patient-1",
-            undefined,
-            undefined,
-            true
-        );
-
-        expect(appointmentsRef.where).toHaveBeenCalledTimes(1);
-        expect(add).toHaveBeenCalledWith({
-            clinicId: "default",
-            clinicName: "Unknown Clinic",
-            clinicAddress: "N/A",
-            date: "2026-04-20",
-            timeSlot: "11:00 - 12:00",
-            patientId: "patient-1",
-            status: "booked",
-            createdAt: expect.any(String)
-        });
-        expect(result.id).toBe("appt-2");
-    });
-
-    it("should throw when the patient already has a booking for the day", async () => {
-        const duplicateQuery = createLoopQuery({ empty: false });
-        const appointmentsRef = {
-            where: jest.fn().mockImplementationOnce(() => duplicateQuery),
-            add: jest.fn()
-        };
-
-        db.collection.mockReturnValue(appointmentsRef);
-
-        await expect(
-            createAppointment("clinic-123", "2026-04-20", "09:00 - 10:00", "patient-1")
-        ).rejects.toThrow("You already have a booking for this day.");
-    });
-
-    it("should throw when the slot is full", async () => {
-        const duplicateQuery = createLoopQuery({ empty: true });
-        const capacityQuery = createLoopQuery({ size: 10 });
-        const appointmentsRef = {
-            where: jest.fn()
-                .mockImplementationOnce(() => duplicateQuery)
-                .mockImplementationOnce(() => capacityQuery),
-            add: jest.fn()
-        };
-
-        db.collection.mockReturnValue(appointmentsRef);
-
-        await expect(
-            createAppointment("clinic-123", "2026-04-20", "09:00 - 10:00", "patient-1")
-        ).rejects.toThrow("This slot is full.");
-    });
-});
-
-describe("getAppointmentsByPatientId", () => {
-    it("should return appointments for a patientId", async () => {
-        const query = createLoopQuery({
-            forEach: (callback) => {
-                callback({
-                    id: "appt1",
-                    data: () => ({
-                        patientId: "patient123",
-                        status: "booked"
-                    })
-                });
-
-                callback({
-                    id: "appt2",
-                    data: () => ({
-                        patientId: "patient123",
-                        status: "pending"
-                    })
-                });
-            }
+    describe("createAppointment", () => {
+        it("should throw if duplicate found (isReschedule=false)", async () => {
+            mockGet.mockResolvedValueOnce({ empty: false }); // duplicate check
+            await expect(createAppointment("c1", "d1", "t1", "p1")).rejects.toThrow("booking for this day");
         });
 
+<<<<<<< HEAD
         db.collection.mockReturnValue(query);
 
         const result = await getAppointmentsByPatientId("patient123");
@@ -485,32 +345,34 @@ describe("appointment mutation helpers", () => {
         expect(update).toHaveBeenCalledWith({
             status: "cancelled",
             updatedAt: expect.any(Date)
+=======
+        it("should create successfully when not rescheduling", async () => {
+            mockGet.mockResolvedValueOnce({ empty: true }); // duplicate
+            mockGet.mockResolvedValueOnce({ size: 0 }); // capacity
+            mockAdd.mockResolvedValue({ id: "a1" });
+            const res = await createAppointment("c1", "d1", "t1", "p1", "C", "A");
+            expect(res.id).toBe("a1");
         });
     });
 
-    it("should throw when cancelling a missing appointment", async () => {
-        db.collection.mockReturnValue({
-            doc: jest.fn(() => ({
-                get: jest.fn().mockResolvedValue({ exists: false }),
-                update: jest.fn()
-            }))
+    describe("getUserProfileById", () => {
+        it("should return profile if found in first collection", async () => {
+            mockGet.mockResolvedValueOnce({ exists: true, data: () => ({ role: "patient", uid: "u1" }) });
+            const res = await getUserProfileById("u1");
+            expect(res.role).toBe("patient");
+>>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
         });
-
-        await expect(cancelAppointment("appt-1")).rejects.toThrow("Booking not found");
-    });
-});
-
-describe("clinic helpers", () => {
-    it("should validate an admin code", async () => {
-        const query = createLoopQuery({ empty: false });
-        db.collection.mockReturnValue(query);
-
-        await expect(validateAdminCode("ADM-123", "clinic-1")).resolves.toBe(true);
-        expect(query.where).toHaveBeenCalledWith("code", "==", "ADM-123");
-        expect(query.where).toHaveBeenCalledWith("clinicId", "==", "clinic-1");
-        expect(query.where).toHaveBeenCalledWith("used", "==", false);
     });
 
+    describe("cancelAppointment", () => {
+        it("should update status and updatedAt", async () => {
+            mockGet.mockResolvedValueOnce({ exists: true, data: () => ({}) });
+            await cancelAppointment("a1");
+            expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: "cancelled" }));
+        });
+    });
+
+<<<<<<< HEAD
     it("should return false for an invalid admin code", async () => {
         const query = createLoopQuery({ empty: true });
         db.collection.mockReturnValue(query);
@@ -582,6 +444,14 @@ describe("clinic helpers", () => {
         expect(update).toHaveBeenCalledWith({
             adminUid: "test-uid",
             isActive: true
+=======
+    describe("deleteUserAccount", () => {
+        it("should handle roles and cleanup", async () => {
+            mockGet.mockResolvedValueOnce({ exists: true, data: () => ({ role: "admin" }) });
+            mockGet.mockResolvedValueOnce({ docs: [{ ref: { update: mockUpdate } }] });
+            await deleteUserAccount("u1");
+            expect(mockUpdate).toHaveBeenCalled();
+>>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
         });
     });
 
@@ -610,6 +480,7 @@ describe("clinic helpers", () => {
         expect(result).toBeNull();
     });
 });
+<<<<<<< HEAD
 
 describe("deleteUserAccount", () => {
     it("should delete a patient account and any patient appointments", async () => {
@@ -809,3 +680,5 @@ describe("deleteUserAccount", () => {
         expect(mockDeleteUser).toHaveBeenCalledWith("admin-2");
     });
 });
+=======
+>>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b

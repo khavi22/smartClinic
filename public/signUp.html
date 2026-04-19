@@ -1,70 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartClinic | Complete Your Sign Up</title>
     <link rel="stylesheet" href="css/styles.css">
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 </head>
+
 <body>
 
-    <header role="banner">
-        <nav aria-label="Main Navigation">
-            <a href="index.html" class="logo">SmartClinic</a>
-        </nav>
-    </header>
 
-    <main id="main-content">
-        <section class="signup-flow" aria-labelledby="form-title">
-            <header class="section-header">
-                <h1 id="form-title">Complete Your Profile</h1>
-                <p>Welcome! Please provide the details below to access your dashboard.</p>
+
+    <main id="main-content" class="signup-container">
+        <section class="signup-card">
+            <header>
+                <section class="logo-stack">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="logo-icon">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                    <h1>Finalize Account</h1>
+                </section>
+                <p>Welcome! Help us tailor your experience by completing your profile details below.</p>
             </header>
 
             <form id="signupForm">
                 <fieldset>
-                    <legend>User Credentials & Role</legend>
-                    
-                    <div class="field">
+                    <legend>Account Roles</legend>
+
+                    <p class="field">
                         <label for="role">I am a</label>
                         <select id="role" name="role" required>
                             <option value="" disabled selected>Select your role...</option>
-                            <option value="patient">patient</option>
+                            <option value="patient">Patient</option>
                             <option value="staff">Clinic Staff</option>
-                            <option value="admin">admin</option>
+                            <option value="admin">Clinic Admin</option>
                         </select>
-                    </div>
+                    </p>
+                </fieldset>
 
-                    <div class="field">
+                <fieldset>
+                    <legend>Personal Details</legend>
+                    <p class="field">
                         <label for="phone">Contact Number</label>
-                        <input type="tel" id="phone" name="phone" 
-                               placeholder="081 234 5678" pattern="[0-9]{10}" required>
-                    </div>
+                        <input type="tel" id="phone" name="phone" placeholder="e.g. 081 234 5678" pattern="[0-9]{10}"
+                            required>
+                    </p>
                 </fieldset>
 
                 <fieldset id="roleCodeFields" hidden aria-hidden="true">
-                    <legend id="roleCodeLegend">Role Verification</legend>
-                    <p id="roleCodeHelp">Your clinic will be linked automatically from your code.</p>
-                    <div class="field">
+                    <legend id="roleCodeLegend">Verification</legend>
+                    <p class="field">
                         <label for="roleCode" id="roleCodeLabel">Verification Code</label>
-                        <input type="text" id="roleCode" name="roleCode"
-                               autocomplete="off"
-                               maxlength="20">
-                    </div>
+                        <input type="text" id="roleCode" name="roleCode" autocomplete="off" maxlength="20">
+                    </p>
                 </fieldset>
-                
 
-                <footer class="form-actions">
-                    <button type="submit" class="btn-primary">Finalize Account</button>
-                </footer>
+                <button type="submit" class="btn-primary">Finalize Account</button>
             </form>
         </section>
     </main>
 
     <script src="js/signUp.js"></script>
 </body>
+
 </html>
