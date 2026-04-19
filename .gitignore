@@ -1,9 +1,4 @@
 node_modules/
 coverage/
 .env
-.env.*
-!.env.example
-.firebase/
-.DS_Store
-Thumbs.db
-*.log
+.env.local

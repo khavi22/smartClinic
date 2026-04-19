@@ -2,12 +2,13 @@ const { db, admin } = require("./config/firebase");
 const { v4: uuidv4 } = require('uuid');
 const MAX_CAPACITY_PER_SLOT = 10;
 
-// ======================= APPOINTMENTS =======================
+
 
 // Get availability
 const getAvailabilityForDate = async (clinicId, dateStr) => {
-    const slots = [];
-
+    let slots = [];
+    
+    // Default 24 slots
     for (let hour = 0; hour < 24; hour++) {
         const start = hour.toString().padStart(2, "0") + ":00";
         const end = ((hour + 1) % 24).toString().padStart(2, "0") + ":00";
@@ -22,6 +23,34 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
     }
 
     try {
+        // --- 1. Filter by Operating Hours ---
+        if (clinicId && clinicId !== "default") {
+            const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+            if (clinicDoc.exists) {
+                const clinicData = clinicDoc.data();
+                
+                // More reliable day-of-week calculation
+                const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+                const dayIndex = new Date(dateStr).getDay();
+                const dayOfWeek = days[dayIndex];
+                
+                const hours = clinicData.operatingHours ? clinicData.operatingHours[dayOfWeek] : null;
+
+                if (!hours || !hours.isOpen) {
+                    return []; // Closed today
+                }
+
+                // Filter slots that fall within [open, close)
+                slots = slots.filter(slot => {
+                    const slotStart = slot.time.split(" - ")[0];
+                    // Support 24h as 24:00
+                    const closeTime = hours.close === "00:00" && hours.open === "00:00" && hours.isOpen ? "24:00" : hours.close;
+                    return slotStart >= hours.open && slotStart < closeTime;
+                });
+            }
+        }
+
+        // --- 2. Calculate Taken Slots ---
         let queryRef = db
             .collection("appointments")
             .where("date", "==", dateStr)
@@ -142,17 +171,17 @@ const getAppointmentsByPatientId = async (patientId) => {
 // ======================= USERS =======================
 const ROLE_COLLECTIONS = {
     patient: "patients",
-    admin: "admins"
-    // staff: "staff"
+    admin: "admins",
+    staff: "staff"
 };
 
-const getCollectionNameForRole = (role) => ROLE_COLLECTIONS[role];
-const COLLECTION_NAMES = Object.values(ROLE_COLLECTIONS);
+const COLLECTION_NAMES = ["patients", "admins", "staff", "users"];
+const getCollectionNameForRole = (role) => {
+    return ROLE_COLLECTIONS[role] || null;
+};
 
 const getUserProfileById = async (userId) => {
-    const collections = Object.values(ROLE_COLLECTIONS);
-
-    for (const collectionName of collections) {
+    for (const collectionName of COLLECTION_NAMES) {
         const doc = await db.collection(collectionName).doc(userId).get();
 
         if (doc.exists) {
@@ -171,16 +200,21 @@ const createUserProfile = async (userData, roleData = {}) => {
         throw new Error("Unsupported role");
     }
 
+    // 1. Set Custom Claims for security (keeping our logic)
+    await admin.auth().setCustomUserClaims(uid, { role });
+
     const profileData = {
         uid,
         fullName: userData.fullName,
         email: userData.email,
         role,
         phone: userData.phone,
+        idNumber: userData.idNumber || "N/A",
         ...roleData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
     };
 
+    // 2. Save to individualized collection (keeping mate's logic)
     await db.collection(collectionName).doc(uid).set(profileData);
 };
 
@@ -235,8 +269,6 @@ const cancelAppointment = async (appointmentId) =>{
         throw error;
     }
 };
-// ======================= ADMINS =======================
-
 
 // ======================= VALIDATION =======================
 
@@ -252,122 +284,165 @@ const validateAdminCode = async (adminCode, clinicId) => {
 };
 // ======================= CLINICS =======================
 
-const createClinic = async ({ placeId, clinicName, city }) => {
-    const code = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
+const createClinic = async ({ placeId, clinicName, address }) => {
+    const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
+    const staffCode = "STF-" + uuidv4().substring(0, 6).toUpperCase();
+
+    // Default to 24/7 as requested
+    const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
 
     await db.collection("clinics").doc(placeId).set({
         placeId,
         clinicName,
-        city,
+        address: address || "Address not provided",
         operatingHours: {
-            monday:    { open: "08:00", close: "17:00", isOpen: true },
-            tuesday:   { open: "08:00", close: "17:00", isOpen: true },
-            wednesday: { open: "08:00", close: "17:00", isOpen: true },
-            thursday:  { open: "08:00", close: "17:00", isOpen: true },
-            friday:    { open: "08:00", close: "17:00", isOpen: true },
-            saturday:  { open: "08:00", close: "13:00", isOpen: true },
-            sunday:    { open: "00:00", close: "00:00", isOpen: false }
+            monday:    { ...defaultHours },
+            tuesday:   { ...defaultHours },
+            wednesday: { ...defaultHours },
+            thursday:  { ...defaultHours },
+            friday:    { ...defaultHours },
+            saturday:  { ...defaultHours },
+            sunday:    { ...defaultHours }
         },
-        adminCode: code,
+        adminCode,
+        staffCode,
         adminUid: null,
-        isActive: false,
+        isActive: true,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return { clinicId: placeId, adminCode: code };
+    return { clinicId: placeId, adminCode, staffCode };
+};
+
+const ensureClinicExists = async ({ clinicId, name, address }) => {
+    const doc = await db.collection("clinics").doc(clinicId).get();
+    if (doc.exists) {
+        return { success: true, alreadyExists: true };
+    }
+
+    await createClinic({
+        placeId: clinicId,
+        clinicName: name,
+        address: address
+    });
+
+    return { success: true, newlyCreated: true };
 };
 
 
-// Validates the code and returns the clinicId if valid
-const getClinicIdFromAdminCode = async (adminCode) => {
-    const snapshot = await db.collection("clinics")
-        .where("adminCode", "==", adminCode)
-        .where("isActive", "==", false)     // not yet active
+// Validates any verification code (Admin or Staff) and returns { clinicId, role, adminUid }
+const getClinicIdFromVerificationCode = async (code) => {
+    // Check Admin codes
+    let snapshot = await db.collection("clinics")
+        .where("adminCode", "==", code)
         .get();
 
-    if (snapshot.empty) return null;
+    if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        return { 
+            clinicId: doc.id, 
+            role: "admin",
+            adminUid: data.adminUid 
+        };
+    }
 
-    return snapshot.docs[0].id;
+    // Check Staff codes
+    snapshot = await db.collection("clinics")
+        .where("staffCode", "==", code)
+        .get();
+
+    if (!snapshot.empty) {
+        return { 
+            clinicId: snapshot.docs[0].id, 
+            role: "staff" 
+        };
+    }
+
+    return null;
 };
 
 // Links the admin to the clinic on successful signup
-const claimClinic = async (clinicId) => {
+const claimClinic = async (clinicId, adminUid) => {
     await db.collection("clinics").doc(clinicId).update({
+        adminUid: adminUid,
         isActive: true
     });
 };
 
-
-const deleteUserAppointments = async (uid) => {
-    const appointmentsSnapshot = await db.collection("appointments")
-        .where("patientId", "==", uid)
-        .get();
-
-    if (appointmentsSnapshot.empty) {
-        return;
-    }
-
-    await Promise.all(
-        appointmentsSnapshot.docs.map((doc) => doc.ref.delete())
-    );
+const updateClinicOperatingHours = async (clinicId, operatingHours) => {
+    await db.collection("clinics").doc(clinicId).update({
+        operatingHours: operatingHours,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 };
 
-const releaseAdminClinics = async (uid) => {
-    const clinicsSnapshot = await db.collection("clinics")
-        .where("adminUid", "==", uid)
-        .get();
-
-    if (clinicsSnapshot.empty) {
-        return;
-    }
-
-    await Promise.all(
-        clinicsSnapshot.docs.map((doc) =>
-            doc.ref.update({
-                adminUid: null,
-                isActive: false
-            })
-        )
-    );
-};
-
-const deleteUserRoleDocuments = async (uid) => {
-    await Promise.all(
-        COLLECTION_NAMES.map((collectionName) =>
-            db.collection(collectionName).doc(uid).delete()
-        )
-    );
+const getClinicNameById = async (clinicId) => {
+    const doc = await db.collection("clinics").doc(clinicId).get();
+    return doc.exists ? doc.data().clinicName : "Unknown Clinic";
 };
 
 const deleteUserAccount = async (uid) => {
-    const profile = await getUserProfileById(uid);
+    try {
+        // Find which collection the user is in
+        const collections = Object.values(ROLE_COLLECTIONS);
+        let foundProfile = null;
+        let userRole = null;
 
-    if (profile?.role === "admin") {
-        await releaseAdminClinics(uid);
+        for (const collectionName of collections) {
+            const doc = await db.collection(collectionName).doc(uid).get();
+            if (doc.exists) {
+                foundProfile = doc.data();
+                userRole = foundProfile.role;
+                // Delete from Firestore
+                await db.collection(collectionName).doc(uid).delete();
+                break;
+            }
+        }
+
+        if (userRole === "admin") {
+            // Unclaim the clinic
+            const snapshot = await db.collection("clinics").where("adminUid", "==", uid).get();
+            for (const doc of snapshot.docs) {
+                await doc.ref.update({ adminUid: null, isActive: false });
+            }
+        } else if (userRole === "patient") {
+            // Delete patient appointments
+            const snapshot = await db.collection("appointments").where("patientId", "==", uid).get();
+            for (const doc of snapshot.docs) {
+                await doc.ref.delete();
+            }
+        }
+
+        // Delete from Auth
+        await admin.auth().deleteUser(uid);
+        
+        return foundProfile;
+    } catch (error) {
+        console.error("Error deleting user account:", error);
+        throw error;
     }
-
-    // if (profile?.role === "staff") {
-    //     await releaseStaffCodes(uid);
-    // }
-
-    await deleteUserAppointments(uid);
-    await deleteUserRoleDocuments(uid);
-    await admin.auth().deleteUser(uid);
-
-    return profile;
 };
 
 module.exports = {
-    createUserProfile,
-    createClinic,
-    claimClinic,
-    getClinicIdFromAdminCode,
-    getUserProfileByEmail,
-    validateAdminCode,
+    // User management
     getUserProfileById,
+    createUserProfile,
+    getUserProfileByEmail,
     deleteUserAccount,
+    
+    // Clinic management
+    createClinic,
+    ensureClinicExists,
+    getClinicIdFromVerificationCode,
+    claimClinic,
+    updateClinicOperatingHours,
+    getClinicNameById,
+    validateAdminCode,
+
+    // Appointments & Availability
     createAppointment,
     getAvailabilityForDate,
-    cancelAppointment,
-    getAppointmentsByPatientId
+    getAppointmentsByPatientId,
+    cancelAppointment
 };
