@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const appointmentsController = require("../Controllers/appointmentsController");
+const appointmentsController = require("../controllers/appointmentsController");
 
 router.get("/appointments/:patientId", appointmentsController.getAppointmentsByPatientId);
 router.get("/availability", appointmentsController.getAvailability);

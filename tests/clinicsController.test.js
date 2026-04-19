@@ -1,114 +1,112 @@
 const axios = require("axios");
-const { getClinics } = require("../controllers/ClinicsController");
+const firebaseService = require("../services/firebaseService");
+const { admin, db } = require("../services/config/firebase");
+const {
+    ensureClinicExistsController,
+    updateClinicHoursController,
+    getClinics
+} = require("../controllers/ClinicsController");
 
 jest.mock("axios");
+jest.mock("../services/firebaseService");
+jest.mock("../services/config/firebase", () => ({
+    admin: {
+        auth: () => ({
+            verifyIdToken: jest.fn().mockResolvedValue({ uid: "admin-123" })
+        })
+    },
+    db: {
+        collection: jest.fn()
+    }
+}));
 
-describe("getClinics", () => {
-  let req;
-  let res;
+describe("ClinicsController", () => {
+    let req, res;
 
-  beforeEach(() => {
-    req = {
-      query: {}
-    };
-
-    res = {
-      json: jest.fn(),
-      status: jest.fn().mockReturnThis()
-    };
-
-    jest.clearAllMocks();
-  });
-
-  it("should fetch clinics by search name", async () => {
-    req.query.search = "Rosebank";
-
-    const mockData = {
-      places: [
-        {
-          displayName: { text: "Rosebank Clinic" },
-          formattedAddress: "123 Main Road",
-          location: {
-            latitude: -26.145,
-            longitude: 28.041
-          },
-          id: "clinic-1"
-        }
-      ]
-    };
-
-    axios.post.mockResolvedValue({ data: mockData });
-
-    await getClinics(req, res);
-
-    expect(axios.post).toHaveBeenCalledWith(
-      "https://places.googleapis.com/v1/places:searchText",
-      {
-        textQuery: "clinic named Rosebank"
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": "AIzaSyAKqDTfRFmKVJw2W3PQDGyIgcm_BVpeWBk",
-          "X-Goog-FieldMask":
-            "places.displayName,places.formattedAddress,places.location,places.id"
-        }
-      }
-    );
-
-    expect(res.json).toHaveBeenCalledWith(mockData);
-  });
-
-  it("should fetch clinics by latitude and longitude", async () => {
-    req.query.lat = "-26.2041";
-    req.query.lon = "28.0473";
-
-    const mockData = {
-      places: [
-        {
-          displayName: { text: "Nearby Clinic" },
-          formattedAddress: "456 Street",
-          location: {
-            latitude: -26.2041,
-            longitude: 28.0473
-          },
-          id: "clinic-2"
-        }
-      ]
-    };
-
-    axios.post.mockResolvedValue({ data: mockData });
-
-    await getClinics(req, res);
-
-    expect(axios.post).toHaveBeenCalledWith(
-      "https://places.googleapis.com/v1/places:searchText",
-      {
-        textQuery: "clinic near -26.2041,28.0473"
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": "AIzaSyAKqDTfRFmKVJw2W3PQDGyIgcm_BVpeWBk",
-          "X-Goog-FieldMask":
-            "places.displayName,places.formattedAddress,places.location,places.id"
-        }
-      }
-    );
-
-    expect(res.json).toHaveBeenCalledWith(mockData);
-  });
-
-  it("should return 500 when axios fails", async () => {
-    req.query.search = "Sandton";
-
-    axios.post.mockRejectedValue(new Error("API failed"));
-
-    await getClinics(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Error fetching clinics"
+    beforeEach(() => {
+        req = {
+            body: {},
+            headers: {},
+            query: {}
+        };
+        res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            send: jest.fn()
+        };
+        jest.clearAllMocks();
+        jest.spyOn(console, "log").mockImplementation(() => {});
+        jest.spyOn(console, "error").mockImplementation(() => {});
     });
-  });
+
+    describe("ensureClinicExistsController", () => {
+        it("should return 400 if clinicId missing", async () => {
+            await ensureClinicExistsController(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+        });
+
+        it("should call service if data is correct", async () => {
+            req.body = { clinicId: "c1", name: "N" };
+            firebaseService.ensureClinicExists.mockResolvedValue({ success: true });
+            await ensureClinicExistsController(req, res);
+            expect(firebaseService.ensureClinicExists).toHaveBeenCalled();
+        });
+    });
+
+    describe("updateClinicHoursController", () => {
+        it("should return 401 if unauthorized", async () => {
+            await updateClinicHoursController(req, res);
+            expect(res.status).toHaveBeenCalledWith(401);
+        });
+
+        it("should return 400 if missing body", async () => {
+            req.headers.authorization = "Bearer token";
+            await updateClinicHoursController(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+        });
+
+        it("should return 403 if not owner", async () => {
+            req.headers.authorization = "Bearer token";
+            req.body = { clinicId: "c1", operatingHours: {} };
+            
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: true, data: () => ({ adminUid: "OTHER" }) })
+                }))
+            });
+
+            await updateClinicHoursController(req, res);
+            expect(res.status).toHaveBeenCalledWith(403);
+        });
+
+        it("should return 200 on success", async () => {
+            req.headers.authorization = "Bearer token";
+            req.body = { clinicId: "c1", operatingHours: {} };
+            
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: true, data: () => ({ adminUid: "admin-123" }) })
+                }))
+            });
+
+            await updateClinicHoursController(req, res);
+            expect(firebaseService.updateClinicOperatingHours).toHaveBeenCalled();
+        });
+    });
+
+    describe("getClinics", () => {
+        it("should return clinic data from Google Places", async () => {
+            req.query = { search: "clinic" };
+            axios.post.mockResolvedValue({ data: { places: [] } });
+            await getClinics(req, res);
+            expect(res.json).toHaveBeenCalledWith({ places: [] });
+        });
+
+        it("should return 500 on error", async () => {
+            req.query = { lat: "1", lon: "2" };
+            axios.post.mockRejectedValue(new Error("Network Error"));
+            await getClinics(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
 });

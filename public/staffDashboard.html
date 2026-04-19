@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartClinic | Staff Dashboard (Demo)</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="logo">SmartClinic</span>
+                <span class="badge">Staff Demo</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active">Overview</a>
+                <a href="#">Patient List</a>
+                <a href="#">Schedule</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h1 id="userGreeting">Loading...</h1>
+                <div class="header-actions">
+                    <span id="clinicNameDisplay" class="clinic-tag">Clinic Access</span>
+                </div>
+            </header>
+
+            <section class="demo-notice">
+                <h2>Welcome to the Staff Portal Demo</h2>
+                <p>This is a placeholder for the SmartClinic Staff experience. Features like real-time queue management and patient check-ins are currently being stylized for a premium feel.</p>
+            </section>
+
+            <div class="dashboard-grid">
+                <div class="card stat-card">
+                    <h3>Today's Load</h3>
+                    <p class="stat-value">12</p>
+                    <p class="stat-desc">Appointments scheduled</p>
+                </div>
+                <div class="card stat-card">
+                    <h3>Avg Wait Time</h3>
+                    <p class="stat-value">15m</p>
+                    <p class="stat-desc">Patient throughput</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/staffDashboard.js"></script>
+</body>
+</html>

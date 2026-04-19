@@ -1,158 +1,96 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Care Journey | smartClinic Appointments</title>
-    <meta
-      name="description"
-      content="View and manage your upcoming and past clinic appointments at smartClinic."
-    />
-    <link rel="stylesheet" href="css/appointments.css?v=2" />
-    <link rel="stylesheet" href="css/global_nav.css?v=1" />
-    <!-- Google Fonts for premium feel -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <nav class="global-app-bar" aria-label="Main Navigation">
-      <section class="nav-container">
-        <a href="index.html" class="nav-brand">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-          </svg>
-          <span>smartClinic</span>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Care Journey | smartClinic Appointments</title>
+  <meta name="description" content="View and manage your upcoming and past clinic appointments at smartClinic.">
+  <link rel="stylesheet" href="css/appointments.css?v=2" />
+  <link rel="stylesheet" href="css/global_nav.css?v=1" />
+  <!-- Google Fonts for premium feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="global-app-bar" aria-label="Main Navigation">
+    <section class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        <span>smartClinic</span>
+      </a>
+      <section class="nav-user">
+        <a href="dashboard.html" class="nav-search-btn">
+          <i class='bx bx-search'></i>
+          Find Clinic
         </a>
-        <section class="nav-user">
-          <a href="dashboard.html" class="nav-search-btn">
-            <i class="bx bx-search"></i>
-            Find Clinic
-          </a>
-          <a href="apointments.html" class="nav-appointment-btn active">
-            <i class="bx bx-calendar-event"></i>
-            My Appointments
-          </a>
-        </section>
+        <a href="apointments.html" class="nav-appointment-btn active">
+          <i class='bx bx-calendar-event'></i>
+          My Appointments
+        </a>
       </section>
-    </nav>
+    </section>
+  </nav>
 
-    <main class="appointments-view">
-      <header class="view-header">
-        <hgroup>
-          <h1>My Appointments</h1>
-          <p>Manage and track your healthcare schedule</p>
-        </hgroup>
+  <main class="appointments-view">
+    <header class="view-header">
+      <hgroup>
+        <h1>My Appointments</h1>
+        <p>Manage and track your healthcare schedule</p>
+      </hgroup>
+    </header>
+
+    <article class="scheduling-dashboard">
+      <nav class="status-tabs" aria-label="Appointment category selection">
+        <button class="tab-trigger active" id="tab-upcoming" data-tab="upcoming" type="button" aria-selected="true" aria-controls="upcoming-panel">
+          Upcoming <mark id="upcoming-count" class="count-pill">0</mark>
+        </button>
+        <button class="tab-trigger" id="tab-past" data-tab="past" type="button" aria-selected="false" aria-controls="past-panel">
+          Past History <mark id="past-count" class="count-pill">0</mark>
+        </button>
+      </nav>
+
+      <section id="upcoming-panel" class="tab-panel active" role="tabpanel" aria-labelledby="tab-upcoming">
+        <h2 class="visually-hidden">Upcoming Appointments</h2>
+        <section class="appointment-grid" id="upcoming-list"></section>
+      </section>
+
+      <section id="past-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-past" hidden>
+        <h2 class="visually-hidden">Past Appointment History</h2>
+        <section class="appointment-grid" id="past-list"></section>
+      </section>
+    </article>
+  </main>
+
+  <!-- Interaction Dialogs -->
+  <dialog id="cancel-dialog" class="action-modal">
+    <form method="dialog">
+      <header>
+        <h2>Cancel Appointment</h2>
       </header>
+      <p>Are you sure you want to cancel this visit? This action will release your time slot.</p>
+      <footer class="modal-footer">
+        <button type="submit" value="cancel" class="btn-subtle">Keep Appointment</button>
+        <button type="submit" id="cancel-confirm" value="confirm" class="btn-danger">Yes, Cancel Visit</button>
+      </footer>
+    </form>
+  </dialog>
 
-      <article class="scheduling-dashboard">
-        <nav class="status-tabs" aria-label="Appointment category selection">
-          <button
-            class="tab-trigger active"
-            id="tab-upcoming"
-            data-tab="upcoming"
-            type="button"
-            aria-selected="true"
-            aria-controls="upcoming-panel"
-          >
-            Upcoming <mark id="upcoming-count" class="count-pill">0</mark>
-          </button>
-          <button
-            class="tab-trigger"
-            id="tab-past"
-            data-tab="past"
-            type="button"
-            aria-selected="false"
-            aria-controls="past-panel"
-          >
-            Past History <mark id="past-count" class="count-pill">0</mark>
-          </button>
-        </nav>
+  <dialog id="reschedule-dialog" class="action-modal">
+    <form method="dialog">
+      <header>
+        <h2>Reschedule Appointment</h2>
+      </header>
+      <p>This will cancel your current booking. You can then pick a new time that suits you better.</p>
+      <footer class="modal-footer">
+        <button type="submit" value="cancel" class="btn-subtle">Go Back</button>
+        <button type="submit" id="reschedule-confirm" value="confirm" class="btn-info">Change Time</button>
+      </footer>
+    </form>
+  </dialog>
 
-        <section
-          id="upcoming-panel"
-          class="tab-panel active"
-          role="tabpanel"
-          aria-labelledby="tab-upcoming"
-        >
-          <h2 class="visually-hidden">Upcoming Appointments</h2>
-          <section class="appointment-grid" id="upcoming-list"></section>
-        </section>
-
-        <section
-          id="past-panel"
-          class="tab-panel"
-          role="tabpanel"
-          aria-labelledby="tab-past"
-          hidden
-        >
-          <h2 class="visually-hidden">Past Appointment History</h2>
-          <section class="appointment-grid" id="past-list"></section>
-        </section>
-      </article>
-    </main>
-
-    <!-- Interaction Dialogs -->
-    <dialog id="cancel-dialog" class="action-modal">
-      <form method="dialog">
-        <header>
-          <h2>Cancel Appointment</h2>
-        </header>
-        <p>
-          Are you sure you want to cancel this visit? This action will release
-          your time slot.
-        </p>
-        <footer class="modal-footer">
-          <button type="submit" value="cancel" class="btn-subtle">
-            Keep Appointment
-          </button>
-          <button
-            type="submit"
-            id="cancel-confirm"
-            value="confirm"
-            class="btn-danger"
-          >
-            Yes, Cancel Visit
-          </button>
-        </footer>
-      </form>
-    </dialog>
-
-    <dialog id="reschedule-dialog" class="action-modal">
-      <form method="dialog">
-        <header>
-          <h2>Reschedule Appointment</h2>
-        </header>
-        <p>
-          This will cancel your current booking. You can then pick a new time
-          that suits you better.
-        </p>
-        <footer class="modal-footer">
-          <button type="submit" value="cancel" class="btn-subtle">
-            Go Back
-          </button>
-          <button
-            type="submit"
-            id="reschedule-confirm"
-            value="confirm"
-            class="btn-info"
-          >
-            Change Time
-          </button>
-        </footer>
-      </form>
-    </dialog>
-
-    <script src="js/appointments.js"></script>
-  </body>
+  <script src="js/appointments.js"></script>
+</body>
 </html>

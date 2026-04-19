@@ -1,47 +1,87 @@
-const firebaseConfig = {
-  apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
-  authDomain: "smartclinic-11971.firebaseapp.com",
-  projectId: "smartclinic-11971",
-  storageBucket: "smartclinic-11971.firebasestorage.app",
-  messagingSenderId: "301262646979",
-  appId: "1:301262646979:web:6529009c676257565a7c76",
-  measurementId: "G-CZ0M6NZFV6"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
 const auth = firebase.auth();
+const db   = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
+provider.setCustomParameters({ prompt: 'select_account' });
 
 let signingIn = false;
 
-async function redirectBasedOnUser(user) {
-    try {
-        const response = await fetch(`/api/user/login/${user.uid}`);
-        const data = await response.json();
+function storeUserSession(user, profile) {
+    localStorage.setItem("userId", user.uid);
+    localStorage.setItem("userEmail", profile?.email || user.email || "");
 
-        if (response.ok && data.redirect) {
-            window.location.href = data.redirect;
-            localStorage.setItem("patientId", user.uid);
-        } else {
-            alert(data.error || "Failed to check user login");
-        }
-    } catch (error) {
-        console.error("User check failed:", error);
-        alert("Something went wrong while checking login.");
+    if (profile?.role) {
+        localStorage.setItem("userRole", profile.role);
+    } else {
+        localStorage.removeItem("userRole");
+    }
+
+    if (profile?.role === "patient") {
+        localStorage.setItem("patientId", user.uid);
+    } else {
+        localStorage.removeItem("patientId");
     }
 }
 
-auth.onAuthStateChanged(async (user) => {
-    if (signingIn) return;
+async function redirectBasedOnUser(user) {
+    try {
+        // Force refresh the token to get the latest custom claims (roles)
+        try {
+            await user.getIdTokenResult(true);
+        } catch (tokenError) {
+            console.error("Token refresh failed. Session likely expired:", tokenError);
+            await auth.signOut();
+            return;
+        }
+        
+        const emailQuery = encodeURIComponent(user.email || "");
+        const response = await fetch(`/api/user/login/${user.uid}?email=${emailQuery}`);
+        
+        if (response.status === 401 || response.status === 403) {
+            console.warn("Backend rejected session. Signing out.");
+            await auth.signOut();
+            return;
+        }
 
-    if (user) {
-        console.log("Already logged in:", user.uid);
-        await redirectBasedOnUser(user);
+        const data = await response.json();
+
+        if (response.ok && data.exists) {
+            storeUserSession(user, data.profile);
+            
+            const serverRedirect = data.redirect ? (data.redirect.startsWith("/") ? data.redirect.substring(1) : data.redirect) : null;
+            
+            if (serverRedirect) {
+                console.log("Redirecting to server-specified path:", serverRedirect);
+                window.location.href = serverRedirect;
+                return;
+            }
+
+            const idTokenResult = await user.getIdTokenResult(true);
+            const role = idTokenResult.claims.role;
+            if (role) {
+                const claimRedirect = role === "admin" ? "adminDashboard.html" : "dashboard.html";
+                window.location.href = claimRedirect;
+                return;
+            }
+
+            window.location.href = "dashboard.html";
+        } else {
+            console.log("No profile found. Redirecting to signUp.html");
+            window.location.href = "signUp.html";
+        }
+    } catch (error) {
+        console.error("User check failed:", error);
+        
+        if (error.code === 'auth/network-request-failed') {
+            alert("Network error: Please check your internet connection or ensure localhost:3000 is whitelisted in Firebase Console.");
+        } else {
+            alert("Session validation failed. Signing out to retry.");
+        }
+        
+        await auth.signOut();
     }
-});
+}
+
+
 
 const googleBtn = document.getElementById("googleLogin");
 

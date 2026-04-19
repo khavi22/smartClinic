@@ -1,20 +1,41 @@
-const { getUserProfileById } = require("../services/firebaseService");
+const firebaseService = require("../services/firebaseService");
+const { admin } = require("../services/config/firebase");
 
 exports.checkUserLogin = async (req, res) => {
     try {
         const { userId } = req.params;
+        const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
 
-        if (!userId) {
-            return res.status(400).json({ error: "Missing userId" });
+        if (!userId && !email) {
+            return res.status(400).json({ error: "Missing userId or email" });
         }
 
-        const user = await getUserProfileById(userId);
+        const user =
+            (userId ? await firebaseService.getUserProfileById(userId) : null) ||
+            (email ? await firebaseService.getUserProfileByEmail(email) : null);
 
-        if (user) {
+        if (user && (!userId || user.uid === userId)) {
+            let redirectUrl = "/dashboard.html";
+
+            if (user.role === "admin") {
+                redirectUrl = "/adminDashboard.html";
+            } else if (user.role === "staff") {
+                redirectUrl = "/staffDashboard.html";
+            }
+
+            if ((user.role === "admin" || user.role === "staff") && user.clinicId) {
+                try {
+                    user.clinicName = await firebaseService.getClinicNameById(user.clinicId);
+                } catch (error) {
+                    console.warn("Could not fetch clinic name for profile enrichment");
+                }
+            }
+
             return res.json({
                 success: true,
                 exists: true,
-                redirect: "/dashboard.html"
+                redirect: redirectUrl,
+                profile: user
             });
         }
 
@@ -31,11 +52,18 @@ exports.checkUserLogin = async (req, res) => {
     }
 };
 
-const { db, admin } = require("../services/firebaseService");
-
-exports.createPatientProfile = async (req, res) => {
+exports.registerUser = async (req, res) => {
     try {
-        const { uid, fullName, email, role, phone, idNumber } = req.body;
+        const {
+            uid,
+            fullName,
+            email,
+            role,
+            phone,
+            verificationCode,
+            adminCode,
+            staffCode
+        } = req.body;
 
         if (!uid || !fullName || !email || !role || !phone) {
             return res.status(400).json({
@@ -44,29 +72,126 @@ exports.createPatientProfile = async (req, res) => {
             });
         }
 
-        const patientData = {
+        if (!["patient", "admin", "staff"].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid role selected"
+            });
+        }
+
+        const userData = {
             uid,
             fullName,
             email,
             role,
-            phone,
-            idNumber: idNumber || "N/A",
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
+            phone
         };
 
-        await db.collection("patients").doc(uid).set(patientData);
+        let roleData = {};
+        let redirect = "/dashboard.html";
+        let message = "Patient account created successfully";
+
+        if (role === "admin") {
+            const code = verificationCode || adminCode;
+
+            if (!code) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Admin code is required"
+                });
+            }
+
+            const clinicId = await firebaseService.getClinicIdFromAdminCode(code);
+
+            if (!clinicId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Invalid or already used admin code"
+                });
+            }
+
+            roleData = { adminCode: code, clinicId };
+            redirect = "/adminDashboard.html";
+            message = "Admin account created successfully";
+
+            await firebaseService.createUserProfile(userData, roleData);
+            await firebaseService.claimClinic(clinicId, uid);
+        } else if (role === "staff") {
+            const code = verificationCode || staffCode;
+
+            if (!code) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Staff code is required"
+                });
+            }
+
+            const clinicId = await firebaseService.getStaffAssignmentFromCode(code);
+
+            if (!clinicId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Invalid staff code"
+                });
+            }
+
+            roleData = { staffCode: code, clinicId };
+            redirect = "/staffDashboard.html";
+            message = "Staff account created successfully";
+
+            await firebaseService.createUserProfile(userData, roleData);
+        } else {
+            await firebaseService.createUserProfile(userData);
+        }
 
         return res.status(201).json({
             success: true,
-            message: "Patient record created successfully"
+            message,
+            role,
+            redirect,
+            profile: {
+                ...userData,
+                ...roleData
+            }
         });
     } catch (error) {
-        console.error("Error creating patient:", error);
+        console.error("Registration error:", error);
         return res.status(500).json({
             success: false,
-            message: "Failed to create patient record",
+            message: "Failed to register user",
             error: error.message
         });
     }
 };
 
+exports.createUserProfile = exports.registerUser;
+
+exports.deleteUserAccount = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization || "";
+
+        if (!authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                success: false,
+                message: "Missing authorization token"
+            });
+        }
+
+        const idToken = authHeader.slice(7).trim();
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+        await firebaseService.deleteUserAccount(decodedToken.uid);
+
+        return res.json({
+            success: true,
+            message: "Account deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting user account:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete user account",
+            error: error.message
+        });
+    }
+};

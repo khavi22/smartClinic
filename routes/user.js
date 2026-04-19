@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const { checkUserLogin, createPatientProfile } = require("../controllers/UserController");
+const { checkUserLogin, registerUser, deleteUserAccount } = require("../controllers/UserController");
 
 router.get("/login/:userId", checkUserLogin);
-router.post("/signup", createPatientProfile);
+router.post("/register", registerUser);
+router.delete("/account", deleteUserAccount);
 
 module.exports = router;
