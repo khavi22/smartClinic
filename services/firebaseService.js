@@ -1,4 +1,5 @@
 const { db, admin } = require("./config/firebase");
+const { v4: uuidv4 } = require('uuid');
 const MAX_CAPACITY_PER_SLOT = 10;
 
 // ======================= APPOINTMENTS =======================
@@ -138,7 +139,21 @@ const getAppointmentsByPatientId = async (patientId) => {
         throw error;
     }
 };
+// ======================= USERS =======================
+exports.getUserProfileById = async (userId) => {
+    const doc = await db.collection("users").doc(userId).get();
+    return doc.exists ? doc.data() : null;
+};
 
+exports.createUserProfile = async (userData, roleData = {}) => {
+    const { uid } = userData;
+
+    await db.collection("users").doc(uid).set({
+        ...userData,
+        ...roleData,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
 // ======================= PATIENTS =======================
 
 // Get profile
@@ -181,10 +196,55 @@ const cancelAppointment = async (appointmentId) =>{
     }
 };
 // ======================= ADMINS =======================
-const createAdminProfile = async (adminData) => {
-    adminData.createdAt = admin.firestore.FieldValue.serverTimestamp();
-    await db.collection("admin").doc(adminData.uid).set(adminData);
+
+
+// ======================= VALIDATION =======================
+
+// Checks a pre-generated admin code exists for the given clinic
+const validateAdminCode = async (adminCode, clinicId) => {
+    const snapshot = await db.collection("adminCodes")
+        .where("code", "==", adminCode)
+        .where("clinicId", "==", clinicId)
+        .where("used", "==", false)
+        .get();
+
+    return !snapshot.empty;
+};
+// ======================= CLINICS =======================
+
+const createClinic = async (clinicData) => {
+    const code = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
+
+    const clinicRef = await db.collection("clinics").add({
+        ...clinicData,
+        adminCode: code,
+        adminUid: null,
+        isActive: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { clinicId: clinicRef.id, adminCode: code };
 };
 
+// Validates the code and returns the clinicId if valid
+const getClinicIdFromAdminCode = async (adminCode) => {
+    const snapshot = await db.collection("clinics")
+        .where("adminCode", "==", adminCode)
+        .where("adminUid", "==", null)      // not yet claimed
+        .where("isActive", "==", false)     // not yet active
+        .get();
 
-module.exports = { getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment, createAdminProfile };
+    if (snapshot.empty) return null;
+
+    return snapshot.docs[0].id;
+};
+
+// Links the admin to the clinic on successful signup
+const claimClinic = async (clinicId, uid) => {
+    await db.collection("clinics").doc(clinicId).update({
+        adminUid: uid,
+        isActive: true
+    });
+};
+
+module.exports = {createClinic, claimClinic, getClinicIdFromAdminCode, validateAdminCode, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };

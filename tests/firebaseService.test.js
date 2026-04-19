@@ -1,6 +1,5 @@
 const { getAppointmentsByPatientId } = require("../services/firebaseService");
 const { db } = require("../services/config/firebase");
-const { createAdminProfile } = require('"../services/firebaseService"');
 
 jest.mock("../services/config/firebase", () => ({
   db: {
@@ -83,56 +82,112 @@ describe("getAppointmentsByPatientId (service)", () => {
   });
 });
 
-// Mock firebase-admin
-const mockSet = jest.fn();
-const mockDoc = jest.fn(() => ({ set: mockSet }));
-const mockCollection = jest.fn(() => ({ doc: mockDoc }));
-const mockServerTimestamp = jest.fn(() => 'mock-timestamp');
+// ======================= ADMIN =======================
 
-jest.mock('firebase-admin', () => ({
-    firestore: Object.assign(
-        jest.fn(() => ({ collection: mockCollection })),
-        {
-            FieldValue: { serverTimestamp: mockServerTimestamp }
-        }
-    )
-}));
+const {
+    createUserProfile,
+    getClinicIdFromAdminCode,
+    claimClinic
+} = require('../services/firebaseService');
 
-// Mock your db instance
-jest.mock('./firebaseConfig', () => ({
-    db: { collection: mockCollection }
-}));
+describe('firebaseService - Admin', () => {
+    let mockGet, mockWhere, mockSet, mockUpdate, mockDoc, mockCollection;
 
-describe('createAdminProfile - Firebase Service', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+
+        mockGet = jest.fn();
+        mockSet = jest.fn();
+        mockUpdate = jest.fn();
+        mockWhere = jest.fn();
+        mockDoc = jest.fn(() => ({ set: mockSet, get: mockGet, update: mockUpdate }));
+        mockCollection = jest.fn(() => ({ doc: mockDoc, where: mockWhere }));
+        mockWhere.mockReturnValue({ where: mockWhere, get: mockGet });
+
+        db.collection.mockImplementation(mockCollection);
     });
 
-    it('should write admin data with a server timestamp to the admin collection', async () => {
-        const adminData = {
-            uid: 'test-uid',
-            fullName: 'John Doe',
-            email: 'john@example.com',
-            phone: '1234567890',
-            adminCode: 'ADM001',
-            assignedClinic: 'Clinic A'
-        };
+    describe('createUserProfile', () => {
+        it('should write base and role data to users collection with a timestamp', async () => {
+            const userData = { uid: 'test-uid', fullName: 'John Doe', email: 'john@example.com', phone: '1234567890', role: 'admin' };
+            const roleData = { adminCode: 'ADM-A1B2C3', clinicId: 'clinic-123' };
 
-        await createAdminProfile(adminData);
+            await createUserProfile(userData, roleData);
 
-        expect(mockCollection).toHaveBeenCalledWith('admin');
-        expect(mockDoc).toHaveBeenCalledWith('test-uid');
-        expect(mockSet).toHaveBeenCalledWith({
-            ...adminData,
-            createdAt: 'mock-timestamp'
+            expect(db.collection).toHaveBeenCalledWith('users');
+            expect(mockDoc).toHaveBeenCalledWith('test-uid');
+            expect(mockSet).toHaveBeenCalledWith({
+                ...userData,
+                ...roleData,
+                createdAt: undefined // admin is mocked as {} so serverTimestamp returns undefined
+            });
+        });
+
+        it('should throw when Firestore set fails', async () => {
+            mockSet.mockRejectedValue(new Error('Firestore write failed'));
+
+            await expect(createUserProfile({ uid: 'test-uid' }, {}))
+                .rejects
+                .toThrow('Firestore write failed');
         });
     });
 
-    it('should throw when Firestore set fails', async () => {
-        mockSet.mockRejectedValue(new Error('Firestore write failed'));
+    describe('getClinicIdFromAdminCode', () => {
+        it('should return clinicId when code is valid and unused', async () => {
+            mockGet.mockResolvedValue({ empty: false, docs: [{ id: 'clinic-123' }] });
 
-        await expect(createAdminProfile({ uid: 'test-uid' }))
-            .rejects
-            .toThrow('Firestore write failed');
+            const result = await getClinicIdFromAdminCode('ADM-A1B2C3');
+
+            expect(db.collection).toHaveBeenCalledWith('clinics');
+            expect(mockWhere).toHaveBeenCalledWith('adminCode', '==', 'ADM-A1B2C3');
+            expect(mockWhere).toHaveBeenCalledWith('adminUid', '==', null);
+            expect(mockWhere).toHaveBeenCalledWith('isActive', '==', false);
+            expect(result).toBe('clinic-123');
+        });
+
+        it('should return null when code is invalid', async () => {
+            mockGet.mockResolvedValue({ empty: true, docs: [] });
+
+            const result = await getClinicIdFromAdminCode('ADM-INVALID');
+
+            expect(result).toBeNull();
+        });
+
+        it('should return null when code is already used', async () => {
+            mockGet.mockResolvedValue({ empty: true, docs: [] });
+
+            const result = await getClinicIdFromAdminCode('ADM-USED11');
+
+            expect(result).toBeNull();
+        });
+
+        it('should throw when Firestore query fails', async () => {
+            mockGet.mockRejectedValue(new Error('Firestore query failed'));
+
+            await expect(getClinicIdFromAdminCode('ADM-A1B2C3'))
+                .rejects
+                .toThrow('Firestore query failed');
+        });
+    });
+
+    describe('claimClinic', () => {
+        it('should update clinic with adminUid and set isActive to true', async () => {
+            await claimClinic('clinic-123', 'test-uid');
+
+            expect(db.collection).toHaveBeenCalledWith('clinics');
+            expect(mockDoc).toHaveBeenCalledWith('clinic-123');
+            expect(mockUpdate).toHaveBeenCalledWith({
+                adminUid: 'test-uid',
+                isActive: true
+            });
+        });
+
+        it('should throw when Firestore update fails', async () => {
+            mockUpdate.mockRejectedValue(new Error('Firestore update failed'));
+
+            await expect(claimClinic('clinic-123', 'test-uid'))
+                .rejects
+                .toThrow('Firestore update failed');
+        });
     });
 });
