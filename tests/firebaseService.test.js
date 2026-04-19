@@ -109,6 +109,23 @@ describe("firebaseService", () => {
             expect(result).toEqual([]);
         });
 
+        it("returns default availability when no clinic filter is applied", async () => {
+            const appointmentsQuery = createLoopQuery({ empty: true, forEach: jest.fn() });
+
+            db.collection.mockImplementation((name) => {
+                if (name === "appointments") {
+                    return appointmentsQuery;
+                }
+
+                return {};
+            });
+
+            const result = await getAvailabilityForDate("default", "2026-04-20");
+
+            expect(result).toHaveLength(24);
+            expect(appointmentsQuery.where).not.toHaveBeenCalledWith("clinicId", "==", "default");
+        });
+
         it("updates clinic operating hours", async () => {
             const update = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -169,9 +186,128 @@ describe("firebaseService", () => {
                 status: "cancelled"
             }));
         });
+
+        it("marks a slot as limited and ignores unmatched appointments", async () => {
+            const clinicGet = jest.fn().mockResolvedValue({ exists: false });
+            const appointmentsQuery = createLoopQuery({
+                empty: false,
+                forEach: (callback) => {
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+                    callback({ data: () => ({ timeSlot: "not-a-real-slot" }) });
+                }
+            });
+
+            db.collection.mockImplementation((name) => {
+                if (name === "clinics") {
+                    return { doc: jest.fn(() => ({ get: clinicGet })) };
+                }
+
+                if (name === "appointments") {
+                    return appointmentsQuery;
+                }
+
+                return {};
+            });
+
+            const result = await getAvailabilityForDate("clinic-1", "2026-04-20");
+            const slot = result.find((entry) => entry.time === "09:00 - 10:00");
+
+            expect(slot.taken).toBe(7);
+            expect(slot.status).toBe("limited");
+        });
+
+        it("throws when a duplicate appointment already exists", async () => {
+            const duplicateQuery = createLoopQuery({ empty: false });
+            const appointmentsRef = {
+                where: jest.fn().mockImplementationOnce(() => duplicateQuery),
+                add: jest.fn()
+            };
+
+            db.collection.mockReturnValue(appointmentsRef);
+
+            await expect(
+                createAppointment("clinic-1", "2026-04-20", "09:00 - 10:00", "patient-1")
+            ).rejects.toThrow("You already have a booking for this day.");
+        });
+
+        it("throws when the appointment slot is full", async () => {
+            const duplicateQuery = createLoopQuery({ empty: true });
+            const capacityQuery = createLoopQuery({ size: 10 });
+            const appointmentsRef = {
+                where: jest.fn()
+                    .mockImplementationOnce(() => duplicateQuery)
+                    .mockImplementationOnce(() => capacityQuery),
+                add: jest.fn()
+            };
+
+            db.collection.mockReturnValue(appointmentsRef);
+
+            await expect(
+                createAppointment("clinic-1", "2026-04-20", "09:00 - 10:00", "patient-1")
+            ).rejects.toThrow("This slot is full.");
+        });
+
+        it("creates a rescheduled appointment without duplicate check and uses defaults", async () => {
+            const capacityQuery = createLoopQuery({ size: 0 });
+            const add = jest.fn().mockResolvedValue({ id: "appt-2" });
+            const appointmentsRef = {
+                where: jest.fn().mockImplementationOnce(() => capacityQuery),
+                add
+            };
+
+            db.collection.mockReturnValue(appointmentsRef);
+
+            const result = await createAppointment(
+                null,
+                "2026-04-20",
+                "10:00 - 11:00",
+                "patient-1",
+                null,
+                null,
+                true
+            );
+
+            expect(result).toEqual(expect.objectContaining({
+                id: "appt-2",
+                clinicId: "default",
+                clinicName: "Unknown Clinic",
+                clinicAddress: "N/A"
+            }));
+            expect(appointmentsRef.where).toHaveBeenCalledTimes(1);
+        });
+
         it("should throw error if db fails during availability check", async () => {
-            mockGet.mockRejectedValue(new Error("Avail Fail"));
+            const clinicGet = jest.fn().mockResolvedValue({ exists: false });
+            const appointmentsQuery = createLoopQuery({ empty: true, forEach: jest.fn() });
+            appointmentsQuery.get.mockRejectedValue(new Error("Avail Fail"));
+
+            db.collection.mockImplementation((name) => {
+                if (name === "clinics") {
+                    return { doc: jest.fn(() => ({ get: clinicGet })) };
+                }
+
+                if (name === "appointments") {
+                    return appointmentsQuery;
+                }
+
+                return {};
+            });
+
             await expect(getAvailabilityForDate("c1", "d1")).rejects.toThrow("Avail Fail");
+        });
+
+        it("throws if getting appointments by patient id fails", async () => {
+            const query = createLoopQuery({ forEach: jest.fn() });
+            query.get.mockRejectedValue(new Error("Patient lookup fail"));
+            db.collection.mockReturnValue(query);
+
+            await expect(getAppointmentsByPatientId("patient-1")).rejects.toThrow("Patient lookup fail");
         });
     });
 
@@ -255,6 +391,16 @@ describe("firebaseService", () => {
             expect(result).toEqual({ uid: "u1", role: "admin" });
         });
 
+        it("returns null when no user profile exists by id", async () => {
+            db.collection.mockImplementation(() => ({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                }))
+            }));
+
+            await expect(getUserProfileById("missing")).resolves.toBeNull();
+        });
+
         it("gets user profile by email across collections", async () => {
             db.collection.mockImplementation((name) => ({
                 where: jest.fn(() => ({
@@ -270,6 +416,20 @@ describe("firebaseService", () => {
             expect(result).toEqual({ uid: "u2", role: "staff" });
         });
 
+        it("returns null when email is empty", async () => {
+            await expect(getUserProfileByEmail("")).resolves.toBeNull();
+        });
+
+        it("returns null when no profile exists for email", async () => {
+            db.collection.mockImplementation(() => ({
+                where: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ empty: true, docs: [] })
+                }))
+            }));
+
+            await expect(getUserProfileByEmail("missing@example.com")).resolves.toBeNull();
+        });
+
         it("gets clinic name by id", async () => {
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({
@@ -279,6 +439,16 @@ describe("firebaseService", () => {
 
             await expect(getClinicNameById("clinic-1")).resolves.toBe("Smart Clinic");
         });
+
+        it("returns unknown clinic name when clinic is missing", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                }))
+            });
+
+            await expect(getClinicNameById("clinic-404")).resolves.toBe("Unknown Clinic");
+        });
     });
 
     describe("clinic helpers", () => {
@@ -287,6 +457,13 @@ describe("firebaseService", () => {
             db.collection.mockReturnValue(query);
 
             await expect(validateAdminCode("ADM-1", "clinic-1")).resolves.toBe(true);
+        });
+
+        it("returns false when admin code is invalid", async () => {
+            const query = createLoopQuery({ empty: true });
+            db.collection.mockReturnValue(query);
+
+            await expect(validateAdminCode("ADM-BAD", "clinic-1")).resolves.toBe(false);
         });
 
         it("creates a clinic with admin and staff codes", async () => {
@@ -339,6 +516,16 @@ describe("firebaseService", () => {
             await expect(getClinicIdFromAdminCode("ADM-1")).resolves.toBe("clinic-1");
         });
 
+        it("returns null when admin code is not found", async () => {
+            const query = createLoopQuery({
+                empty: true,
+                docs: []
+            });
+            db.collection.mockReturnValue(query);
+
+            await expect(getClinicIdFromAdminCode("ADM-MISSING")).resolves.toBeNull();
+        });
+
         it("gets clinic id from staff code", async () => {
             const query = createLoopQuery({
                 empty: false,
@@ -347,6 +534,32 @@ describe("firebaseService", () => {
             db.collection.mockReturnValue(query);
 
             await expect(getStaffAssignmentFromCode("STF-1")).resolves.toBe("clinic-2");
+        });
+
+        it("returns null when staff code is not found", async () => {
+            const query = createLoopQuery({
+                empty: true,
+                docs: []
+            });
+            db.collection.mockReturnValue(query);
+
+            await expect(getStaffAssignmentFromCode("STF-MISSING")).resolves.toBeNull();
+        });
+
+        it("gets clinic id and role from admin verification code", async () => {
+            const adminQuery = createLoopQuery({
+                empty: false,
+                docs: [{ id: "clinic-1" }]
+            });
+            const adminCollection = { where: jest.fn(() => adminQuery) };
+
+            db.collection.mockImplementationOnce(() => adminCollection);
+            adminQuery.where.mockReturnValue(adminQuery);
+
+            await expect(getClinicIdFromVerificationCode("ADM-1")).resolves.toEqual({
+                clinicId: "clinic-1",
+                role: "admin"
+            });
         });
 
         it("gets clinic id and role from generic verification code", async () => {
@@ -373,6 +586,21 @@ describe("firebaseService", () => {
             expect(staffCollection.where).toHaveBeenCalledWith("staffCode", "==", "STF-1");
         });
 
+        it("returns null when verification code matches neither admin nor staff", async () => {
+            const adminQuery = createLoopQuery({ empty: true, docs: [] });
+            const staffQuery = createLoopQuery({ empty: true, docs: [] });
+            const adminCollection = { where: jest.fn(() => adminQuery) };
+            const staffCollection = { where: jest.fn(() => staffQuery) };
+
+            db.collection
+                .mockImplementationOnce(() => adminCollection)
+                .mockImplementationOnce(() => staffCollection);
+            adminQuery.where.mockReturnValue(adminQuery);
+            staffQuery.where.mockReturnValue(staffQuery);
+
+            await expect(getClinicIdFromVerificationCode("NONE")).resolves.toBeNull();
+        });
+
         it("claims a clinic for an admin", async () => {
             const update = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -388,156 +616,6 @@ describe("firebaseService", () => {
         });
     });
 
-<<<<<<< HEAD
-    describe("createUserProfile", () => {
-        it("should set claims and save to collection", async () => {
-            mockSet.mockResolvedValue();
-            await createUserProfile({ uid: "u1", role: "patient", fullName: "N", email: "e", phone: "p" });
-            expect(mockSetCustomUserClaims).toHaveBeenCalledWith("u1", { role: "patient" });
-            expect(mockSet).toHaveBeenCalled();
-        });
-
-        it("should throw on unsupported role", async () => {
-            await expect(createUserProfile({ uid: "u1", role: "invalid" })).rejects.toThrow("Unsupported role");
-        });
-    });
-
-    describe("getUserProfileById search loop", () => {
-        it("should return null if found in no collections", async () => {
-            mockGet.mockResolvedValue({ exists: false }); // Mocking all calls to return not found
-            const res = await getUserProfileById("missing-uid");
-            expect(res).toBeNull();
-            expect(mockGet).toHaveBeenCalledTimes(4); // patients, admins, staff, users
-        });
-    });
-
-    describe("createAppointment capacity", () => {
-        it("should throw when at MAX_CAPACITY", async () => {
-            mockGet.mockResolvedValueOnce({ empty: true }); // duplicate check
-            mockGet.mockResolvedValueOnce({ size: 10 }); // Exactly at MAX_CAPACITY (10)
-            await expect(createAppointment("c1", "d1", "t1", "p1")).rejects.toThrow("slot is full");
-        });
-    });
-
-    describe("getUserProfileById search depth", () => {
-        it("should find user in the last collection (users)", async () => {
-            mockGet.mockResolvedValueOnce({ exists: false }); // patients
-            mockGet.mockResolvedValueOnce({ exists: false }); // admins
-            mockGet.mockResolvedValueOnce({ exists: false }); // staff
-            mockGet.mockResolvedValueOnce({ exists: true, data: () => ({ role: "user", uid: "u4" }) }); // users
-            
-            const res = await getUserProfileById("u4");
-            expect(res.role).toBe("user");
-            expect(mockGet).toHaveBeenCalledTimes(4);
-        });
-    });
-
-    describe("cancelAppointment error flow", () => {
-        it("should throw if booking not found", async () => {
-            mockGet.mockResolvedValueOnce({ exists: false });
-            await expect(cancelAppointment("fake-id")).rejects.toThrow("Booking not found");
-        });
-    });
-
-    describe("getAppointmentsByPatientId success", () => {
-        it("should return array of appointments", async () => {
-            const mockDocs = [{ id: "a1", data: () => ({ date: "d1" }) }];
-            mockGet.mockResolvedValueOnce({ forEach: (cb) => mockDocs.forEach(cb) });
-            const res = await getAppointmentsByPatientId("p1");
-            expect(res).toHaveLength(1);
-            expect(res[0].id).toBe("a1");
-        });
-    });
-
-    describe("getAppointmentsByPatientId error flow", () => {
-        it("should throw on db error", async () => {
-            mockGet.mockRejectedValue(new Error("DB Error"));
-            await expect(getAppointmentsByPatientId("p1")).rejects.toThrow("DB Error");
-        });
-    });
-
-    describe("getUserProfileByEmail exhaust search", () => {
-        it("should return null if found in no collections", async () => {
-            mockGet.mockResolvedValue({ empty: true });
-            const res = await getUserProfileByEmail("unknown@unknown.com");
-            expect(res).toBeNull();
-            expect(mockGet).toHaveBeenCalledTimes(3); // patients, admins, staff
-        });
-
-        it("should return null on empty email", async () => {
-            const res = await getUserProfileByEmail("");
-            expect(res).toBeNull();
-        });
-
-        it("should find user in collections", async () => {
-            mockGet.mockResolvedValueOnce({ empty: false, docs: [{ data: () => ({ email: "test@test.com" }) }] });
-            const res = await getUserProfileByEmail("test@test.com");
-            expect(res.email).toBe("test@test.com");
-        });
-    });
-
-    describe("getClinicIdFromVerificationCode", () => {
-        it("should find admin code in clinics", async () => {
-            mockGet.mockResolvedValueOnce({ empty: false, docs: [{ id: "c1", data: () => ({ adminUid: "a1" }) }] });
-            const res = await getClinicIdFromVerificationCode("ADMIN-CODE");
-            expect(res.role).toBe("admin");
-            expect(res.clinicId).toBe("c1");
-        });
-
-        it("should find staff code in clinics", async () => {
-            mockGet.mockResolvedValueOnce({ empty: true }); // Admin check empty
-            mockGet.mockResolvedValueOnce({ empty: false, docs: [{ id: "c1" }] }); // Staff check found
-            const res = await getClinicIdFromVerificationCode("STAFF-CODE");
-            expect(res.role).toBe("staff");
-        });
-
-        it("should return null if code not found", async () => {
-            mockGet.mockResolvedValue({ empty: true });
-            const res = await getClinicIdFromVerificationCode("FAKE");
-            expect(res).toBeNull();
-        });
-    });
-
-    describe("clinic management helpers", () => {
-        it("validateAdminCode should return true if found", async () => {
-            mockGet.mockResolvedValueOnce({ empty: false });
-            const res = await validateAdminCode("C", "ID");
-            expect(res).toBe(true);
-        });
-
-        it("getClinicNameById should return clinic name or default", async () => {
-            mockGet.mockResolvedValueOnce({ exists: true, data: () => ({ clinicName: "Health" }) });
-            expect(await getClinicNameById("c1")).toBe("Health");
-            
-            mockGet.mockResolvedValueOnce({ exists: false });
-            expect(await getClinicNameById("c2")).toBe("Unknown Clinic");
-        });
-
-        it("ensureClinicExists should return success", async () => {
-            mockGet.mockResolvedValueOnce({ exists: true });
-            const res = await ensureClinicExists({ clinicId: "c1" });
-            expect(res.alreadyExists).toBe(true);
-
-            mockGet.mockResolvedValueOnce({ exists: false });
-            mockSet.mockResolvedValue();
-            const res2 = await ensureClinicExists({ clinicId: "c2", name: "N", address: "A" });
-            expect(res2.newlyCreated).toBe(true);
-        });
-    });
-
-    describe("deleteUserAccount logic cleanup", () => {
-        it("should clean up patient appointments", async () => {
-            mockGet.mockResolvedValueOnce({ exists: true, data: () => ({ role: "patient" }) });
-            mockGet.mockResolvedValueOnce({ docs: [{ ref: { delete: mockDelete } }] }); // appointments
-            await deleteUserAccount("u1");
-            expect(mockDeleteUser).toHaveBeenCalled();
-            expect(mockDelete).toHaveBeenCalled();
-        });
-
-        it("should handle service errors gracefully", async () => {
-            mockGet.mockRejectedValue(new Error("Fail"));
-            await expect(deleteUserAccount("u1")).rejects.toThrow("Fail");
-=======
     describe("deleteUserAccount", () => {
         it("deletes a patient account and appointments", async () => {
             db.collection.mockImplementation((name) => {
@@ -571,7 +649,68 @@ describe("firebaseService", () => {
 
             await deleteUserAccount("patient-1");
             expect(mockDeleteUser).toHaveBeenCalledWith("patient-1");
->>>>>>> clinic-search/Mzo
+        });
+
+        it("deletes an admin account and releases owned clinics", async () => {
+            const clinicUpdate = jest.fn().mockResolvedValue();
+
+            db.collection.mockImplementation((name) => {
+                if (name === "patients") {
+                    return {
+                        doc: jest.fn(() => ({
+                            get: jest.fn().mockResolvedValue({ exists: false }),
+                            delete: jest.fn().mockResolvedValue()
+                        }))
+                    };
+                }
+
+                if (name === "admins") {
+                    return {
+                        doc: jest.fn(() => ({
+                            get: jest.fn().mockResolvedValue({ exists: true, data: () => ({ role: "admin" }) }),
+                            delete: jest.fn().mockResolvedValue()
+                        }))
+                    };
+                }
+
+                if (name === "clinics") {
+                    return {
+                        where: jest.fn(() => ({
+                            get: jest.fn().mockResolvedValue({
+                                empty: false,
+                                docs: [{ ref: { update: clinicUpdate } }]
+                            })
+                        }))
+                    };
+                }
+
+                return {
+                    doc: jest.fn(() => ({
+                        get: jest.fn().mockResolvedValue({ exists: false }),
+                        delete: jest.fn().mockResolvedValue()
+                    }))
+                };
+            });
+
+            await deleteUserAccount("admin-1");
+
+            expect(clinicUpdate).toHaveBeenCalledWith({
+                adminUid: null,
+                isActive: false
+            });
+            expect(mockDeleteUser).toHaveBeenCalledWith("admin-1");
+        });
+
+        it("deletes an unknown account without role-specific cleanup", async () => {
+            db.collection.mockImplementation(() => ({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false }),
+                    delete: jest.fn().mockResolvedValue()
+                }))
+            }));
+
+            await expect(deleteUserAccount("ghost-user")).resolves.toBeNull();
+            expect(mockDeleteUser).toHaveBeenCalledWith("ghost-user");
         });
     });
 });

@@ -101,12 +101,51 @@ exports.registerUser = async (req, res) => {
                 });
             }
 
-            const clinicId = await firebaseService.getClinicIdFromAdminCode(code);
+            let clinicId = null;
+            let verificationResult = null;
+
+            if (typeof firebaseService.getClinicIdFromVerificationCode === "function") {
+                verificationResult = await firebaseService.getClinicIdFromVerificationCode(code);
+            }
+
+            if (verificationResult) {
+                if (verificationResult.role !== "admin") {
+                    return res.status(403).json({
+                        success: false,
+                        message: "This code is not valid for Admin role"
+                    });
+                }
+
+                clinicId = verificationResult.clinicId;
+            } else {
+                clinicId = await firebaseService.getClinicIdFromAdminCode(code);
+            }
 
             if (!clinicId) {
                 return res.status(403).json({
                     success: false,
                     message: "Invalid or already used admin code"
+                });
+            }
+
+            const existingProfile = await firebaseService.getUserProfileById(uid);
+
+            if (
+                existingProfile &&
+                existingProfile.role === "admin" &&
+                existingProfile.clinicId &&
+                existingProfile.clinicId !== clinicId
+            ) {
+                return res.status(403).json({
+                    success: false,
+                    message: "You are already registered as an administrator for another clinic"
+                });
+            }
+
+            if (verificationResult?.adminUid && verificationResult.adminUid !== uid) {
+                return res.status(403).json({
+                    success: false,
+                    message: "This clinic is already managed by another administrator"
                 });
             }
 

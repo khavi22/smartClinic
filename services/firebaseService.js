@@ -173,20 +173,7 @@ const getAppointmentsByPatientId = async (patientId) => {
         throw error;
     }
 };
-<<<<<<< HEAD
 // ======================= USERS =======================
-const ROLE_COLLECTIONS = {
-    patient: "patients",
-    admin: "admins",
-    staff: "staff"
-};
-
-const COLLECTION_NAMES = ["patients", "admins", "staff", "users"];
-const getCollectionNameForRole = (role) => {
-    return ROLE_COLLECTIONS[role] || null;
-};
-=======
->>>>>>> clinic-search/Mzo
 
 const getUserProfileById = async (userId) => {
     for (const collectionName of SEARCH_COLLECTIONS) {
