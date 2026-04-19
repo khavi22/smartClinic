@@ -11,7 +11,7 @@ import {
 
 console.log("JS file loaded!");
 
-async function validateStaffNumber(StaffNumber){
+export async function validateStaffNumber(StaffNumber){
     console.log("hi");
     const q_staff_number=query(collection(db,"ClinicStaff") , 
                               where("StaffNumber","==",StaffNumber) 
@@ -29,6 +29,8 @@ async function validateStaffNumber(StaffNumber){
         return null;
     }
 }
+
+
 const verify_button=document.getElementById("verify-button-staff-number");
 const invalid_section=document.getElementById("invalid_staff_number_section");
 verify_button.addEventListener("click" , async function(){
@@ -42,7 +44,7 @@ verify_button.addEventListener("click" , async function(){
 
     if(Staff_isValid){
     //document.getElementById("signIn-google").style.display="block";
-    //GoToClinicStaffDashboard()
+    //GoToClinicStaffDashboard();
     }
     else{
         const paragraph=document.createElement("p");
@@ -59,3 +61,5 @@ verify_button.addEventListener("click" , async function(){
 function GoToClinicStaffDashboard(){
     window.location.href="ClinicStaffDashboard.html";
 }
+
+export { validateStaffNumber };
