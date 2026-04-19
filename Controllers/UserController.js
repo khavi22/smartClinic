@@ -1,4 +1,5 @@
-const { getUserProfileById, createPatientProfile } = require("../services/firebaseService");
+const { getUserProfileById } = require("../services/firebaseService");
+const firebaseService = require('../services/firebaseService');
 
 exports.checkUserLogin = async (req, res) => {
     try {
@@ -58,3 +59,41 @@ exports.createPatientProfileController = async (req, res) => {
     }
 };
 
+exports.createAdminProfile = async (req, res) => {
+    try {
+        const { uid, fullName, email, phone, adminCode } = req.body;
+
+        if (!uid || !fullName || !email || !phone || !adminCode) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields"
+            });
+        }
+
+        // clinicId comes from the code itself, not the frontend
+        const clinicId = await firebaseService.getClinicIdFromAdminCode(adminCode);
+        if (!clinicId) {
+            return res.status(403).json({
+                success: false,
+                message: "Invalid admin code"
+            });
+        }
+
+        const userData = { uid, fullName, email, phone, role: "admin" };
+        const roleData = { adminCode, clinicId };
+
+        await firebaseService.createUserProfile(userData, roleData);
+
+        return res.status(201).json({
+            success: true,
+            message: "Admin account created successfully"
+        });
+    } catch (error) {
+        console.error("Error creating admin:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to create admin record",
+            error: error.message
+        });
+    }
+};
