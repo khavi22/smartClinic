@@ -3,7 +3,7 @@ const {
     checkUserLogin, 
     createPatientProfileController,
     createAdminProfile 
-} = require("../Controllers/UserController");
+} = require("../controllers/UserController");
 
 jest.mock("../services/firebaseService");
 

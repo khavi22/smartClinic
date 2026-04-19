@@ -12,10 +12,11 @@ exports.checkUserLogin = async (req, res) => {
         const user = await getUserProfileById(userId);
 
         if (user) {
+            const redirectUrl = user.role === "admin" ? "/adminDashboard.html" : "/dashboard.html";
             return res.json({
                 success: true,
                 exists: true,
-                redirect: "/dashboard.html"
+                redirect: redirectUrl
             });
         }
 
