@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/ClinicStaffLogIn.css" />
+    <title>Clinic Staff Login</title>
+  </head>
+  <body>
+    <nav class="nav">
+      <span class="nav-brand">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#185FA5"
+          stroke-width="2"
+        >
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+        smartClinic
+      </span>
+    </nav>
+
+    <header class="hero">
+      <h1>Clinic Staff Login</h1>
+      <p>Secure access portal for registered clinic staff members.</p>
+    </header>
+
+    <main class="content">
+      <section class="login-panel">
+        <h2>Staff Verification</h2>
+        <p class="panel-desc">
+          Please provide your clinic staff number to access the clinic staff
+          dashboard page.
+        </p>
+
+        <label class="input-label" for="Staff_Code">Staff Number</label>
+        <input
+          type="text"
+          id="Staff_Code"
+          class="staff-input"
+          maxlength="15"
+          placeholder="e.g. Clinic Staff Code"
+          autocomplete="off"
+        />
+
+        <button
+          type="button"
+          id="verify-button-staff-number"
+          class="verify-btn"
+        >
+          Verify Staff Number
+        </button>
+
+        <button
+          type="button"
+          id="success-btn"
+          class="success-btn"
+          style="display: none"
+        >
+          ✓ Verified Successfully — Go to Dashboard
+        </button>
+
+        <p id="invalid_staff_number_section" class="error-msg"></p>
+        <p id="success-msg" class="success-msg"></p>
+      </section>
+    </main>
+
+    <script type="module" src="js/ClinicStaffLogIn.js"></script>
+  </body>
+</html>
