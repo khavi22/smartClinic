@@ -41,7 +41,8 @@ verify_button.addEventListener("click" , async function(){
     console.log(Staff_isValid);
 
     if(Staff_isValid){
-       document.getElementById("signIn-google").style.display="block";
+    //document.getElementById("signIn-google").style.display="block";
+    //GoToClinicStaffDashboard()
     }
     else{
         const paragraph=document.createElement("p");
@@ -55,3 +56,6 @@ verify_button.addEventListener("click" , async function(){
 
 })
 
+function GoToClinicStaffDashboard(){
+    window.location.href="ClinicStaffDashboard.html";
+}
