@@ -1,19 +1,7 @@
 console.log("signUp.js loaded");
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
-    authDomain: "smartclinic-11971.firebaseapp.com",
-    projectId: "smartclinic-11971",
-    storageBucket: "smartclinic-11971.firebasestorage.app",
-    messagingSenderId: "301262646979",
-    appId: "1:301262646979:web:6529009c676257565a7c76"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
 const auth = firebase.auth();
+const db   = firebase.firestore();
 
 auth.onAuthStateChanged((user) => {
     if (!user) {
@@ -23,10 +11,30 @@ auth.onAuthStateChanged((user) => {
 });
 
 const signupForm = document.getElementById("signupForm");
+const roleSelect = document.getElementById("role");
+const verificationFields = document.getElementById("verificationFields");
+const verificationHint = document.getElementById("verificationHint");
+const verificationLabel = document.getElementById("verificationLabel");
+
+roleSelect.addEventListener("change", () => {
+    const role = roleSelect.value;
+    const needsCode = (role === "admin" || role === "staff");
+
+    verificationFields.hidden = !needsCode;
+    verificationFields.setAttribute("aria-hidden", String(!needsCode));
+
+    if (role === "admin") {
+        verificationLabel.textContent = "Admin Verification Code";
+        verificationHint.textContent = "Enter the Admin Code associated with your clinic (starts with ADM-).";
+    } else if (role === "staff") {
+        verificationLabel.textContent = "Staff Registration Code";
+        verificationHint.textContent = "Enter the Staff Code provided by your Clinic Administrator (starts with STF-).";
+    }
+
+    if (!needsCode) document.getElementById("verificationCode").value = "";
+});
 
 signupForm.addEventListener("submit", async (e) => {
-    const role = document.getElementById("role").value;
-    if (role === "admin") return; // let the admin listener handle it
     e.preventDefault();
 
     const user = auth.currentUser;
@@ -36,115 +44,50 @@ signupForm.addEventListener("submit", async (e) => {
         return;
     }
 
+    const role = roleSelect.value;
+    const verificationCode = document.getElementById("verificationCode").value.trim();
+
+    if ((role === "admin" || role === "staff") && !verificationCode) {
+        alert(`Please enter your ${role} verification code.`);
+        return;
+    }
+
     const submitBtn = signupForm.querySelector("button[type='submit']");
     submitBtn.disabled = true;
-    submitBtn.textContent = "Saving...";
+    submitBtn.textContent = "Saving Profile...";
 
-    const patientData = {
+    const registrationData = {
         uid: user.uid,
         fullName: user.displayName || "Unknown User",
         email: user.email,
-        role: document.getElementById("role").value,
+        role: role,
         phone: document.getElementById("phone").value,
-        idNumber: document.getElementById("idNumber").value || "N/A"
+        idNumber: document.getElementById("idNumber").value || "N/A",
+        verificationCode: verificationCode || null
     };
 
     try {
-        const response = await fetch("/api/user/signup", {
+        const response = await fetch("/api/user/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(patientData)
+            body: JSON.stringify(registrationData)
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.message || "Something went wrong");
+            throw new Error(result.message || "Something went wrong during registration.");
         }
 
-        console.log("Patient record created successfully!");
-        localStorage.setItem("patientId", user.uid);
-        window.location.href = "dashboard.html";
+        console.log(`${role} record created successfully!`);
+        
+        await user.getIdToken(true);
+        window.location.href = result.redirect || "dashboard.html";
+
     } catch (error) {
-        console.error("Error creating patient:", error);
-        alert("Error: " + error.message);
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Finalize Account";
-    }
-});
-// ======================= ROLE SELECTION =======================
-
-const roleSelect = document.getElementById("role");
-const adminFields = document.getElementById("adminFields");
-
-roleSelect.addEventListener("change", () => {
-    const role = roleSelect.value;
-    const isAdmin = role === "admin";
-
-    adminFields.hidden = !isAdmin;
-    adminFields.setAttribute("aria-hidden", String(!isAdmin));
-
-    if (!isAdmin) document.getElementById("adminCode").value = "";
-});
-// ======================= ADMIN SUBMISSION =======================
-signupForm.addEventListener("submit", async (e) => {
-    const role = document.getElementById("role").value;
-    if (role !== "admin") return;
-
-    e.preventDefault();
-    e.stopImmediatePropagation();
-
-    const user = auth.currentUser;
-    if (!user) {
-        alert("Session expired. Please log in again.");
-        window.location.href = "login.html";
-        return;
-    }
-
-    const submitBtn = signupForm.querySelector("button[type='submit']");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Saving...";
-
-    const adminCode = document.getElementById("adminCode").value.trim();
-
-    if (!adminCode) {
-        alert("Please enter your admin code.");
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Finalize Account";
-        return;
-    }
-
-    const adminData = {
-        uid: user.uid,
-        fullName: user.displayName || "Unknown User",
-        email: user.email,
-        phone: document.getElementById("phone").value,
-        adminCode
-    };
-
-    try {
-        const response = await fetch("/api/user/admin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(adminData)
-        });
-
-        const result = await response.json();
-
-        if (response.status === 403) {
-            throw new Error("Invalid admin code. Please check and try again.");
-        }
-
-        if (!response.ok) {
-            throw new Error(result.message || "Something went wrong");
-        }
-
-        console.log("Admin record created successfully!");
-        window.location.href = "adminDashboard.html";
-    } catch (error) {
-        console.error("Error creating admin:", error);
+        console.error("Error during registration:", error);
         alert("Error: " + error.message);
         submitBtn.disabled = false;
         submitBtn.textContent = "Finalize Account";

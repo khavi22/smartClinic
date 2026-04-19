@@ -1,35 +1,20 @@
 // dashboard.js — auth guard, user display, logout, delete account
 // clinics.js handles all clinic search logic independently
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
-    authDomain: "smartclinic-11971.firebaseapp.com",
-    projectId: "smartclinic-11971",
-    storageBucket: "smartclinic-11971.firebasestorage.app",
-    messagingSenderId: "301262646979",
-    appId: "1:301262646979:web:6529009c676257565a7c76"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// ── AUTH GUARD ──────────────────────────────────────────────
 auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        await loadUserProfile(user);
-    } else {
+    if (!user) {
         window.location.href = "login.html";
+        return;
     }
+    await loadUserProfile(user);
 });
 
-// ── LOAD PROFILE → populate nav ─────────────────────────────
 async function loadUserProfile(user) {
     try {
-        const doc = await db.collection("patients").doc(user.uid).get();
+        const doc = await db.collection("users").doc(user.uid).get();
 
         if (!doc.exists) {
             window.location.href = "signUp.html";
@@ -118,3 +103,4 @@ modalConfirm.addEventListener("click", async () => {
         confirmText.textContent = "Yes, Delete";
     }
 });
+

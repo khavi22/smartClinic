@@ -60,13 +60,14 @@ const onboardClinic = async () => {
         process.exit(0);
     }
 
-    const { adminCode } = await firebaseService.createClinic({ placeId, clinicName, city });
+    const { adminCode, staffCode } = await firebaseService.createClinic({ placeId, clinicName, city });
 
     console.log(`\n✓ Clinic onboarded successfully`);
-    console.log(`  Clinic   : ${clinicName}`);
-    console.log(`  Place ID : ${placeId}`);
-    console.log(`  Code     : ${adminCode}`);
-    console.log(`\n  Send this code to the clinic's designated admin.\n`);
+    console.log(`  Clinic    : ${clinicName}`);
+    console.log(`  Place ID  : ${placeId}`);
+    console.log(`  Admin Code: ${adminCode}`);
+    console.log(`  Staff Code: ${staffCode}`);
+    console.log(`\n  Share these codes with the clinic's designated staff.\n`);
 
     rl.close();
 };

@@ -1,32 +1,38 @@
-const firebaseConfig = {
-  apiKey: "AIzaSyDWr5lA9QgmKZLl5M8ctDKQWqS7yOFn_LY",
-  authDomain: "smartclinic-11971.firebaseapp.com",
-  projectId: "smartclinic-11971",
-  storageBucket: "smartclinic-11971.firebasestorage.app",
-  messagingSenderId: "301262646979",
-  appId: "1:301262646979:web:6529009c676257565a7c76",
-  measurementId: "G-CZ0M6NZFV6"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
 const auth = firebase.auth();
+const db   = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
 let signingIn = false;
 
 async function redirectBasedOnUser(user) {
     try {
+        // Force refresh the token to get the latest custom claims (roles)
+        const idTokenResult = await user.getIdTokenResult(true);
+        const role = idTokenResult.claims.role;
+
+        if (role) {
+            const redirectUrl = role === "admin" ? "adminDashboard.html" : "dashboard.html";
+            console.log("Redirecting to dashboard based on claim:", redirectUrl);
+            window.location.href = redirectUrl;
+            localStorage.setItem("patientId", user.uid);
+            return;
+        }
+
+        // Fallback: If no claim yet, check the legacy endpoint
+        console.log("No claim found. Checking legacy database endpoint...");
         const response = await fetch(`/api/user/login/${user.uid}`);
         const data = await response.json();
 
         if (response.ok && data.redirect) {
-            window.location.href = data.redirect;
+            // Remove leading slash if present for relative navigation
+            const target = data.redirect.startsWith("/") ? data.redirect.substring(1) : data.redirect;
+            console.log("Redirecting to database-suggested path:", target);
+            window.location.href = target;
             localStorage.setItem("patientId", user.uid);
         } else {
-            alert(data.error || "Failed to check user login");
+            // New user — needs to sign up
+            console.log("No role or profile found. Redirecting to signUp.html");
+            window.location.href = "signUp.html";
         }
     } catch (error) {
         console.error("User check failed:", error);

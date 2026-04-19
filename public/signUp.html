@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 </head>
 <body>
 
@@ -55,15 +56,16 @@
                     </div>
                 </fieldset>
 
-                <!-- ======================= admin fields ======================= -->
-                <fieldset id="adminFields" hidden aria-hidden="true">
-                    <legend>Admin Verification</legend>
-                    <p>Your clinic ID will be retrieved automatically from your admin code.</p>
+                <!-- ======================= verification fields ======================= -->
+                <fieldset id="verificationFields" hidden aria-hidden="true">
+                    <legend>Clinic Verification</legend>
+                    <p id="verificationHint">Please enter the code provided by your clinic.</p>
                     <div class="field">
-                        <label for="adminCode">Admin Code</label>
-                        <input type="text" id="adminCode" name="adminCode"
+                        <label for="verificationCode" id="verificationLabel">Verification Code</label>
+                        <input type="text" id="verificationCode" name="verificationCode"
+                               placeholder="e.g. ADM-XXXXXX or STF-XXXXXX"
                                autocomplete="off"
-                               maxlength="10">
+                               maxlength="15">
                     </div>
                 </fieldset>
                 
