@@ -131,3 +131,10 @@
   font-size: 14px;
   padding: 60px 0;
 }
+.welcome-title {
+  text-align: center;
+  color: #185FA5;
+  font-size: 24px;
+  font-weight: 500;
+  padding: 40px 0;
+}
