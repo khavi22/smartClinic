@@ -1,4 +1,4 @@
-const firebaseService = require('../services/firebaseService');
+const firebaseService = require("../services/firebaseService");
 const { admin } = require("../services/config/firebase");
 
 exports.checkUserLogin = async (req, res) => {
@@ -14,18 +14,19 @@ exports.checkUserLogin = async (req, res) => {
             (userId ? await firebaseService.getUserProfileById(userId) : null) ||
             (email ? await firebaseService.getUserProfileByEmail(email) : null);
 
-        // If we found a user by email, ensure the UID matches or it's a placeholder
-        // If it's a placeholder (no UID in records yet), we want them to go to Sign Up to link it
-        if (user && user.uid === userId) {
-            let redirectUrl = "/dashboard.html"; 
-            if (user.role === "admin") redirectUrl = "/adminDashboard.html";
-            else if (user.role === "staff") redirectUrl = "/staffDashboard.html";
+        if (user && (!userId || user.uid === userId)) {
+            let redirectUrl = "/dashboard.html";
 
-            // If it's a clinic-related role, enrich with clinic name if possible
+            if (user.role === "admin") {
+                redirectUrl = "/adminDashboard.html";
+            } else if (user.role === "staff") {
+                redirectUrl = "/staffDashboard.html";
+            }
+
             if ((user.role === "admin" || user.role === "staff") && user.clinicId) {
                 try {
                     user.clinicName = await firebaseService.getClinicNameById(user.clinicId);
-                } catch (e) {
+                } catch (error) {
                     console.warn("Could not fetch clinic name for profile enrichment");
                 }
             }
@@ -53,19 +54,16 @@ exports.checkUserLogin = async (req, res) => {
 
 exports.registerUser = async (req, res) => {
     try {
-<<<<<<< HEAD
         const {
             uid,
             fullName,
             email,
             role,
             phone,
+            verificationCode,
             adminCode,
             staffCode
         } = req.body;
-=======
-        const { uid, fullName, email, role, phone, idNumber, verificationCode } = req.body;
->>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
 
         if (!uid || !fullName || !email || !role || !phone) {
             return res.status(400).json({
@@ -74,80 +72,61 @@ exports.registerUser = async (req, res) => {
             });
         }
 
-<<<<<<< HEAD
         if (!["patient", "admin", "staff"].includes(role)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid role selected"
             });
         }
-=======
-        const userData = { uid, fullName, email, role, phone };
-        const roleData = { idNumber: idNumber || "N/A" };
->>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
 
-        // Handle verification codes for Admin and Staff
-        if (role === "admin" || role === "staff") {
-            if (!verificationCode) {
-                return res.status(400).json({ success: false, message: "Verification code required for this role" });
-            }
+        const userData = {
+            uid,
+            fullName,
+            email,
+            role,
+            phone
+        };
 
-            const verificationResult = await firebaseService.getClinicIdFromVerificationCode(verificationCode);
-            
-            if (!verificationResult) {
-                return res.status(403).json({ success: false, message: "Invalid verification code" });
-            }
+        let roleData = {};
+        let redirect = "/dashboard.html";
+        let message = "Patient account created successfully";
 
-            // --- ONE ADMIN PER CLINIC CHECK ---
-            if (role === "admin") {
-                const existingUserDoc = await firebaseService.getUserProfileById(uid);
-                
-                if (existingUserDoc) {
-                    // If already an admin for a DIFFERENT clinic, block
-                    if (existingUserDoc.role === "admin" && existingUserDoc.clinicId && existingUserDoc.clinicId !== verificationResult.clinicId) {
-                        return res.status(403).json({ 
-                            success: false, 
-                            message: `You are already registered as an administrator for another clinic. You cannot manage more than one clinic.`
-                        });
-                    }
-                }
-            }
+        if (role === "admin") {
+            const code = verificationCode || adminCode;
 
-            // Ensure the role matches the code type
-            if (role === "admin" && verificationResult.role !== "admin") {
-                return res.status(403).json({ success: false, message: "This code is not valid for Admin role" });
-            }
-
-            // Check if clinic is already claimed by someone else
-            if (role === "admin" && verificationResult.adminUid && verificationResult.adminUid !== uid) {
-                return res.status(403).json({ 
-                    success: false, 
-                    message: "This clinic is already managed by another administrator" 
+            if (!code) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Admin code is required"
                 });
             }
 
-            roleData.clinicId = verificationResult.clinicId;
-            roleData.verificationCode = verificationCode;
+            const clinicId = await firebaseService.getClinicIdFromAdminCode(code);
 
-            if (role === "admin") {
-                await firebaseService.claimClinic(verificationResult.clinicId, uid);
+            if (!clinicId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Invalid or already used admin code"
+                });
             }
-<<<<<<< HEAD
 
-            roleData = { adminCode, clinicId };
-            successMessage = "Admin account created successfully";
+            roleData = { adminCode: code, clinicId };
+            redirect = "/adminDashboard.html";
+            message = "Admin account created successfully";
 
             await firebaseService.createUserProfile(userData, roleData);
             await firebaseService.claimClinic(clinicId, uid);
         } else if (role === "staff") {
-            if (!staffCode) {
+            const code = verificationCode || staffCode;
+
+            if (!code) {
                 return res.status(400).json({
                     success: false,
                     message: "Staff code is required"
                 });
             }
 
-            const clinicId = await firebaseService.getStaffAssignmentFromCode(staffCode);
+            const clinicId = await firebaseService.getStaffAssignmentFromCode(code);
 
             if (!clinicId) {
                 return res.status(403).json({
@@ -156,31 +135,25 @@ exports.registerUser = async (req, res) => {
                 });
             }
 
-            roleData = { staffCode, clinicId };
-            successMessage = "Staff account created successfully";
+            roleData = { staffCode: code, clinicId };
+            redirect = "/staffDashboard.html";
+            message = "Staff account created successfully";
 
             await firebaseService.createUserProfile(userData, roleData);
         } else {
-            successMessage = "Patient account created successfully";
             await firebaseService.createUserProfile(userData);
-=======
->>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
         }
-
-        await firebaseService.createUserProfile(userData, roleData);
-
-        // Determine redirect based on role
-        let redirect = "/dashboard.html";
-        if (role === "admin") redirect = "/adminDashboard.html";
-        else if (role === "staff") redirect = "/staffDashboard.html";
 
         return res.status(201).json({
             success: true,
-            message: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully`,
+            message,
             role,
-            redirect
+            redirect,
+            profile: {
+                ...userData,
+                ...roleData
+            }
         });
-
     } catch (error) {
         console.error("Registration error:", error);
         return res.status(500).json({
@@ -190,6 +163,8 @@ exports.registerUser = async (req, res) => {
         });
     }
 };
+
+exports.createUserProfile = exports.registerUser;
 
 exports.deleteUserAccount = async (req, res) => {
     try {

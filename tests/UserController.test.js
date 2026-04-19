@@ -1,7 +1,5 @@
-const firebaseService = require("../services/firebaseService");
-const { admin } = require("../services/config/firebase");
-
 const mockVerifyIdToken = jest.fn();
+
 jest.mock("../services/config/firebase", () => ({
     admin: {
         auth: () => ({
@@ -10,22 +8,18 @@ jest.mock("../services/config/firebase", () => ({
     }
 }));
 
+const firebaseService = require("../services/firebaseService");
 const {
     checkUserLogin,
     registerUser,
     deleteUserAccount
-} = require("../Controllers/UserController");
-<<<<<<< HEAD
-const firebaseService = require("../services/firebaseService");
-=======
->>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
+} = require("../controllers/UserController");
 
 jest.mock("../services/firebaseService");
 
 describe("UserController", () => {
     let req;
     let res;
-    let consoleErrorSpy;
 
     beforeEach(() => {
         req = {
@@ -40,42 +34,25 @@ describe("UserController", () => {
         };
 
         jest.clearAllMocks();
-        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        jest.spyOn(console, "error").mockImplementation(() => {});
+        jest.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
+        console.error.mockRestore();
+        console.warn.mockRestore();
     });
 
     describe("checkUserLogin", () => {
-        it("should return 400 when both userId and email are missing", async () => {
+        it("returns 400 when both userId and email are missing", async () => {
             req.params = {};
-            req.query = {};
-
             await checkUserLogin(req, res);
 
             expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                error: "Missing userId or email"
-            });
+            expect(res.json).toHaveBeenCalledWith({ error: "Missing userId or email" });
         });
 
-        it("should return the correct redirect when an admin exists", async () => {
-            firebaseService.getUserProfileById.mockResolvedValue({
-                uid: "test-uid",
-                role: "admin"
-            });
-
-            await checkUserLogin(req, res);
-
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-                success: true,
-                exists: true,
-                redirect: "/adminDashboard.html"
-            }));
-        });
-
-        it("should return the correct redirect when a patient exists", async () => {
+        it("returns patient redirect when patient exists", async () => {
             firebaseService.getUserProfileById.mockResolvedValue({
                 uid: "test-uid",
                 role: "patient"
@@ -83,14 +60,64 @@ describe("UserController", () => {
 
             await checkUserLogin(req, res);
 
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            expect(res.json).toHaveBeenCalledWith({
                 success: true,
                 exists: true,
-                redirect: "/dashboard.html"
-            }));
+                redirect: "/dashboard.html",
+                profile: {
+                    uid: "test-uid",
+                    role: "patient"
+                }
+            });
         });
 
-        it("should return signup redirect when no profile exists", async () => {
+        it("returns admin redirect and clinic name enrichment", async () => {
+            firebaseService.getUserProfileById.mockResolvedValue({
+                uid: "test-uid",
+                role: "admin",
+                clinicId: "clinic-1"
+            });
+            firebaseService.getClinicNameById.mockResolvedValue("Smart Clinic");
+
+            await checkUserLogin(req, res);
+
+            expect(firebaseService.getClinicNameById).toHaveBeenCalledWith("clinic-1");
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                exists: true,
+                redirect: "/adminDashboard.html",
+                profile: {
+                    uid: "test-uid",
+                    role: "admin",
+                    clinicId: "clinic-1",
+                    clinicName: "Smart Clinic"
+                }
+            });
+        });
+
+        it("falls back to email lookup", async () => {
+            req.query.email = "john@example.com";
+            firebaseService.getUserProfileById.mockResolvedValue(null);
+            firebaseService.getUserProfileByEmail.mockResolvedValue({
+                uid: "test-uid",
+                role: "staff"
+            });
+
+            await checkUserLogin(req, res);
+
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                exists: true,
+                redirect: "/staffDashboard.html",
+                profile: {
+                    uid: "test-uid",
+                    role: "staff"
+                }
+            });
+        });
+
+        it("returns signup redirect when no matching profile exists", async () => {
+            req.query.email = "john@example.com";
             firebaseService.getUserProfileById.mockResolvedValue(null);
             firebaseService.getUserProfileByEmail.mockResolvedValue(null);
 
@@ -103,8 +130,25 @@ describe("UserController", () => {
             });
         });
 
-        it("should return 500 when an error occurs during check", async () => {
-            firebaseService.getUserProfileById.mockRejectedValue(new Error("DB Error"));
+        it("returns signup redirect when found email profile uid does not match", async () => {
+            req.query.email = "john@example.com";
+            firebaseService.getUserProfileById.mockResolvedValue(null);
+            firebaseService.getUserProfileByEmail.mockResolvedValue({
+                uid: "another-uid",
+                role: "patient"
+            });
+
+            await checkUserLogin(req, res);
+
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                exists: false,
+                redirect: "/signUp.html"
+            });
+        });
+
+        it("returns 500 on lookup failure", async () => {
+            firebaseService.getUserProfileById.mockRejectedValue(new Error("DB error"));
 
             await checkUserLogin(req, res);
 
@@ -124,55 +168,68 @@ describe("UserController", () => {
             };
         });
 
-        it("should return 400 when required fields are missing", async () => {
-            req.body = { uid: "test-uid" }; // missing others
+        it("returns 400 when required fields are missing", async () => {
+            req.body = { uid: "test-uid" };
 
             await registerUser(req, res);
 
             expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Missing required fields"
+            });
         });
 
-        it("should create a patient profile and return 201", async () => {
+        it("returns 400 for invalid role", async () => {
+            req.body.role = "manager";
+
+            await registerUser(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Invalid role selected"
+            });
+        });
+
+        it("creates patient profile", async () => {
             firebaseService.createUserProfile.mockResolvedValue();
 
             await registerUser(req, res);
 
-            expect(firebaseService.createUserProfile).toHaveBeenCalled();
-            expect(res.status).toHaveBeenCalledWith(201);
-        });
-
-        it("should return 400 when admin misses verification code", async () => {
-            req.body.role = "admin";
-            await registerUser(req, res);
-            expect(res.status).toHaveBeenCalledWith(400);
-        });
-
-        it("should return 403 when an admin is already linked to another clinic", async () => {
-            req.body.role = "admin";
-            req.body.verificationCode = "ADM-NEW";
-
-            firebaseService.getClinicIdFromVerificationCode.mockResolvedValue({
-                clinicId: "clinic-NEW",
-                role: "admin"
-            });
-            firebaseService.getUserProfileById.mockResolvedValue({
+            expect(firebaseService.createUserProfile).toHaveBeenCalledWith({
                 uid: "test-uid",
-                role: "admin",
-                clinicId: "clinic-OLD"
+                fullName: "John Doe",
+                email: "john@example.com",
+                role: "patient",
+                phone: "1234567890"
             });
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                message: "Patient account created successfully",
+                role: "patient",
+                redirect: "/dashboard.html",
+                profile: {
+                    uid: "test-uid",
+                    fullName: "John Doe",
+                    email: "john@example.com",
+                    role: "patient",
+                    phone: "1234567890"
+                }
+            });
+        });
 
-<<<<<<< HEAD
-        it("should create an admin profile and claim the clinic", async () => {
+        it("creates admin profile using verificationCode", async () => {
             req.body.role = "admin";
-            req.body.adminCode = "ADM-A1B2C3";
-
-            firebaseService.getClinicIdFromAdminCode.mockResolvedValue("clinic-123");
+            req.body.verificationCode = "ADM-CODE";
+            firebaseService.getClinicIdFromAdminCode.mockResolvedValue("clinic-1");
             firebaseService.createUserProfile.mockResolvedValue();
             firebaseService.claimClinic.mockResolvedValue();
 
-            await createUserProfile(req, res);
+            await registerUser(req, res);
 
-            expect(firebaseService.getClinicIdFromAdminCode).toHaveBeenCalledWith("ADM-A1B2C3");
+            expect(firebaseService.getClinicIdFromAdminCode).toHaveBeenCalledWith("ADM-CODE");
             expect(firebaseService.createUserProfile).toHaveBeenCalledWith(
                 {
                     uid: "test-uid",
@@ -182,24 +239,63 @@ describe("UserController", () => {
                     phone: "1234567890"
                 },
                 {
-                    adminCode: "ADM-A1B2C3",
-                    clinicId: "clinic-123"
+                    adminCode: "ADM-CODE",
+                    clinicId: "clinic-1"
                 }
             );
-            expect(firebaseService.claimClinic).toHaveBeenCalledWith("clinic-123", "test-uid");
-            expect(res.status).toHaveBeenCalledWith(201);
+            expect(firebaseService.claimClinic).toHaveBeenCalledWith("clinic-1", "test-uid");
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                message: "Admin account created successfully",
+                role: "admin",
+                redirect: "/adminDashboard.html",
+                profile: {
+                    uid: "test-uid",
+                    fullName: "John Doe",
+                    email: "john@example.com",
+                    role: "admin",
+                    phone: "1234567890",
+                    adminCode: "ADM-CODE",
+                    clinicId: "clinic-1"
+                }
+            });
         });
 
-        it("should create a staff profile with the clinic staff code", async () => {
-            req.body.role = "staff";
-            req.body.staffCode = "STF-A1B2C3";
+        it("returns 400 when admin code is missing", async () => {
+            req.body.role = "admin";
 
-            firebaseService.getStaffAssignmentFromCode.mockResolvedValue("clinic-456");
+            await registerUser(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Admin code is required"
+            });
+        });
+
+        it("returns 403 when admin code is invalid", async () => {
+            req.body.role = "admin";
+            req.body.adminCode = "ADM-BAD";
+            firebaseService.getClinicIdFromAdminCode.mockResolvedValue(null);
+
+            await registerUser(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Invalid or already used admin code"
+            });
+        });
+
+        it("creates staff profile using verificationCode", async () => {
+            req.body.role = "staff";
+            req.body.verificationCode = "STF-CODE";
+            firebaseService.getStaffAssignmentFromCode.mockResolvedValue("clinic-2");
             firebaseService.createUserProfile.mockResolvedValue();
 
-            await createUserProfile(req, res);
+            await registerUser(req, res);
 
-            expect(firebaseService.getStaffAssignmentFromCode).toHaveBeenCalledWith("STF-A1B2C3");
+            expect(firebaseService.getStaffAssignmentFromCode).toHaveBeenCalledWith("STF-CODE");
             expect(firebaseService.createUserProfile).toHaveBeenCalledWith(
                 {
                     uid: "test-uid",
@@ -209,71 +305,31 @@ describe("UserController", () => {
                     phone: "1234567890"
                 },
                 {
-                    staffCode: "STF-A1B2C3",
-                    clinicId: "clinic-456"
+                    staffCode: "STF-CODE",
+                    clinicId: "clinic-2"
                 }
             );
-            expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
                 message: "Staff account created successfully",
+                role: "staff",
+                redirect: "/staffDashboard.html",
                 profile: {
                     uid: "test-uid",
                     fullName: "John Doe",
                     email: "john@example.com",
                     role: "staff",
                     phone: "1234567890",
-                    staffCode: "STF-A1B2C3",
-                    clinicId: "clinic-456"
+                    staffCode: "STF-CODE",
+                    clinicId: "clinic-2"
                 }
             });
         });
 
-        it("should return 400 when required fields are missing", async () => {
-            req.body = {
-                fullName: "John Doe",
-                email: "john@example.com"
-            };
-
-            await createUserProfile(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                success: false,
-                message: "Missing required fields"
-            });
-        });
-
-        it("should return 400 when the role is invalid", async () => {
-            req.body.role = "manager";
-
-            await createUserProfile(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                success: false,
-                message: "Invalid role selected"
-            });
-        });
-
-        it("should return 400 when admin code is missing", async () => {
-            req.body.role = "admin";
-            delete req.body.adminCode;
-
-            await createUserProfile(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                success: false,
-                message: "Admin code is required"
-            });
-        });
-
-        it("should return 400 when staff code is missing", async () => {
+        it("returns 400 when staff code is missing", async () => {
             req.body.role = "staff";
-            delete req.body.staffCode;
 
-            await createUserProfile(req, res);
+            await registerUser(req, res);
 
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({
@@ -282,31 +338,12 @@ describe("UserController", () => {
             });
         });
 
-        it("should return 403 when the admin code is invalid", async () => {
-            req.body.role = "admin";
-            req.body.adminCode = "ADM-INVALID";
-
-            firebaseService.getClinicIdFromAdminCode.mockResolvedValue(null);
-
-            await createUserProfile(req, res);
-=======
-            await registerUser(req, res);
->>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
-
-            expect(res.status).toHaveBeenCalledWith(403);
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-                message: expect.stringContaining("already registered")
-            }));
-        });
-
-<<<<<<< HEAD
-        it("should return 403 when the staff code is invalid", async () => {
+        it("returns 403 when staff code is invalid", async () => {
             req.body.role = "staff";
-            req.body.staffCode = "STF-INVALID";
-
+            req.body.staffCode = "STF-BAD";
             firebaseService.getStaffAssignmentFromCode.mockResolvedValue(null);
 
-            await createUserProfile(req, res);
+            await registerUser(req, res);
 
             expect(res.status).toHaveBeenCalledWith(403);
             expect(res.json).toHaveBeenCalledWith({
@@ -315,56 +352,29 @@ describe("UserController", () => {
             });
         });
 
-        it("should return 500 when profile creation fails", async () => {
-            firebaseService.createUserProfile.mockRejectedValue(new Error("Firebase error"));
-=======
-        it("should return 403 for role mismatch", async () => {
-            req.body.role = "admin";
-            req.body.verificationCode = "STF-CODE";
->>>>>>> 8990dce747880d8a601e65dc9606fbe4e9a7b29b
-
-            firebaseService.getClinicIdFromVerificationCode.mockResolvedValue({
-                clinicId: "clinic-123",
-                role: "staff" // mismatch
-            });
-
-            await registerUser(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(403);
-        });
-
-        it("should return 403 when clinic already managed", async () => {
-            req.body.role = "admin";
-            req.body.verificationCode = "ADM-CODE";
-
-            firebaseService.getClinicIdFromVerificationCode.mockResolvedValue({
-                clinicId: "clinic-123",
-                role: "admin",
-                adminUid: "OTHER-UID"
-            });
-
-            await registerUser(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(403);
-        });
-
-        it("should return 500 on registration error", async () => {
+        it("returns 500 on registration error", async () => {
             firebaseService.createUserProfile.mockRejectedValue(new Error("Fail"));
 
             await registerUser(req, res);
 
             expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Failed to register user",
+                error: "Fail"
+            });
         });
     });
 
     describe("deleteUserAccount", () => {
-        it("should delete the account successfully", async () => {
+        it("deletes the account successfully", async () => {
             req.headers.authorization = "Bearer token-123";
             mockVerifyIdToken.mockResolvedValue({ uid: "test-uid" });
             firebaseService.deleteUserAccount.mockResolvedValue();
 
             await deleteUserAccount(req, res);
 
+            expect(mockVerifyIdToken).toHaveBeenCalledWith("token-123");
             expect(firebaseService.deleteUserAccount).toHaveBeenCalledWith("test-uid");
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
@@ -372,13 +382,17 @@ describe("UserController", () => {
             });
         });
 
-        it("should return 401 when authorization header is missing", async () => {
-            req.headers.authorization = "";
+        it("returns 401 when authorization header is missing", async () => {
             await deleteUserAccount(req, res);
+
             expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Missing authorization token"
+            });
         });
 
-        it("should return 500 on delete error", async () => {
+        it("returns 500 on delete error", async () => {
             req.headers.authorization = "Bearer token-123";
             mockVerifyIdToken.mockResolvedValue({ uid: "test-uid" });
             firebaseService.deleteUserAccount.mockRejectedValue(new Error("Fail"));
@@ -386,7 +400,11 @@ describe("UserController", () => {
             await deleteUserAccount(req, res);
 
             expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Failed to delete user account",
+                error: "Fail"
+            });
         });
     });
-
 });
