@@ -101,6 +101,22 @@ describe("UserController", () => {
             });
         });
 
+        it("should handle profile enrichment warnings gracefully", async () => {
+            // Mock a user that needs enrichment
+            firebaseService.getUserProfileById.mockResolvedValueOnce({
+                uid: "test-uid",
+                role: "staff",
+                clinicId: "clinic-123"
+            });
+            // Force the enrichment to fail
+            firebaseService.getClinicNameById.mockRejectedValueOnce(new Error("Enrichment Fail"));
+            
+            await checkUserLogin(req, res);
+            
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ exists: true }));
+            expect(consoleWarnSpy).toHaveBeenCalled();
+        });
+
         it("should return 500 when an error occurs during check", async () => {
             firebaseService.getUserProfileById.mockRejectedValue(new Error("DB Error"));
 

@@ -177,9 +177,7 @@ const ROLE_COLLECTIONS = {
 
 const COLLECTION_NAMES = ["patients", "admins", "staff", "users"];
 const getCollectionNameForRole = (role) => {
-    if (role === "admin") return "admins";
-    if (role === "patient") return "patients";
-    return role; // staff is staff
+    return ROLE_COLLECTIONS[role] || null;
 };
 
 const getUserProfileById = async (userId) => {

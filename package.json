@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "jest",
+    "coverage": "jest --coverage",
     "test:coverage": "jest --coverage"
   },
   "jest": {

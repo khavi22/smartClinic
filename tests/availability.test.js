@@ -1,4 +1,4 @@
-const { getAvailability } = require("../controllers/appointmentsController");
+const { getAvailability } = require("../Controllers/appointmentsController");
 const firebaseService = require("../services/firebaseService");
 
 jest.mock("../services/firebaseService");
