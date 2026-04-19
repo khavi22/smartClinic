@@ -1,67 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmartClinic | Complete Your Sign Up</title>
-    <link rel="stylesheet" href="css/styles.css">
-    
+    <link rel="stylesheet" href="css/styles.css" />
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-</head>
-<body>
-
+  </head>
+  <body>
     <header role="banner">
-        <nav aria-label="Main Navigation">
-            <a href="index.html" class="logo">SmartClinic</a>
-        </nav>
+      <nav aria-label="Main Navigation">
+        <a href="index.html" class="logo">SmartClinic</a>
+      </nav>
     </header>
 
     <main id="main-content">
-        <section class="signup-flow" aria-labelledby="form-title">
-            <header class="section-header">
-                <h1 id="form-title">Complete Your Profile</h1>
-                <p>Welcome! Please provide the details below to access your dashboard.</p>
-            </header>
+      <section class="signup-flow" aria-labelledby="form-title">
+        <header class="section-header">
+          <h1 id="form-title">Complete Your Profile</h1>
+          <p>
+            Welcome! Please provide the details below to access your dashboard.
+          </p>
+        </header>
 
-            <form id="signupForm">
-                <fieldset>
-                    <legend>User Credentials & Role</legend>
-                    
-                    <div class="field">
-                        <label for="role">Project Role</label>
-                        <select id="role" name="role" required>
-                            <option value="" disabled selected>Select your role...</option>
-                            <option value="Patient">Patient</option>
-                            <option value="Staff">Clinic Staff</option>
-                            <option value="Admin">Admin</option>
-                        </select>
-                    </div>
+        <form id="signupForm">
+          <fieldset>
+            <legend>User Credentials & Role</legend>
 
-                    <div class="field">
-                        <label for="phone">Contact Number</label>
-                        <input type="tel" id="phone" name="phone" 
-                               placeholder="081 234 5678" pattern="[0-9]{10}" required>
-                    </div>
-                </fieldset>
+            <div class="field">
+              <label for="role">Project Role</label>
+              <select id="role" name="role" required>
+                <option value="" disabled selected>Select your role...</option>
+                <option value="Patient">Patient</option>
+                <option value="Staff">Clinic Staff</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
 
-                <fieldset>
-                    <legend>Verification Details</legend>
-                    <div class="field">
-                        <label for="idNumber">SA ID Number</label>
-                        <input type="text" id="idNumber" name="idNumber" 
-                               placeholder="YYMMDDXXXXXXX" maxlength="13">
-                    </div>
-                </fieldset>
+            <div class="field">
+              <label for="phone">Contact Number</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="081 234 5678"
+                pattern="[0-9]{10}"
+                required
+              />
+            </div>
+          </fieldset>
 
-                <footer class="form-actions">
-                    <button type="submit" class="btn-primary">Finalize Account</button>
-                </footer>
-            </form>
-        </section>
+          <fieldset>
+            <legend>Verification Details</legend>
+            <div class="field">
+              <label for="idNumber">SA ID Number</label>
+              <input
+                type="text"
+                id="idNumber"
+                name="idNumber"
+                placeholder="YYMMDDXXXXXXX"
+                maxlength="13"
+              />
+            </div>
+          </fieldset>
+
+          <footer class="form-actions">
+            <button type="submit" class="btn-primary">Finalize Account</button>
+          </footer>
+        </form>
+      </section>
     </main>
 
     <script src="js/signUp.js"></script>
-</body>
+    <script type="module" src="js/roleSelect.js"></script>
+  </body>
 </html>

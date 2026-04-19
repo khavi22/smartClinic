@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clinic Staff Login</title>
+  </head>
+  <body>
+    <section>
+      <h2>Clinic Staff Login</h2>
+      <p>
+        Please provide your clinic staff number to access clinic staff dashboard
+        page
+      </p>
+      <form>
+        <input
+          type="text"
+          id="Staff_Code"
+          class="Staff_Code_input_class"
+          maxlength="5"
+          placeholder="Staff Number"
+        />
+
+        <button type="button" id="verify-button-staff-number">Verify</button>
+      </form>
+    </section>
+
+    <button id="signIn-google" style="display: none">Sign With Google</button>
+    <section id="invalid_staff_number_section"></section>
+    <script type="module" src="js/ClinicStaffLogIn.js"></script>
+  </body>
+</html>
