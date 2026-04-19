@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-const { getUserProfileById, createPatientProfile } = require("../services/firebaseService");
-=======
 const firebaseService = require("../services/firebaseService");
 const { admin } = require("../services/config/firebase");
->>>>>>> feature-adminlogin
 
 exports.checkUserLogin = async (req, res) => {
     try {
@@ -40,11 +36,7 @@ exports.checkUserLogin = async (req, res) => {
     }
 };
 
-<<<<<<< HEAD
-exports.createPatientProfileController = async (req, res) => {
-=======
 exports.createUserProfile = async (req, res) => {
->>>>>>> feature-adminlogin
     try {
         const {
             uid,
@@ -63,9 +55,6 @@ exports.createUserProfile = async (req, res) => {
             });
         }
 
-<<<<<<< HEAD
-        await createPatientProfile(uid, fullName, email, role, phone, idNumber);
-=======
         if (!["patient", "admin"].includes(role)) {
             return res.status(400).json({
                 success: false,
@@ -111,7 +100,6 @@ exports.createUserProfile = async (req, res) => {
             successMessage = "Patient account created successfully";
             await firebaseService.createUserProfile(userData);
         }
->>>>>>> feature-adminlogin
 
         return res.status(201).json({
             success: true,
