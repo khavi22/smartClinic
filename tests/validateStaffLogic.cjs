@@ -1,4 +1,5 @@
-//validateStaffData  for Browser
+
+//validateStaffData for Jest
 function validateStaffData(snapshot) {
     if (!snapshot.empty) {
         const Staff_Data = snapshot.docs[0].data();
@@ -8,5 +9,4 @@ function validateStaffData(snapshot) {
     }
 }
 
-export { validateStaffData };
-
+module.exports = { validateStaffData };

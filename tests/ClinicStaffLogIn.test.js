@@ -13,7 +13,8 @@ jest.mock('firebase/firestore', () => ({
 
 const { getDocs } = require('firebase/firestore');
 
-const { validateStaffData } = require('../public/js/validateStaffLogic');
+const { validateStaffData } = require('./validateStaffLogic.cjs');
+
 
 describe("Test Clinic Staff Login", function () {
     test("invalid staff number returns error message", async function () {
