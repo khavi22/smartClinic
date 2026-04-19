@@ -28,9 +28,6 @@
                 </svg>
                 <span>smartClinic</span>
             </a>
-            <menu class="nav-links">
-                <li><a href="adminDashboard.html" class="nav-link active">Dashboard</a></li>
-            </menu>
             <section class="nav-user" aria-label="Account">
                 <img id="userAvatar" class="nav-avatar" src="" alt="Your profile picture" hidden>
                 <span id="userGreeting" class="nav-greeting" hidden></span>
@@ -50,6 +47,10 @@
             <section id="middleSection" class="admin-header-inner">
                 <h1 id="adminGreeting">Admin Dashboard</h1>
                 <p>Manage your clinic's operating hours and settings</p>
+                <p id="clinicNameDisplay" class="clinic-name-badge" hidden>
+                    <i class='bx bx-building-house' aria-hidden="true"></i>
+                    <span id="clinicNameText"></span>
+                </p>
             </section>
         </header>
 

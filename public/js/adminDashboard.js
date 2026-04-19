@@ -47,6 +47,14 @@ async function loadClinicHours(clinicId) {
         const data = doc.data();
         const hours = data.operatingHours;
         const statusEl = document.getElementById('clinicStatus');
+
+        //show clinic name in header
+        const clinicNameText    = document.getElementById('clinicNameText');
+        const clinicNameDisplay = document.getElementById('clinicNameDisplay');
+        if (clinicNameText && data.clinicName) {
+            clinicNameText.textContent = data.clinicName;
+            clinicNameDisplay.hidden   = false;
+        }
         
         if (hours) {
             Object.keys(hours).forEach(day => {
