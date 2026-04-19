@@ -223,8 +223,47 @@ describe("UserController", () => {
                     clinicId: "clinic-123"
                 }
             );
-            expect(firebaseService.claimClinic).toHaveBeenCalledWith("clinic-123");
+            expect(firebaseService.claimClinic).toHaveBeenCalledWith("clinic-123", "test-uid");
             expect(res.status).toHaveBeenCalledWith(201);
+        });
+
+        it("should create a staff profile with the clinic staff code", async () => {
+            req.body.role = "staff";
+            req.body.staffCode = "STF-A1B2C3";
+
+            firebaseService.getStaffAssignmentFromCode.mockResolvedValue("clinic-456");
+            firebaseService.createUserProfile.mockResolvedValue();
+
+            await createUserProfile(req, res);
+
+            expect(firebaseService.getStaffAssignmentFromCode).toHaveBeenCalledWith("STF-A1B2C3");
+            expect(firebaseService.createUserProfile).toHaveBeenCalledWith(
+                {
+                    uid: "test-uid",
+                    fullName: "John Doe",
+                    email: "john@example.com",
+                    role: "staff",
+                    phone: "1234567890"
+                },
+                {
+                    staffCode: "STF-A1B2C3",
+                    clinicId: "clinic-456"
+                }
+            );
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                message: "Staff account created successfully",
+                profile: {
+                    uid: "test-uid",
+                    fullName: "John Doe",
+                    email: "john@example.com",
+                    role: "staff",
+                    phone: "1234567890",
+                    staffCode: "STF-A1B2C3",
+                    clinicId: "clinic-456"
+                }
+            });
         });
 
         it("should return 400 when required fields are missing", async () => {
@@ -267,6 +306,19 @@ describe("UserController", () => {
             });
         });
 
+        it("should return 400 when staff code is missing", async () => {
+            req.body.role = "staff";
+            delete req.body.staffCode;
+
+            await createUserProfile(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Staff code is required"
+            });
+        });
+
         it("should return 403 when the admin code is invalid", async () => {
             req.body.role = "admin";
             req.body.adminCode = "ADM-INVALID";
@@ -279,6 +331,21 @@ describe("UserController", () => {
             expect(res.json).toHaveBeenCalledWith({
                 success: false,
                 message: "Invalid or already used admin code"
+            });
+        });
+
+        it("should return 403 when the staff code is invalid", async () => {
+            req.body.role = "staff";
+            req.body.staffCode = "STF-INVALID";
+
+            firebaseService.getStaffAssignmentFromCode.mockResolvedValue(null);
+
+            await createUserProfile(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({
+                success: false,
+                message: "Invalid staff code"
             });
         });
 

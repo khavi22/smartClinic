@@ -23,6 +23,7 @@ const {
     getAppointmentsByPatientId,
     createUserProfile,
     getClinicIdFromAdminCode,
+    getStaffAssignmentFromCode,
     claimClinic,
     getUserProfileById,
     getUserProfileByEmail,
@@ -280,6 +281,7 @@ describe("profile helpers", () => {
             exists: true,
             data: () => ({ uid: "user-1", role: "admin" })
         });
+        const staffGet = jest.fn();
 
         db.collection.mockImplementation((name) => ({
             doc: jest.fn(() => ({
@@ -298,6 +300,7 @@ describe("profile helpers", () => {
             data: () => ({ uid: "user-1", role: "patient" })
         });
         const adminGet = jest.fn();
+        const staffGet = jest.fn();
 
         db.collection.mockImplementation((name) => ({
             doc: jest.fn(() => ({
@@ -362,7 +365,7 @@ describe("profile helpers", () => {
                 fullName: "John Doe",
                 email: "john@example.com",
                 phone: "1234567890",
-                role: "staff"
+                role: "manager"
             })
         ).rejects.toThrow("Unsupported role");
     });
@@ -410,16 +413,56 @@ describe("profile helpers", () => {
     it("should return null when no email match exists", async () => {
         const patientQuery = createLoopQuery({ empty: true, docs: [] });
         const adminQuery = createLoopQuery({ empty: true, docs: [] });
+        const staffQuery = createLoopQuery({ empty: true, docs: [] });
 
         db.collection.mockImplementation((name) => ({
-            where: name === "patients" ? patientQuery.where : adminQuery.where
+            where:
+                name === "patients"
+                    ? patientQuery.where
+                    : name === "admins"
+                        ? adminQuery.where
+                        : staffQuery.where
         }));
         patientQuery.where.mockReturnValue(patientQuery);
         adminQuery.where.mockReturnValue(adminQuery);
+        staffQuery.where.mockReturnValue(staffQuery);
 
         const result = await getUserProfileByEmail("missing@example.com");
 
         expect(result).toBeNull();
+    });
+
+    it("should create a staff profile in the staff collection", async () => {
+        const set = jest.fn().mockResolvedValue();
+        db.collection.mockReturnValue({
+            doc: jest.fn(() => ({ set }))
+        });
+
+        await createUserProfile(
+            {
+                uid: "staff-1",
+                fullName: "Jane Doe",
+                email: "jane@example.com",
+                phone: "1234567890",
+                role: "staff"
+            },
+            {
+                staffCode: "STF-A1B2C3",
+                clinicId: "clinic-456"
+            }
+        );
+
+        expect(db.collection).toHaveBeenCalledWith("staff");
+        expect(set).toHaveBeenCalledWith({
+            uid: "staff-1",
+            fullName: "Jane Doe",
+            email: "jane@example.com",
+            phone: "1234567890",
+            role: "staff",
+            staffCode: "STF-A1B2C3",
+            clinicId: "clinic-456",
+            createdAt: "SERVER_TIMESTAMP"
+        });
     });
 });
 
@@ -534,11 +577,37 @@ describe("clinic helpers", () => {
             doc: jest.fn(() => ({ update }))
         });
 
-        await claimClinic("clinic-123");
+        await claimClinic("clinic-123", "test-uid");
 
         expect(update).toHaveBeenCalledWith({
+            adminUid: "test-uid",
             isActive: true
         });
+    });
+
+    it("should return the clinic id for a valid staff code", async () => {
+        const query = createLoopQuery({
+            empty: false,
+            docs: [{ id: "clinic-456" }]
+        });
+        db.collection.mockReturnValue(query);
+
+        const result = await getStaffAssignmentFromCode("STF-A1B2C3");
+
+        expect(result).toBe("clinic-456");
+        expect(query.where).toHaveBeenCalledWith("staffCode", "==", "STF-A1B2C3");
+    });
+
+    it("should return null for an invalid staff code", async () => {
+        const query = createLoopQuery({
+            empty: true,
+            docs: []
+        });
+        db.collection.mockReturnValue(query);
+
+        const result = await getStaffAssignmentFromCode("STF-INVALID");
+
+        expect(result).toBeNull();
     });
 });
 
@@ -549,8 +618,10 @@ describe("deleteUserAccount", () => {
             data: () => ({ uid: "patient-1", role: "patient" })
         });
         const adminGet = jest.fn();
+        const staffGet = jest.fn().mockResolvedValue({ exists: false });
         const patientDelete = jest.fn().mockResolvedValue();
         const adminDelete = jest.fn().mockResolvedValue();
+        const staffDelete = jest.fn().mockResolvedValue();
         const appointmentDelete = jest.fn().mockResolvedValue();
         const appointmentsQuery = createLoopQuery({
             empty: false,
@@ -576,6 +647,15 @@ describe("deleteUserAccount", () => {
                 };
             }
 
+            if (name === "staff") {
+                return {
+                    doc: jest.fn(() => ({
+                        get: staffGet,
+                        delete: staffDelete
+                    }))
+                };
+            }
+
             if (name === "appointments") {
                 return {
                     where: appointmentsQuery.where
@@ -592,6 +672,7 @@ describe("deleteUserAccount", () => {
         expect(appointmentDelete).toHaveBeenCalled();
         expect(patientDelete).toHaveBeenCalled();
         expect(adminDelete).toHaveBeenCalled();
+        expect(staffDelete).toHaveBeenCalled();
         expect(mockDeleteUser).toHaveBeenCalledWith("patient-1");
     });
 
@@ -601,8 +682,10 @@ describe("deleteUserAccount", () => {
             exists: true,
             data: () => ({ uid: "admin-1", role: "admin" })
         });
+        const staffGet = jest.fn().mockResolvedValue({ exists: false });
         const patientDelete = jest.fn().mockResolvedValue();
         const adminDelete = jest.fn().mockResolvedValue();
+        const staffDelete = jest.fn().mockResolvedValue();
         const clinicsQuery = createLoopQuery({ empty: true, docs: [] });
         const appointmentsQuery = createLoopQuery({ empty: true, docs: [] });
 
@@ -621,6 +704,15 @@ describe("deleteUserAccount", () => {
                     doc: jest.fn(() => ({
                         get: adminGet,
                         delete: adminDelete
+                    }))
+                };
+            }
+
+            if (name === "staff") {
+                return {
+                    doc: jest.fn(() => ({
+                        get: staffGet,
+                        delete: staffDelete
                     }))
                 };
             }
@@ -645,6 +737,7 @@ describe("deleteUserAccount", () => {
         expect(appointmentsQuery.where).toHaveBeenCalledWith("patientId", "==", "admin-1");
         expect(patientDelete).toHaveBeenCalled();
         expect(adminDelete).toHaveBeenCalled();
+        expect(staffDelete).toHaveBeenCalled();
         expect(mockDeleteUser).toHaveBeenCalledWith("admin-1");
     });
 
@@ -654,8 +747,10 @@ describe("deleteUserAccount", () => {
             exists: true,
             data: () => ({ uid: "admin-2", role: "admin" })
         });
+        const staffGet = jest.fn().mockResolvedValue({ exists: false });
         const patientDelete = jest.fn().mockResolvedValue();
         const adminDelete = jest.fn().mockResolvedValue();
+        const staffDelete = jest.fn().mockResolvedValue();
         const clinicUpdate = jest.fn().mockResolvedValue();
         const clinicsQuery = createLoopQuery({
             empty: false,
@@ -682,6 +777,15 @@ describe("deleteUserAccount", () => {
                 };
             }
 
+            if (name === "staff") {
+                return {
+                    doc: jest.fn(() => ({
+                        get: staffGet,
+                        delete: staffDelete
+                    }))
+                };
+            }
+
             if (name === "clinics") {
                 return { where: clinicsQuery.where };
             }
@@ -701,6 +805,7 @@ describe("deleteUserAccount", () => {
             adminUid: null,
             isActive: false
         });
+        expect(staffDelete).toHaveBeenCalled();
         expect(mockDeleteUser).toHaveBeenCalledWith("admin-2");
     });
 });

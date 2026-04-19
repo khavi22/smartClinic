@@ -44,8 +44,8 @@ exports.createUserProfile = async (req, res) => {
             email,
             role,
             phone,
-            adminCode
-            // staffCode
+            adminCode,
+            staffCode
         } = req.body;
 
         if (!uid || !fullName || !email || !role || !phone) {
@@ -55,7 +55,7 @@ exports.createUserProfile = async (req, res) => {
             });
         }
 
-        if (!["patient", "admin"].includes(role)) {
+        if (!["patient", "admin", "staff"].includes(role)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid role selected"
@@ -94,9 +94,29 @@ exports.createUserProfile = async (req, res) => {
             successMessage = "Admin account created successfully";
 
             await firebaseService.createUserProfile(userData, roleData);
-            await firebaseService.claimClinic(clinicId);
+            await firebaseService.claimClinic(clinicId, uid);
+        } else if (role === "staff") {
+            if (!staffCode) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Staff code is required"
+                });
+            }
+
+            const clinicId = await firebaseService.getStaffAssignmentFromCode(staffCode);
+
+            if (!clinicId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Invalid staff code"
+                });
+            }
+
+            roleData = { staffCode, clinicId };
+            successMessage = "Staff account created successfully";
+
+            await firebaseService.createUserProfile(userData, roleData);
         } else {
-            // Staff signup is intentionally disabled in the backend for now.
             successMessage = "Patient account created successfully";
             await firebaseService.createUserProfile(userData);
         }

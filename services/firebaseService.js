@@ -142,8 +142,8 @@ const getAppointmentsByPatientId = async (patientId) => {
 // ======================= USERS =======================
 const ROLE_COLLECTIONS = {
     patient: "patients",
-    admin: "admins"
-    // staff: "staff"
+    admin: "admins",
+    staff: "staff"
 };
 
 const getCollectionNameForRole = (role) => ROLE_COLLECTIONS[role];
@@ -282,6 +282,7 @@ const createClinic = async ({ placeId, clinicName, city }) => {
 const getClinicIdFromAdminCode = async (adminCode) => {
     const snapshot = await db.collection("clinics")
         .where("adminCode", "==", adminCode)
+        .where("adminUid", "==", null)
         .where("isActive", "==", false)     // not yet active
         .get();
 
@@ -291,10 +292,23 @@ const getClinicIdFromAdminCode = async (adminCode) => {
 };
 
 // Links the admin to the clinic on successful signup
-const claimClinic = async (clinicId) => {
+const claimClinic = async (clinicId, uid) => {
     await db.collection("clinics").doc(clinicId).update({
+        adminUid: uid,
         isActive: true
     });
+};
+
+const getStaffAssignmentFromCode = async (staffCode) => {
+    const snapshot = await db.collection("clinics")
+        .where("staffCode", "==", staffCode)
+        .get();
+
+    if (snapshot.empty) {
+        return null;
+    }
+
+    return snapshot.docs[0].id;
 };
 
 
@@ -362,6 +376,7 @@ module.exports = {
     createClinic,
     claimClinic,
     getClinicIdFromAdminCode,
+    getStaffAssignmentFromCode,
     getUserProfileByEmail,
     validateAdminCode,
     getUserProfileById,
