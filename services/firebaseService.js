@@ -297,36 +297,6 @@ const claimClinic = async (clinicId) => {
     });
 };
 
-// const getStaffAssignmentFromCode = async (staffCode) => {
-//     const snapshot = await db.collection("staffCodes")
-//         .where("code", "==", staffCode)
-//         .where("used", "==", false)
-//         .get();
-//
-//     if (snapshot.empty) {
-//         return null;
-//     }
-//
-//     const staffCodeDoc = snapshot.docs[0];
-//     const staffCodeData = staffCodeDoc.data();
-//
-//     if (!staffCodeData.clinicId) {
-//         return null;
-//     }
-//
-//     return {
-//         staffCodeId: staffCodeDoc.id,
-//         clinicId: staffCodeData.clinicId
-//     };
-// };
-
-// const claimStaffCode = async (staffCodeId, uid) => {
-//     await db.collection("staffCodes").doc(staffCodeId).update({
-//         used: true,
-//         staffUid: uid,
-//         usedAt: admin.firestore.FieldValue.serverTimestamp()
-//     });
-// };
 
 const deleteUserAppointments = async (uid) => {
     const appointmentsSnapshot = await db.collection("appointments")
@@ -360,26 +330,6 @@ const releaseAdminClinics = async (uid) => {
         )
     );
 };
-
-// const releaseStaffCodes = async (uid) => {
-//     const staffCodesSnapshot = await db.collection("staffCodes")
-//         .where("staffUid", "==", uid)
-//         .get();
-//
-//     if (staffCodesSnapshot.empty) {
-//         return;
-//     }
-//
-//     await Promise.all(
-//         staffCodesSnapshot.docs.map((doc) =>
-//             doc.ref.update({
-//                 used: false,
-//                 staffUid: null,
-//                 usedAt: null
-//             })
-//         )
-//     );
-// };
 
 const deleteUserRoleDocuments = async (uid) => {
     await Promise.all(
