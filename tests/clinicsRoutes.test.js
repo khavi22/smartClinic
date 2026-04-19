@@ -20,6 +20,16 @@ jest.mock("../services/config/firebase", () => ({
 }));
 
 describe("Clinics Routes", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.spyOn(console, "log").mockImplementation(() => {});
+        jest.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it("POST /api/clinics/ensure-exists should return 200", async () => {
         firebaseService.ensureClinicExists.mockResolvedValue({ success: true });
         const res = await request(app).post("/api/clinics/ensure-exists").send({ clinicId: "c1", name: "N" });

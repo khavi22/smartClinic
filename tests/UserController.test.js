@@ -37,10 +37,12 @@ describe("UserController", () => {
 
         jest.clearAllMocks();
         consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
         consoleErrorSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
     });
 
     describe("checkUserLogin", () => {

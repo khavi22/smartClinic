@@ -11,6 +11,8 @@ jest.mock("../services/firebaseService");
 describe("appointmentsController", () => {
     let req;
     let res;
+    let consoleErrorSpy;
+    let consoleLogSpy;
 
     beforeEach(() => {
         req = {
@@ -25,6 +27,13 @@ describe("appointmentsController", () => {
         };
 
         jest.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
+        consoleLogSpy.mockRestore();
     });
 
     describe("getAvailability", () => {
@@ -142,14 +151,14 @@ describe("appointmentsController", () => {
                 timeSlot: "09:00 - 10:00"
             };
             appointmentService.createAppointment.mockRejectedValue(
-                new Error("This slot is full and unavailable")
+                new Error("This slot is full")
             );
 
             await postAppointment(req, res);
 
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({
-                error: "This slot is full and unavailable"
+                error: "This slot is full"
             });
         });
 

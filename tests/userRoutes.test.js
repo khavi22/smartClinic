@@ -20,7 +20,7 @@ describe("User Routes", () => {
 
     describe("GET /api/user/login/:userId", () => {
         it("should return 200 and redirect info when user exists", async () => {
-            firebaseService.getUserProfileById.mockResolvedValue({ role: "patient" });
+            firebaseService.getUserProfileById.mockResolvedValue({ uid: "test-uid", role: "patient" });
             
             const res = await request(app).get("/api/user/login/test-uid");
             
