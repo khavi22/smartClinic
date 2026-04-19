@@ -87,6 +87,17 @@ describe("firebaseService Tests", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("should throw error if database fails", async () => {
+        const mockGet = jest.fn();
+        const mockWhere = jest.fn();
+    
+        mockGet.mockRejectedValue(new Error("DB error"));
+        mockWhere.mockReturnValue({ get: mockGet });
+        db.collection.mockReturnValue({ where: mockWhere });
+    
+        await expect(getAppointmentsByPatientId("patient123")).rejects.toThrow("DB error");
+    });
   });
 
   describe("getAvailabilityForDate", () => {
@@ -115,38 +126,72 @@ describe("firebaseService Tests", () => {
       expect(result[9].time).toBe("09:00 - 10:00");
     });
 
+    it("should not filter by clinicId if clinicId is default", async () => {
+        const mockGet = jest.fn();
+        const mockWhere = jest.fn();
+        mockGet.mockResolvedValue({ empty: true, forEach: jest.fn() });
+        const queryRef = { where: mockWhere, get: mockGet };
+        mockWhere.mockReturnValue(queryRef);
+        db.collection.mockReturnValue(queryRef);
+
+        await getAvailabilityForDate("default", "2026-04-20");
+
+        expect(mockWhere).toHaveBeenNthCalledWith(1, "date", "==", "2026-04-20");
+        expect(mockWhere).toHaveBeenNthCalledWith(2, "status", "==", "booked");
+        expect(mockWhere).not.toHaveBeenCalledWith("clinicId", "==", "default");
+    });
+
+    it("should update slot taken count and status when appointments exist", async () => {
+        const mockGet = jest.fn();
+        const mockWhere = jest.fn();
+        const mockSnapshot = {
+          empty: false,
+          forEach: (callback) => {
+            callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+            callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
+          }
+        };
+        mockGet.mockResolvedValue(mockSnapshot);
+        const queryRef = { where: mockWhere, get: mockGet };
+        mockWhere.mockReturnValue(queryRef);
+        db.collection.mockReturnValue(queryRef);
+
+        const result = await getAvailabilityForDate("clinic123", "2026-04-20");
+        const slot = result.find((s) => s.time === "09:00 - 10:00");
+        expect(slot.taken).toBe(2);
+    });
+
     it("should mark slot as full when taken exceeds capacity", async () => {
         const mockGet = jest.fn();
         const mockWhere = jest.fn();
-    
         const mockSnapshot = {
           empty: false,
           forEach: (callback) => {
             for (let i = 0; i < 20; i++) {
-              callback({
-                data: () => ({
-                  timeSlot: "09:00 - 10:00"
-                })
-              });
+              callback({ data: () => ({ timeSlot: "09:00 - 10:00" }) });
             }
           }
         };
-    
         mockGet.mockResolvedValue(mockSnapshot);
-    
-        const queryRef = {
-          where: mockWhere,
-          get: mockGet
-        };
-    
+        const queryRef = { where: mockWhere, get: mockGet };
         mockWhere.mockReturnValue(queryRef);
         db.collection.mockReturnValue(queryRef);
-    
+
         const result = await getAvailabilityForDate("clinic123", "2026-04-20");
-    
         const slot = result.find((s) => s.time === "09:00 - 10:00");
         expect(slot.status).toBe("full");
-      });
+    });
+
+    it("should throw error if database fails", async () => {
+        const mockGet = jest.fn();
+        const mockWhere = jest.fn();
+        mockGet.mockRejectedValue(new Error("DB error"));
+        const queryRef = { where: mockWhere, get: mockGet };
+        mockWhere.mockReturnValue(queryRef);
+        db.collection.mockReturnValue(queryRef);
+
+        await expect(getAvailabilityForDate("clinic123", "2026-04-20")).rejects.toThrow("DB error");
+    });
   });
 
   describe("createAppointment", () => {
@@ -156,20 +201,9 @@ describe("firebaseService Tests", () => {
       const mockGetCapacity = jest.fn();
       const mockWhere = jest.fn();
 
-      const duplicateQuery = {
-        where: jest.fn(),
-        get: mockGetDuplicate
-      };
-
-      const capacityQuery = {
-        where: jest.fn(),
-        get: mockGetCapacity
-      };
-
-      const appointmentsRef = {
-        where: mockWhere,
-        add: mockAdd
-      };
+      const duplicateQuery = { where: jest.fn(), get: mockGetDuplicate };
+      const capacityQuery = { where: jest.fn(), get: mockGetCapacity };
+      const appointmentsRef = { where: mockWhere, add: mockAdd };
 
       mockGetDuplicate.mockResolvedValue({ empty: true });
       mockGetCapacity.mockResolvedValue({ size: 0 });
@@ -185,16 +219,47 @@ describe("firebaseService Tests", () => {
       db.collection.mockReturnValue(appointmentsRef);
 
       const result = await createAppointment(
-        "clinic123",
-        "2026-04-20",
-        "09:00 - 10:00",
-        "patient123",
-        "Community Clinic",
-        "123 Main Road"
+        "clinic123", "2026-04-20", "09:00 - 10:00", "patient123", "Clinic", "Addr"
       );
 
       expect(mockAdd).toHaveBeenCalled();
       expect(result.id).toBe("appt123");
+    });
+
+    it("should throw error if patient already has a booking for the day", async () => {
+        const mockGetDuplicate = jest.fn();
+        const mockWhere = jest.fn();
+        const duplicateQuery = { where: jest.fn(), get: mockGetDuplicate };
+        const appointmentsRef = { where: mockWhere, add: jest.fn() };
+        mockGetDuplicate.mockResolvedValue({ empty: false });
+        duplicateQuery.where.mockReturnValue(duplicateQuery);
+        mockWhere.mockReturnValue(duplicateQuery);
+        db.collection.mockReturnValue(appointmentsRef);
+
+        await expect(createAppointment("c1", "2026-04-20", "09:00", "p1")).rejects.toThrow("You already have a booking for this day.");
+    });
+
+    it("should throw error if slot is full", async () => {
+        const mockGetDuplicate = jest.fn();
+        const mockGetCapacity = jest.fn();
+        const mockWhere = jest.fn();
+        const duplicateQuery = { where: jest.fn(), get: mockGetDuplicate };
+        const capacityQuery = { where: jest.fn(), get: mockGetCapacity };
+        mockGetDuplicate.mockResolvedValue({ empty: true });
+        mockGetCapacity.mockResolvedValue({ size: 10 });
+        duplicateQuery.where.mockReturnValue(duplicateQuery);
+        capacityQuery.where.mockReturnValue(capacityQuery);
+        mockWhere.mockImplementation((field) => field === "patientId" ? duplicateQuery : capacityQuery);
+        db.collection.mockReturnValue({ where: mockWhere, add: jest.fn() });
+
+        await expect(createAppointment("c1", "2026-04-20", "09:00", "p1")).rejects.toThrow("This slot is full.");
+    });
+
+    it("should throw error if database fails", async () => {
+        const mockWhere = jest.fn();
+        db.collection.mockReturnValue({ where: mockWhere });
+        mockWhere.mockImplementation(() => { throw new Error("DB error"); });
+        await expect(createAppointment("c1", "2026-04-20", "09:00", "p1")).rejects.toThrow("DB error");
     });
   });
 
@@ -216,23 +281,68 @@ describe("firebaseService Tests", () => {
       expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: "cancelled" }));
       expect(result.success).toBe(true);
     });
+
+    it("should throw error if booking is not found", async () => {
+        const mockGet = jest.fn();
+        const mockDoc = jest.fn();
+        mockGet.mockResolvedValue({ exists: false });
+        mockDoc.mockReturnValue({ get: mockGet, update: jest.fn() });
+        db.collection.mockReturnValue({ doc: mockDoc });
+
+        await expect(cancelAppointment("appt999")).rejects.toThrow("Booking not found");
+    });
+
+    it("should throw error if database fails while updating", async () => {
+        const mockGet = jest.fn();
+        const mockUpdate = jest.fn();
+        mockGet.mockResolvedValue({ exists: true });
+        mockUpdate.mockRejectedValue(new Error("Update failed"));
+        db.collection.mockReturnValue({ doc: () => ({ get: mockGet, update: mockUpdate }) });
+
+        await expect(cancelAppointment("appt123")).rejects.toThrow("Update failed");
+    });
   });
 
   describe("getUserProfileById", () => {
-    it("should return user profile if user exists", async () => {
+    it("should return profile from 'users' if it exists", async () => {
       const mockGet = jest.fn();
       const mockDoc = jest.fn();
-
-      mockGet.mockResolvedValue({
-        exists: true,
-        data: () => ({ name: "Martin" })
-      });
-
+      mockGet.mockResolvedValue({ exists: true, data: () => ({ role: "admin" }) });
       mockDoc.mockReturnValue({ get: mockGet });
       db.collection.mockReturnValue({ doc: mockDoc });
 
       const result = await getUserProfileById("user123");
-      expect(result.name).toBe("Martin");
+      expect(db.collection).toHaveBeenCalledWith("users");
+      expect(result.role).toBe("admin");
+    });
+
+    it("should return profile from 'patients' if not in 'users'", async () => {
+        const mockGetUsers = jest.fn();
+        const mockGetPatients = jest.fn();
+        const mockDoc = jest.fn();
+
+        mockGetUsers.mockResolvedValue({ exists: false });
+        mockGetPatients.mockResolvedValue({ exists: true, data: () => ({ role: "patient" }) });
+        
+        mockDoc.mockReturnValue({ get: mockGetUsers }); // first call
+        mockDoc.mockReturnValueOnce({ get: mockGetUsers }); 
+        mockDoc.mockReturnValueOnce({ get: mockGetPatients });
+
+        db.collection.mockImplementation((name) => ({ doc: mockDoc }));
+
+        const result = await getUserProfileById("user456");
+        expect(db.collection).toHaveBeenCalledWith("users");
+        expect(db.collection).toHaveBeenCalledWith("patients");
+        expect(result.role).toBe("patient");
+    });
+
+    it("should return null if not in either collection", async () => {
+        const mockGet = jest.fn();
+        mockGet.mockResolvedValue({ exists: false });
+        db.collection.mockReturnValue({ doc: () => ({ get: mockGet }) });
+
+        const result = await getUserProfileById("user999");
+        expect(result).toBeNull();
     });
   });
 
@@ -246,18 +356,10 @@ describe("firebaseService Tests", () => {
       db.collection.mockReturnValue({ doc: mockDoc });
 
       const result = await createPatientProfile(
-        "user123",
-        "Martin Mulweli",
-        "martin@example.com",
-        "patient",
-        "0712345678",
-        "1234567890123"
+        "user123", "Martin Mulweli", "martin@example.com", "patient", "0712345678", "1234567890123"
       );
 
-      expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
-        uid: "user123",
-        idNumber: "1234567890123"
-      }));
+      expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ uid: "user123", idNumber: "1234567890123" }));
       expect(result.uid).toBe("user123");
     });
   });
@@ -281,9 +383,7 @@ describe("firebaseService Tests", () => {
           it('should write base and role data to users collection', async () => {
               const userData = { uid: 'test-uid', fullName: 'John Doe', role: 'admin' };
               const roleData = { clinicId: 'clinic-123' };
-
               await createUserProfile(userData, roleData);
-
               expect(db.collection).toHaveBeenCalledWith('users');
               expect(mockDoc).toHaveBeenCalledWith('test-uid');
               expect(mockSet).toHaveBeenCalled();
@@ -293,9 +393,7 @@ describe("firebaseService Tests", () => {
       describe('getClinicIdFromAdminCode', () => {
           it('should return clinicId when code is valid and unused', async () => {
               mockGet.mockResolvedValue({ empty: false, docs: [{ id: 'clinic-123' }] });
-
               const result = await getClinicIdFromAdminCode('ADM-A1B2C3');
-
               expect(db.collection).toHaveBeenCalledWith('clinics');
               expect(result).toBe('clinic-123');
           });
@@ -304,12 +402,8 @@ describe("firebaseService Tests", () => {
       describe('claimClinic', () => {
           it('should update clinic with adminUid and set isActive to true', async () => {
               await claimClinic('clinic-123', 'test-uid');
-
               expect(db.collection).toHaveBeenCalledWith('clinics');
-              expect(mockUpdate).toHaveBeenCalledWith({
-                  adminUid: 'test-uid',
-                  isActive: true
-              });
+              expect(mockUpdate).toHaveBeenCalledWith({ adminUid: 'test-uid', isActive: true });
           });
       });
   });

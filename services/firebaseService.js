@@ -142,7 +142,10 @@ const getAppointmentsByPatientId = async (patientId) => {
 // ======================= USERS =======================
 //TODO: remove the patient implementation
 const getUserProfileById = async (userId) => {
-    const doc = await db.collection("users").doc(userId).get();
+    let doc = await db.collection("users").doc(userId).get();
+    if (doc.exists) return doc.data();
+
+    doc = await db.collection("patients").doc(userId).get();
     return doc.exists ? doc.data() : null;
 };
 

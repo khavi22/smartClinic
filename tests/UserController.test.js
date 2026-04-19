@@ -36,12 +36,12 @@ describe("UserController Tests", () => {
             });
         });
 
-        it("should return dashboard redirect if user exists", async () => {
+        it("should return adminDashboard redirect if user is admin", async () => {
             req.params.userId = "user123";
 
             const mockUser = {
-                id: "user123",
-                name: "Martin"
+                uid: "user123",
+                role: "admin"
             };
 
             firebaseService.getUserProfileById.mockResolvedValue(mockUser);
@@ -49,6 +49,26 @@ describe("UserController Tests", () => {
             await checkUserLogin(req, res);
 
             expect(firebaseService.getUserProfileById).toHaveBeenCalledWith("user123");
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                exists: true,
+                redirect: "/adminDashboard.html"
+            });
+        });
+
+        it("should return dashboard redirect if user is patient", async () => {
+            req.params.userId = "user456";
+
+            const mockUser = {
+                uid: "user456",
+                role: "patient"
+            };
+
+            firebaseService.getUserProfileById.mockResolvedValue(mockUser);
+
+            await checkUserLogin(req, res);
+
+            expect(firebaseService.getUserProfileById).toHaveBeenCalledWith("user456");
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
                 exists: true,
