@@ -12,7 +12,7 @@ const {
     checkUserLogin,
     createUserProfile,
     deleteUserAccount
-} = require("../controllers/UserController");
+} = require("../Controllers/UserController");
 const firebaseService = require("../services/firebaseService");
 
 jest.mock("../services/firebaseService");
@@ -337,5 +337,5 @@ describe("UserController", () => {
             });
         });
     });
-    
+
 });
