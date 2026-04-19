@@ -7,21 +7,12 @@ exports.getClinics = async (req, res) => {
   let Query;
 
   ///search name exits checking if it has a value
-<<<<<<< HEAD
   if (searchName) {
     Query = `clinic named ${searchName}`;
   }
   //check if latitude and longitude exist if the patient search using location
   if (latitude && longitude) {
     Query = `clinic near ${latitude},${longitude}`
-=======
-  if(searchName){
-    Query = `clinic named ${searchName}`;
-  }
-  //check if latitude and longitude exist if the patient search using location
-  if(latitude &&  longitude){
-    Query =`clinic near ${latitude},${longitude}`
->>>>>>> 59151477bdf606017904c0e9b0679657769f768e
   }
   try {
     const response = await axios.post(
