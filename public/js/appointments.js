@@ -263,27 +263,31 @@ function setupTabs() {
 
 document.getElementById("cancel-confirm").addEventListener("click", async () => {
     if (!selectedAppointmentId) return;
-
+    
     try {
-        const response = await fetch(`/api/appointments/${selectedAppointmentId}`, {
-            method: 'DELETE'
+      // change to put/post request to update status to cancelled instead of deleting;
+       const response = await fetch(`/api/appointments/${selectedAppointmentId}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            }
         });
 
-        if (response.ok) {
-            const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
-            if (appointment) {
-                appointment.status = "cancelled";
-            }
-            renderAppointments();
-        } else {
-            const err = await response.json();
-            alert(`Failed to cancel: ${err.error}`);
+      if (response.ok) {
+        const appointment = appointments.find(appt => appt.id === selectedAppointmentId);
+        if (appointment) {
+            appointment.status = "cancelled";
         }
+        renderAppointments();
+      } else {
+        const err = await response.json();
+        alert(`Failed to cancel: ${err.error}`);
+      }
     } catch (error) {
-        console.error("Cancellation error:", error);
-        alert("Error connecting to server for cancellation.");
+    console.error("Cancellation error:", error);
+    alert("Error connecting to server for cancellation.");
     }
-});
+  })
 
 // document.getElementById("cancel-close").addEventListener("click", () => {
 //   cancelDialog.close();
@@ -295,7 +299,7 @@ document.getElementById("reschedule-confirm").addEventListener("click", () => {
     if (appointment) {
         const clinicId = appointment.clinicId;
         const clinicName = encodeURIComponent(appointment.clinicName || "");
-        const clinicAddress = encodeURIComponent(appointment.clinicAddress || "");
+   ;     const clinicAddress = encodeURIComponent(appointment.clinicAddress || "");
         const oldId = appointment.id;
         
         window.location.href = `Availability.html?id=${clinicId}&name=${clinicName}&address=${clinicAddress}&oldAppointmentId=${oldId}`;

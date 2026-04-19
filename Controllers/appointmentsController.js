@@ -60,19 +60,35 @@ exports.getAppointmentsByPatientId = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch appointments" });
     }
 };
-
-exports.deleteAppointment = async (req, res) => {
+// make the put/post that updates status to cancelled by using function from firebaseService
+// Controller to cancel a booking
+exports.cancelAppointmentController = async (req, res) => {
     try {
-        const { id } = req.params;
+        const appointmentId = req.params.id;
 
-        if (!id) {
-            return res.status(400).json({ error: "Missing appointment ID" });
+        // Validate input
+        if (!appointmentId) {
+            return res.status(400).json({
+                success: false,
+                message: "Appointment ID is required"
+            });
         }
 
-        await cancelAppointment(id);
-        res.json({ success: true, message: "Appointment cancelled successfully" });
+        // Call service
+        const result = await cancelAppointment(appointmentId);
+
+        return res.status(200).json({
+            success: true,
+            message: result.message
+        });
+
     } catch (error) {
-        console.error("Failed to cancel appointment:", error);
-        res.status(500).json({ error: "Failed to cancel appointment" });
+        console.error("Cancel Appointment Controller Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to cancel appointment",
+            error: error.message
+        });
     }
 };
