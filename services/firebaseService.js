@@ -180,5 +180,11 @@ const cancelAppointment = async (appointmentId) =>{
         throw error;
     }
 };
+// ======================= ADMINS =======================
+const createAdminProfile = async (adminData) => {
+    adminData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    await db.collection("admin").doc(adminData.uid).set(adminData);
+};
 
-module.exports = { getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
+
+module.exports = { getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment, createAdminProfile };
