@@ -142,7 +142,7 @@ signupForm.addEventListener("submit", async (e) => {
         }
 
         console.log("Admin record created successfully!");
-        window.location.href = "dashboard.html";
+        window.location.href = "adminDashboard.html";
     } catch (error) {
         console.error("Error creating admin:", error);
         alert("Error: " + error.message);
