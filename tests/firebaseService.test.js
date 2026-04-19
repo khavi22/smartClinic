@@ -513,7 +513,6 @@ describe("clinic helpers", () => {
 
         expect(result).toBe("clinic-123");
         expect(query.where).toHaveBeenCalledWith("adminCode", "==", "ADM-A1B2C3");
-        expect(query.where).toHaveBeenCalledWith("adminUid", "==", null);
         expect(query.where).toHaveBeenCalledWith("isActive", "==", false);
     });
 
@@ -535,10 +534,9 @@ describe("clinic helpers", () => {
             doc: jest.fn(() => ({ update }))
         });
 
-        await claimClinic("clinic-123", "test-uid");
+        await claimClinic("clinic-123");
 
         expect(update).toHaveBeenCalledWith({
-            adminUid: "test-uid",
             isActive: true
         });
     });

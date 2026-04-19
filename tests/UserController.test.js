@@ -223,7 +223,7 @@ describe("UserController", () => {
                     clinicId: "clinic-123"
                 }
             );
-            expect(firebaseService.claimClinic).toHaveBeenCalledWith("clinic-123", "test-uid");
+            expect(firebaseService.claimClinic).toHaveBeenCalledWith("clinic-123");
             expect(res.status).toHaveBeenCalledWith(201);
         });
 

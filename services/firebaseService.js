@@ -282,7 +282,6 @@ const createClinic = async ({ placeId, clinicName, city }) => {
 const getClinicIdFromAdminCode = async (adminCode) => {
     const snapshot = await db.collection("clinics")
         .where("adminCode", "==", adminCode)
-        .where("adminUid", "==", null)      // not yet claimed
         .where("isActive", "==", false)     // not yet active
         .get();
 
@@ -292,9 +291,8 @@ const getClinicIdFromAdminCode = async (adminCode) => {
 };
 
 // Links the admin to the clinic on successful signup
-const claimClinic = async (clinicId, uid) => {
+const claimClinic = async (clinicId) => {
     await db.collection("clinics").doc(clinicId).update({
-        adminUid: uid,
         isActive: true
     });
 };

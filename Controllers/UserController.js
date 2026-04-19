@@ -94,7 +94,7 @@ exports.createUserProfile = async (req, res) => {
             successMessage = "Admin account created successfully";
 
             await firebaseService.createUserProfile(userData, roleData);
-            await firebaseService.claimClinic(clinicId, uid);
+            await firebaseService.claimClinic(clinicId);
         } else {
             // Staff signup is intentionally disabled in the backend for now.
             successMessage = "Patient account created successfully";
