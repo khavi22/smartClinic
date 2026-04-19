@@ -140,12 +140,13 @@ const getAppointmentsByPatientId = async (patientId) => {
     }
 };
 // ======================= USERS =======================
-exports.getUserProfileById = async (userId) => {
+//TODO: remove the patient implementation
+const getUserProfileById = async (userId) => {
     const doc = await db.collection("users").doc(userId).get();
     return doc.exists ? doc.data() : null;
 };
 
-exports.createUserProfile = async (userData, roleData = {}) => {
+const createUserProfile = async (userData, roleData = {}) => {
     const { uid } = userData;
 
     await db.collection("users").doc(uid).set({
@@ -157,18 +158,7 @@ exports.createUserProfile = async (userData, roleData = {}) => {
 // ======================= PATIENTS =======================
 
 // Get profile
-const getUserProfileById = async (patientId) => {
-    try {
-        const docSnap = await db.collection("patients").doc(patientId).get();
 
-        if (!docSnap.exists) return null;
-
-        return { id: docSnap.id, ...docSnap.data() };
-    } catch (error) {
-        console.error("Error fetching profile:", error);
-        throw error;
-    }
-};
 
 // make a method to update booking status to cancel which is gonna be used by the controller
 
@@ -212,19 +202,31 @@ const validateAdminCode = async (adminCode, clinicId) => {
 };
 // ======================= CLINICS =======================
 
-const createClinic = async (clinicData) => {
+const createClinic = async ({ placeId, clinicName, city }) => {
     const code = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
 
-    const clinicRef = await db.collection("clinics").add({
-        ...clinicData,
+    await db.collection("clinics").doc(placeId).set({
+        placeId,
+        clinicName,
+        city,
+        operatingHours: {
+            monday:    { open: "08:00", close: "17:00", isOpen: true },
+            tuesday:   { open: "08:00", close: "17:00", isOpen: true },
+            wednesday: { open: "08:00", close: "17:00", isOpen: true },
+            thursday:  { open: "08:00", close: "17:00", isOpen: true },
+            friday:    { open: "08:00", close: "17:00", isOpen: true },
+            saturday:  { open: "08:00", close: "13:00", isOpen: true },
+            sunday:    { open: "00:00", close: "00:00", isOpen: false }
+        },
         adminCode: code,
         adminUid: null,
         isActive: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return { clinicId: clinicRef.id, adminCode: code };
+    return { clinicId: placeId, adminCode: code };
 };
+
 
 // Validates the code and returns the clinicId if valid
 const getClinicIdFromAdminCode = async (adminCode) => {
@@ -247,4 +249,4 @@ const claimClinic = async (clinicId, uid) => {
     });
 };
 
-module.exports = {createClinic, claimClinic, getClinicIdFromAdminCode, validateAdminCode, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
+module.exports = {createUserProfile, createClinic, claimClinic, getClinicIdFromAdminCode, validateAdminCode, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
