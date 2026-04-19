@@ -169,24 +169,77 @@ const getAppointmentsByPatientId = async (patientId) => {
     }
 };
 // ======================= USERS =======================
-//TODO: remove the patient implementation
+const ROLE_COLLECTIONS = {
+    patient: "patients",
+    admin: "admins",
+    staff: "staff"
+};
+
+const COLLECTION_NAMES = ["patients", "admins", "staff", "users"];
+const getCollectionNameForRole = (role) => {
+    if (role === "admin") return "admins";
+    if (role === "patient") return "patients";
+    return role; // staff is staff
+};
+
 const getUserProfileById = async (userId) => {
-    const doc = await db.collection("users").doc(userId).get();
-    return doc.exists ? doc.data() : null;
+    for (const collectionName of COLLECTION_NAMES) {
+        const doc = await db.collection(collectionName).doc(userId).get();
+
+        if (doc.exists) {
+            return doc.data();
+        }
+    }
+
+    return null;
 };
 
 const createUserProfile = async (userData, roleData = {}) => {
-    const { uid } = userData;
+    const { uid, role } = userData;
+    const collectionName = getCollectionNameForRole(role);
 
-    // 1. Set Custom Claims for security
-    await admin.auth().setCustomUserClaims(uid, { role: userData.role });
+    if (!collectionName) {
+        throw new Error("Unsupported role");
+    }
 
-    // 2. Save to Firestore
-    await db.collection("users").doc(uid).set({
-        ...userData,
+    // 1. Set Custom Claims for security (keeping our logic)
+    await admin.auth().setCustomUserClaims(uid, { role });
+
+    const profileData = {
+        uid,
+        fullName: userData.fullName,
+        email: userData.email,
+        role,
+        phone: userData.phone,
+        idNumber: userData.idNumber || "N/A",
         ...roleData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    };
+
+    // 2. Save to individualized collection (keeping mate's logic)
+    await db.collection(collectionName).doc(uid).set(profileData);
+};
+
+const getUserProfileByEmail = async (email) => {
+    const trimmedEmail = String(email || "").trim();
+
+    if (!trimmedEmail) {
+        return null;
+    }
+
+    const collections = Object.values(ROLE_COLLECTIONS);
+
+    for (const collectionName of collections) {
+        const snapshot = await db.collection(collectionName)
+            .where("email", "==", trimmedEmail)
+            .get();
+
+        if (!snapshot.empty) {
+            return snapshot.docs[0].data();
+        }
+    }
+
+    return null;
 };
 // ======================= PATIENTS =======================
 
@@ -217,26 +270,6 @@ const cancelAppointment = async (appointmentId) =>{
         console.error("Error cancelling booking:", error);
         throw error;
     }
-};
-// ======================= ADMINS =======================
-
-const createPatientProfile = async (uid, fullName, email, role, phone, idNumber) => {
-    // 1. Set Custom Claims for security
-    await admin.auth().setCustomUserClaims(uid, { role: "patient" });
-
-    const patientData = {
-        uid,
-        fullName,
-        email,
-        role: "patient", // Force role for security
-        phone,
-        idNumber: idNumber || "N/A",
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-    };
-
-    await db.collection("patients").doc(uid).set(patientData);
-
-    return patientData;
 };
 
 // ======================= VALIDATION =======================
@@ -299,7 +332,7 @@ const ensureClinicExists = async ({ clinicId, name, address }) => {
 };
 
 
-// Validates any verification code (Admin or Staff) and returns { clinicId, role }
+// Validates any verification code (Admin or Staff) and returns { clinicId, role, adminUid }
 const getClinicIdFromVerificationCode = async (code) => {
     // Check Admin codes
     let snapshot = await db.collection("clinics")
@@ -332,9 +365,9 @@ const getClinicIdFromVerificationCode = async (code) => {
 };
 
 // Links the admin to the clinic on successful signup
-const claimClinic = async (clinicId, uid) => {
+const claimClinic = async (clinicId, adminUid) => {
     await db.collection("clinics").doc(clinicId).update({
-        adminUid: uid,
+        adminUid: adminUid,
         isActive: true
     });
 };
@@ -346,18 +379,72 @@ const updateClinicOperatingHours = async (clinicId, operatingHours) => {
     });
 };
 
+const getClinicNameById = async (clinicId) => {
+    const doc = await db.collection("clinics").doc(clinicId).get();
+    return doc.exists ? doc.data().clinicName : "Unknown Clinic";
+};
+
+const deleteUserAccount = async (uid) => {
+    try {
+        // Find which collection the user is in
+        const collections = Object.values(ROLE_COLLECTIONS);
+        let foundProfile = null;
+        let userRole = null;
+
+        for (const collectionName of collections) {
+            const doc = await db.collection(collectionName).doc(uid).get();
+            if (doc.exists) {
+                foundProfile = doc.data();
+                userRole = foundProfile.role;
+                // Delete from Firestore
+                await db.collection(collectionName).doc(uid).delete();
+                break;
+            }
+        }
+
+        if (userRole === "admin") {
+            // Unclaim the clinic
+            const snapshot = await db.collection("clinics").where("adminUid", "==", uid).get();
+            for (const doc of snapshot.docs) {
+                await doc.ref.update({ adminUid: null, isActive: false });
+            }
+        } else if (userRole === "patient") {
+            // Delete patient appointments
+            const snapshot = await db.collection("appointments").where("patientId", "==", uid).get();
+            for (const doc of snapshot.docs) {
+                await doc.ref.delete();
+            }
+        }
+
+        // Delete from Auth
+        await admin.auth().deleteUser(uid);
+        
+        return foundProfile;
+    } catch (error) {
+        console.error("Error deleting user account:", error);
+        throw error;
+    }
+};
 
 module.exports = {
+    // User management
     getUserProfileById,
     createUserProfile,
-    createAppointment,
-    getAvailabilityForDate,
-    getAppointmentsByPatientId,
-    cancelAppointment,
-    validateAdminCode,
+    getUserProfileByEmail,
+    deleteUserAccount,
+    
+    // Clinic management
     createClinic,
     ensureClinicExists,
     getClinicIdFromVerificationCode,
     claimClinic,
-    updateClinicOperatingHours
+    updateClinicOperatingHours,
+    getClinicNameById,
+    validateAdminCode,
+
+    // Appointments & Availability
+    createAppointment,
+    getAvailabilityForDate,
+    getAppointmentsByPatientId,
+    cancelAppointment
 };

@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 
+if (!admin.apps.length) {
     const serviceAccount = {
         type: "service_account",
         project_id: "smartclinic-11971",
@@ -43,6 +44,7 @@ HijTIW3z/E2h/ZAkNVYQ/Q==
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
+}
 
 const db = admin.firestore();
 

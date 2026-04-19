@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // -- Helper Functions --
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // -- Collection Rules --
+
+    // Patients can only read and update their own profiles
+    match /patients/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+    
+    // Admins can read their own profiles (Writes handled by server)
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false; 
+    }
+    
+    // Staff can read their own profiles (Writes handled by server)
+    match /staff/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+    
+    // Legacy/Centralized users collection
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Clinics are publicly searchable but only the server can modify them
+    match /clinics/{clinicId} {
+      allow read: if true; 
+      allow write: if false; 
+    }
+
+    // Appointments are private to the patient, but readable by clinic staff
+    match /appointments/{appointmentId} {
+      allow read: if signedIn() && (
+        resource.data.patientId == request.auth.uid ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+      );
+      allow create: if signedIn() && request.resource.data.patientId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.patientId == request.auth.uid;
+    }
+    
+    // Default Deny for everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

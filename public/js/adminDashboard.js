@@ -10,17 +10,33 @@ firebase.auth().onAuthStateChanged(async (user) => {
         return;
     }
     
-    // Check if user is actually an admin
-    const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
-    if (!userDoc.exists || userDoc.data().role !== "admin") {
-        console.warn("Unauthorized access to admin dashboard");
-        window.location.href = "dashboard.html";
-        return;
-    }
+    try {
+        console.log("Admin Dashboard: Fetching profile from server...");
+        const idToken = await user.getIdToken();
+        const response = await fetch(`/api/user/login/${user.uid}?email=${encodeURIComponent(user.email || "")}`, {
+            headers: { "Authorization": `Bearer ${idToken}` }
+        });
 
-    currentClinicId = userDoc.data().clinicId;
-    if (currentClinicId) {
-        await loadClinicHours(currentClinicId);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+        const result = await response.json();
+
+        if (!result.exists || !result.profile || result.profile.role !== "admin") {
+            console.warn("Unauthorized or missing admin profile");
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        const data = result.profile;
+        currentClinicId = data.clinicId;
+        if (currentClinicId) {
+            // Clinic hours search might still hit rules, 
+            // but at least we have the clinic ID and profile secure.
+            await loadClinicHours(currentClinicId);
+        }
+
+    } catch (error) {
+        console.error("Admin Dashboard: Error loading profile:", error);
+        window.location.href = "dashboard.html";
     }
 });
 

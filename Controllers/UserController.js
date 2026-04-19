@@ -1,22 +1,40 @@
 const firebaseService = require('../services/firebaseService');
-const { getUserProfileById } = firebaseService;
+const { admin } = require("../services/config/firebase");
 
 exports.checkUserLogin = async (req, res) => {
     try {
         const { userId } = req.params;
+        const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
 
-        if (!userId) {
-            return res.status(400).json({ error: "Missing userId" });
+        if (!userId && !email) {
+            return res.status(400).json({ error: "Missing userId or email" });
         }
 
-        const user = await getUserProfileById(userId);
+        const user =
+            (userId ? await firebaseService.getUserProfileById(userId) : null) ||
+            (email ? await firebaseService.getUserProfileByEmail(email) : null);
 
-        if (user) {
-            const redirectUrl = user.role === "admin" ? "/adminDashboard.html" : "/dashboard.html";
+        // If we found a user by email, ensure the UID matches or it's a placeholder
+        // If it's a placeholder (no UID in records yet), we want them to go to Sign Up to link it
+        if (user && user.uid === userId) {
+            let redirectUrl = "/dashboard.html"; 
+            if (user.role === "admin") redirectUrl = "/adminDashboard.html";
+            else if (user.role === "staff") redirectUrl = "/staffDashboard.html";
+
+            // If it's a clinic-related role, enrich with clinic name if possible
+            if ((user.role === "admin" || user.role === "staff") && user.clinicId) {
+                try {
+                    user.clinicName = await firebaseService.getClinicNameById(user.clinicId);
+                } catch (e) {
+                    console.warn("Could not fetch clinic name for profile enrichment");
+                }
+            }
+
             return res.json({
                 success: true,
                 exists: true,
-                redirect: redirectUrl
+                redirect: redirectUrl,
+                profile: user
             });
         }
 
@@ -61,16 +79,14 @@ exports.registerUser = async (req, res) => {
 
             // --- ONE ADMIN PER CLINIC CHECK ---
             if (role === "admin") {
-                const { db } = require("../services/config/firebase");
-                const existingUserDoc = await db.collection("users").doc(uid).get();
+                const existingUserDoc = await firebaseService.getUserProfileById(uid);
                 
-                if (existingUserDoc.exists) {
-                    const existingData = existingUserDoc.data();
+                if (existingUserDoc) {
                     // If already an admin for a DIFFERENT clinic, block
-                    if (existingData.role === "admin" && existingData.clinicId && existingData.clinicId !== verificationResult.clinicId) {
+                    if (existingUserDoc.role === "admin" && existingUserDoc.clinicId && existingUserDoc.clinicId !== verificationResult.clinicId) {
                         return res.status(403).json({ 
                             success: false, 
-                            message: `You are already registered as an administrator for another clinic (${existingData.clinicId === "default" ? "Default Clinic" : "another location"}). You cannot manage more than one clinic.`
+                            message: `You are already registered as an administrator for another clinic. You cannot manage more than one clinic.`
                         });
                     }
                 }
@@ -119,4 +135,34 @@ exports.registerUser = async (req, res) => {
             error: error.message
         });
     }
-};
+};
+
+exports.deleteUserAccount = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization || "";
+
+        if (!authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                success: false,
+                message: "Missing authorization token"
+            });
+        }
+
+        const idToken = authHeader.slice(7).trim();
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+        await firebaseService.deleteUserAccount(decodedToken.uid);
+
+        return res.json({
+            success: true,
+            message: "Account deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting user account:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete user account",
+            error: error.message
+        });
+    }
+};

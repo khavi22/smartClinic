@@ -1,43 +1,59 @@
-console.log("signUp.js loaded");
-
 const auth = firebase.auth();
-const db   = firebase.firestore();
-
-auth.onAuthStateChanged((user) => {
-    if (!user) {
-        console.warn("No session — redirecting to login");
-        window.location.href = "login.html";
-    }
-});
-
 const signupForm = document.getElementById("signupForm");
 const roleSelect = document.getElementById("role");
-const verificationFields = document.getElementById("verificationFields");
-const verificationHint = document.getElementById("verificationHint");
-const verificationLabel = document.getElementById("verificationLabel");
+const roleCodeFields = document.getElementById("roleCodeFields");
+const roleCodeLegend = document.getElementById("roleCodeLegend");
+const roleCodeHelp = document.getElementById("roleCodeHelp");
+const roleCodeLabel = document.getElementById("roleCodeLabel");
+const roleCodeInput = document.getElementById("roleCode");
 
-roleSelect.addEventListener("change", () => {
+function storeUserSession(user, profile = {}) {
+    localStorage.setItem("userId", user.uid);
+    localStorage.setItem("userEmail", profile.email || user.email || "");
+    localStorage.setItem("userRole", profile.role || "");
+
+    if (profile.role === "patient") {
+        localStorage.setItem("patientId", user.uid);
+    } else {
+        localStorage.removeItem("patientId");
+    }
+}
+
+function updateRoleCodeField() {
     const role = roleSelect.value;
-    const needsCode = (role === "admin" || role === "staff");
+    const isSpecialRole = role === "admin" || role === "staff";
 
-    verificationFields.hidden = !needsCode;
-    verificationFields.setAttribute("aria-hidden", String(!needsCode));
+    // Explicitly toggle display to avoid browser-specific hidden attribute bugs
+    roleCodeFields.style.display = isSpecialRole ? "block" : "none";
+    roleCodeFields.setAttribute("aria-hidden", String(!isSpecialRole));
+    roleCodeInput.required = isSpecialRole;
 
-    if (role === "admin") {
-        verificationLabel.textContent = "Admin Verification Code";
-        verificationHint.textContent = "Enter the Admin Code associated with your clinic (starts with ADM-).";
-    } else if (role === "staff") {
-        verificationLabel.textContent = "Staff Registration Code";
-        verificationHint.textContent = "Enter the Staff Code provided by your Clinic Administrator (starts with STF-).";
+    if (!isSpecialRole) {
+        roleCodeInput.value = "";
+        return;
     }
 
-    if (!needsCode) document.getElementById("verificationCode").value = "";
+    const isAdmin = role === "admin";
+    roleCodeLegend.textContent = isAdmin ? "Admin Verification" : "Staff Verification";
+    roleCodeLabel.textContent = isAdmin ? "Admin Code" : "Staff Code";
+}
+
+updateRoleCodeField();
+roleSelect.addEventListener("change", updateRoleCodeField);
+
+// --- Auth Guard ---
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        console.warn("No active session found on signUp.html. Redirecting...");
+        window.location.href = "login.html";
+    }
 });
 
 signupForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const user = auth.currentUser;
+
     if (!user) {
         alert("Session expired. Please log in again.");
         window.location.href = "login.html";
@@ -45,9 +61,9 @@ signupForm.addEventListener("submit", async (e) => {
     }
 
     const role = roleSelect.value;
-    const verificationCode = document.getElementById("verificationCode").value.trim();
+    const roleCode = roleCodeInput.value.trim();
 
-    if ((role === "admin" || role === "staff") && !verificationCode) {
+    if ((role === "admin" || role === "staff") && !roleCode) {
         alert(`Please enter your ${role} verification code.`);
         return;
     }
@@ -62,8 +78,7 @@ signupForm.addEventListener("submit", async (e) => {
         email: user.email,
         role: role,
         phone: document.getElementById("phone").value,
-        idNumber: document.getElementById("idNumber").value || "N/A",
-        verificationCode: verificationCode || null
+        verificationCode: roleCode || null
     };
 
     try {
@@ -82,7 +97,9 @@ signupForm.addEventListener("submit", async (e) => {
         }
 
         console.log(`${role} record created successfully!`);
+        storeUserSession(user, result.profile || registrationData);
         
+        // Wait for token refresh then redirect to the correct dashboard
         await user.getIdToken(true);
         window.location.href = result.redirect || "dashboard.html";
 
