@@ -1,21 +1,25 @@
-const { getUserProfileById } = require("../services/firebaseService");
-const firebaseService = require('../services/firebaseService'); 
+const firebaseService = require("../services/firebaseService");
+const { admin } = require("../services/config/firebase");
 
 exports.checkUserLogin = async (req, res) => {
     try {
         const { userId } = req.params;
+        const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
 
-        if (!userId) {
-            return res.status(400).json({ error: "Missing userId" });
+        if (!userId && !email) {
+            return res.status(400).json({ error: "Missing userId or email" });
         }
 
-        const user = await getUserProfileById(userId);
+        const user =
+            (userId ? await firebaseService.getUserProfileById(userId) : null) ||
+            (email ? await firebaseService.getUserProfileByEmail(email) : null);
 
         if (user) {
             return res.json({
                 success: true,
                 exists: true,
-                redirect: "/dashboard.html"
+                redirect: "/dashboard.html",
+                profile: user
             });
         }
 
@@ -32,11 +36,17 @@ exports.checkUserLogin = async (req, res) => {
     }
 };
 
-const { db, admin } = require("../services/firebaseService");
-
-exports.createPatientProfile = async (req, res) => {
+exports.createUserProfile = async (req, res) => {
     try {
-        const { uid, fullName, email, role, phone, idNumber } = req.body;
+        const {
+            uid,
+            fullName,
+            email,
+            role,
+            phone,
+            adminCode
+            // staffCode
+        } = req.body;
 
         if (!uid || !fullName || !email || !role || !phone) {
             return res.status(400).json({
@@ -45,66 +55,95 @@ exports.createPatientProfile = async (req, res) => {
             });
         }
 
-        const patientData = {
+        if (!["patient", "admin"].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid role selected"
+            });
+        }
+
+        const userData = {
             uid,
             fullName,
             email,
             role,
-            phone,
-            idNumber: idNumber || "N/A",
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
+            phone
         };
 
-        await db.collection("patients").doc(uid).set(patientData);
+        let roleData = {};
+        let successMessage = "User profile created successfully";
+
+        if (role === "admin") {
+            if (!adminCode) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Admin code is required"
+                });
+            }
+
+            const clinicId = await firebaseService.getClinicIdFromAdminCode(adminCode);
+
+            if (!clinicId) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Invalid or already used admin code"
+                });
+            }
+
+            roleData = { adminCode, clinicId };
+            successMessage = "Admin account created successfully";
+
+            await firebaseService.createUserProfile(userData, roleData);
+            await firebaseService.claimClinic(clinicId, uid);
+        } else {
+            // Staff signup is intentionally disabled in the backend for now.
+            successMessage = "Patient account created successfully";
+            await firebaseService.createUserProfile(userData);
+        }
 
         return res.status(201).json({
             success: true,
-            message: "Patient record created successfully"
+            message: successMessage,
+            profile: {
+                ...userData,
+                ...roleData
+            }
         });
     } catch (error) {
-        console.error("Error creating patient:", error);
+        console.error("Error creating user profile:", error);
         return res.status(500).json({
             success: false,
-            message: "Failed to create patient record",
+            message: "Failed to create user profile",
             error: error.message
         });
     }
 };
 
-exports.createAdminProfile = async (req, res) => {
+exports.deleteUserAccount = async (req, res) => {
     try {
-        const { uid, fullName, email, phone, adminCode } = req.body;
+        const authHeader = req.headers.authorization || "";
 
-        if (!uid || !fullName || !email || !phone || !adminCode) {
-            return res.status(400).json({
+        if (!authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
                 success: false,
-                message: "Missing required fields"
+                message: "Missing authorization token"
             });
         }
 
-        // clinicId comes from the code itself, not the frontend
-        const clinicId = await firebaseService.getClinicIdFromAdminCode(adminCode);
-        if (!clinicId) {
-            return res.status(403).json({
-                success: false,
-                message: "Invalid admin code"
-            });
-        }
+        const idToken = authHeader.slice(7).trim();
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
 
-        const userData = { uid, fullName, email, phone, role: "admin" };
-        const roleData = { adminCode, clinicId };
+        await firebaseService.deleteUserAccount(decodedToken.uid);
 
-        await firebaseService.createUserProfile(userData, roleData);
-
-        return res.status(201).json({
+        return res.json({
             success: true,
-            message: "Admin account created successfully"
+            message: "Account deleted successfully"
         });
     } catch (error) {
-        console.error("Error creating admin:", error);
+        console.error("Error deleting user account:", error);
         return res.status(500).json({
             success: false,
-            message: "Failed to create admin record",
+            message: "Failed to delete user account",
             error: error.message
         });
     }

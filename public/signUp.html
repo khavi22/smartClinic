@@ -46,24 +46,14 @@
                     </div>
                 </fieldset>
 
-                <fieldset>
-                    <legend>Verification Details</legend>
+                <fieldset id="roleCodeFields" hidden aria-hidden="true">
+                    <legend id="roleCodeLegend">Role Verification</legend>
+                    <p id="roleCodeHelp">Your clinic will be linked automatically from your code.</p>
                     <div class="field">
-                        <label for="idNumber">SA ID Number</label>
-                        <input type="text" id="idNumber" name="idNumber" 
-                               placeholder="YYMMDDXXXXXXX" maxlength="13">
-                    </div>
-                </fieldset>
-
-                <!-- ======================= admin fields ======================= -->
-                <fieldset id="adminFields" hidden aria-hidden="true">
-                    <legend>Admin Verification</legend>
-                    <p>Your clinic ID will be retrieved automatically from your admin code.</p>
-                    <div class="field">
-                        <label for="adminCode">Admin Code</label>
-                        <input type="text" id="adminCode" name="adminCode"
+                        <label for="roleCode" id="roleCodeLabel">Verification Code</label>
+                        <input type="text" id="roleCode" name="roleCode"
                                autocomplete="off"
-                               maxlength="10">
+                               maxlength="20">
                     </div>
                 </fieldset>
                 

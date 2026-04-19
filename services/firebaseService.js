@@ -140,20 +140,70 @@ const getAppointmentsByPatientId = async (patientId) => {
     }
 };
 // ======================= USERS =======================
-//TODO: remove the patient implementation
+const ROLE_COLLECTIONS = {
+    patient: "patients",
+    admin: "admins"
+    // staff: "staff"
+};
+
+const getCollectionNameForRole = (role) => ROLE_COLLECTIONS[role];
+const COLLECTION_NAMES = Object.values(ROLE_COLLECTIONS);
+
 const getUserProfileById = async (userId) => {
-    const doc = await db.collection("users").doc(userId).get();
-    return doc.exists ? doc.data() : null;
+    const collections = Object.values(ROLE_COLLECTIONS);
+
+    for (const collectionName of collections) {
+        const doc = await db.collection(collectionName).doc(userId).get();
+
+        if (doc.exists) {
+            return doc.data();
+        }
+    }
+
+    return null;
 };
 
 const createUserProfile = async (userData, roleData = {}) => {
-    const { uid } = userData;
+    const { uid, role } = userData;
+    const collectionName = getCollectionNameForRole(role);
 
-    await db.collection("users").doc(uid).set({
-        ...userData,
+    if (!collectionName) {
+        throw new Error("Unsupported role");
+    }
+
+    const profileData = {
+        uid,
+        fullName: userData.fullName,
+        email: userData.email,
+        role,
+        phone: userData.phone,
         ...roleData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    };
+
+    await db.collection(collectionName).doc(uid).set(profileData);
+};
+
+const getUserProfileByEmail = async (email) => {
+    const trimmedEmail = String(email || "").trim();
+
+    if (!trimmedEmail) {
+        return null;
+    }
+
+    const collections = Object.values(ROLE_COLLECTIONS);
+
+    for (const collectionName of collections) {
+        const snapshot = await db.collection(collectionName)
+            .where("email", "==", trimmedEmail)
+            .get();
+
+        if (!snapshot.empty) {
+            return snapshot.docs[0].data();
+        }
+    }
+
+    return null;
 };
 // ======================= PATIENTS =======================
 
@@ -249,4 +299,127 @@ const claimClinic = async (clinicId, uid) => {
     });
 };
 
-module.exports = {createUserProfile, createClinic, claimClinic, getClinicIdFromAdminCode, validateAdminCode, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment };
+// const getStaffAssignmentFromCode = async (staffCode) => {
+//     const snapshot = await db.collection("staffCodes")
+//         .where("code", "==", staffCode)
+//         .where("used", "==", false)
+//         .get();
+//
+//     if (snapshot.empty) {
+//         return null;
+//     }
+//
+//     const staffCodeDoc = snapshot.docs[0];
+//     const staffCodeData = staffCodeDoc.data();
+//
+//     if (!staffCodeData.clinicId) {
+//         return null;
+//     }
+//
+//     return {
+//         staffCodeId: staffCodeDoc.id,
+//         clinicId: staffCodeData.clinicId
+//     };
+// };
+
+// const claimStaffCode = async (staffCodeId, uid) => {
+//     await db.collection("staffCodes").doc(staffCodeId).update({
+//         used: true,
+//         staffUid: uid,
+//         usedAt: admin.firestore.FieldValue.serverTimestamp()
+//     });
+// };
+
+const deleteUserAppointments = async (uid) => {
+    const appointmentsSnapshot = await db.collection("appointments")
+        .where("patientId", "==", uid)
+        .get();
+
+    if (appointmentsSnapshot.empty) {
+        return;
+    }
+
+    await Promise.all(
+        appointmentsSnapshot.docs.map((doc) => doc.ref.delete())
+    );
+};
+
+const releaseAdminClinics = async (uid) => {
+    const clinicsSnapshot = await db.collection("clinics")
+        .where("adminUid", "==", uid)
+        .get();
+
+    if (clinicsSnapshot.empty) {
+        return;
+    }
+
+    await Promise.all(
+        clinicsSnapshot.docs.map((doc) =>
+            doc.ref.update({
+                adminUid: null,
+                isActive: false
+            })
+        )
+    );
+};
+
+// const releaseStaffCodes = async (uid) => {
+//     const staffCodesSnapshot = await db.collection("staffCodes")
+//         .where("staffUid", "==", uid)
+//         .get();
+//
+//     if (staffCodesSnapshot.empty) {
+//         return;
+//     }
+//
+//     await Promise.all(
+//         staffCodesSnapshot.docs.map((doc) =>
+//             doc.ref.update({
+//                 used: false,
+//                 staffUid: null,
+//                 usedAt: null
+//             })
+//         )
+//     );
+// };
+
+const deleteUserRoleDocuments = async (uid) => {
+    await Promise.all(
+        COLLECTION_NAMES.map((collectionName) =>
+            db.collection(collectionName).doc(uid).delete()
+        )
+    );
+};
+
+const deleteUserAccount = async (uid) => {
+    const profile = await getUserProfileById(uid);
+
+    if (profile?.role === "admin") {
+        await releaseAdminClinics(uid);
+    }
+
+    // if (profile?.role === "staff") {
+    //     await releaseStaffCodes(uid);
+    // }
+
+    await deleteUserAppointments(uid);
+    await deleteUserRoleDocuments(uid);
+    await admin.auth().deleteUser(uid);
+
+    return profile;
+};
+
+module.exports = {
+    createUserProfile,
+    createClinic,
+    claimClinic,
+    getClinicIdFromAdminCode,
+    getUserProfileByEmail,
+    validateAdminCode,
+    getUserProfileById,
+    deleteUserAccount,
+    createAppointment,
+    getAvailabilityForDate,
+    cancelAppointment,
+    getAppointmentsByPatientId
+};

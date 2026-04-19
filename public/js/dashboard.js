@@ -1,4 +1,4 @@
-// dashboard.js — auth guard, user display, logout, delete account
+// dashboard.js - auth guard, user display, logout, delete account
 // clinics.js handles all clinic search logic independently
 
 const firebaseConfig = {
@@ -15,9 +15,9 @@ if (!firebase.apps.length) {
 }
 
 const auth = firebase.auth();
-const db   = firebase.firestore();
+const db = firebase.firestore();
+const ROLE_COLLECTIONS = ["patients", "admins", "staff"];
 
-// ── AUTH GUARD ──────────────────────────────────────────────
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         await loadUserProfile(user);
@@ -26,12 +26,20 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// ── LOAD PROFILE → populate nav ─────────────────────────────
 async function loadUserProfile(user) {
     try {
-        const doc = await db.collection("patients").doc(user.uid).get();
+        let doc = null;
 
-        if (!doc.exists) {
+        for (const collectionName of ROLE_COLLECTIONS) {
+            const candidateDoc = await db.collection(collectionName).doc(user.uid).get();
+
+            if (candidateDoc.exists) {
+                doc = candidateDoc;
+                break;
+            }
+        }
+
+        if (!doc || !doc.exists) {
             window.location.href = "signUp.html";
             return;
         }
@@ -39,35 +47,41 @@ async function loadUserProfile(user) {
         const data = doc.data();
         const firstName = (data.fullName || "there").split(" ")[0];
 
-        // Show avatar
+        localStorage.setItem("userId", user.uid);
+        localStorage.setItem("userEmail", data.email || user.email || "");
+        localStorage.setItem("userRole", data.role || "");
+
+        if (data.role === "patient") {
+            localStorage.setItem("patientId", user.uid);
+        } else {
+            localStorage.removeItem("patientId");
+        }
+
         const avatar = document.getElementById("userAvatar");
         if (user.photoURL) {
-            avatar.src    = user.photoURL;
+            avatar.src = user.photoURL;
             avatar.hidden = false;
         }
 
-        // Show greeting
         const greeting = document.getElementById("userGreeting");
         greeting.textContent = `Hi, ${firstName}`;
         greeting.hidden = false;
 
-        // Show logout button
         document.getElementById("logoutBtn").hidden = false;
-
     } catch (err) {
         console.error("Error loading profile:", err);
     }
 }
 
-// ── LOGOUT ──────────────────────────────────────────────────
 document.getElementById("logoutBtn").addEventListener("click", () => {
-    auth.signOut().then(() => window.location.href = "login.html");
+    auth.signOut().then(() => {
+        window.location.href = "login.html";
+    });
 });
 
-// ── DELETE ACCOUNT ──────────────────────────────────────────
-const deleteModal  = document.getElementById("deleteModal");
+const deleteModal = document.getElementById("deleteModal");
 const modalConfirm = document.getElementById("modalConfirm");
-const confirmText  = document.getElementById("confirmText");
+const confirmText = document.getElementById("confirmText");
 
 document.getElementById("deleteAccBtn").addEventListener("click", () => {
     deleteModal.showModal();
@@ -77,44 +91,52 @@ document.getElementById("modalCancel").addEventListener("click", () => {
     deleteModal.close();
 });
 
-// Close on backdrop click
 deleteModal.addEventListener("click", (e) => {
     if (!deleteModal.querySelector(".modal-box").contains(e.target)) {
         deleteModal.close();
     }
 });
 
-// Confirm deletion
 modalConfirm.addEventListener("click", async () => {
     const user = auth.currentUser;
-    if (!user) { window.location.href = "login.html"; return; }
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
 
-    modalConfirm.disabled   = true;
-    confirmText.textContent = "Deleting…";
+    modalConfirm.disabled = true;
+    confirmText.textContent = "Deleting...";
 
     try {
-        // 1. Delete Firestore record
-        await db.collection("patients").doc(user.uid).delete();
-
-        // 2. Delete Auth account (re-auth if session is stale)
-        try {
-            await user.delete();
-        } catch (authErr) {
-            if (authErr.code === "auth/requires-recent-login") {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                await auth.signInWithPopup(provider);
-                await auth.currentUser.delete();
-            } else {
-                throw authErr;
+        const idToken = await user.getIdToken(true);
+        const response = await fetch("/api/user/account", {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${idToken}`
             }
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Failed to delete account");
+        }
+
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("patientId");
+
+        try {
+            await auth.signOut();
+        } catch (signOutError) {
+            console.warn("Sign out after account deletion failed:", signOutError);
         }
 
         window.location.href = "index.html";
-
     } catch (err) {
         console.error("Delete account error:", err);
         alert("Could not delete account: " + err.message);
-        modalConfirm.disabled   = false;
+        modalConfirm.disabled = false;
         confirmText.textContent = "Yes, Delete";
     }
 });
