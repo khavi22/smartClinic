@@ -50,7 +50,7 @@ const db = admin.firestore();
 
 const MAX_CAPACITY_PER_SLOT = 10;
 
-// ======================= APPOINTMENTS =======================
+
 
 // Get availability
 const getAvailabilityForDate = async (clinicId, dateStr) => {
