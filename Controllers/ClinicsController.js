@@ -66,7 +66,7 @@ exports.getClinics = async (req, res) => {
 
   ///search name exits checking if it has a value
   if (searchName) {
-    Query = `clinic named ${searchName}`;
+    Query = `clinic named ${searchName} in South Africa`;
   }
   //check if latitude and longitude exist if the patient search using location
   if (latitude && longitude) {
