@@ -470,3 +470,18 @@ footer.modal-actions {
     .day-toggle { width: 120px; }
     .admin-sidebar { flex-direction: column; }
 }
+.clinic-name-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: white;
+    backdrop-filter: blur(4px);
+}
+.clinic-name-badge i { font-size: 1rem; }
