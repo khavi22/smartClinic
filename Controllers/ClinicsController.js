@@ -70,7 +70,7 @@ exports.getClinics = async (req, res) => {
   }
   //check if latitude and longitude exist if the patient search using location
   if (latitude && longitude) {
-    Query = `clinic near ${latitude},${longitude}`
+    Query = `clinic near ${latitude},${longitude} in South Africa`
   }
   try {
     const response = await axios.post(
