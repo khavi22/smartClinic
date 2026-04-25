@@ -126,8 +126,9 @@ exports.registerUser = async (req, res) => {
                 });
             }
 
+           //getting the clinic that correcponds with this staff id
             const clinicId = await firebaseService.getStaffAssignmentFromCode(code);
-
+            // if the staff code does not exist then invalid
             if (!clinicId) {
                 return res.status(403).json({
                     success: false,

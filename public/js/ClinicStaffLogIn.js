@@ -1,4 +1,3 @@
-
 import {db} from './ClinicStaffFirebase.js';
 import { 
     collection, 
