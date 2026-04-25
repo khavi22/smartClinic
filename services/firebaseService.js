@@ -450,3 +450,35 @@ module.exports = {
     cancelAppointment,
     getAppointmentsByPatientId
 };
+
+// ======================= QUEUE =======================
+const getQueue = async (clinicId) => {
+    const today = new Date().toISOString().split("T")[0]; // "2026-04-24"
+
+    const snapshot = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("queues")
+        .doc(today)
+        .collection("patients")
+        .orderBy("priority", "asc")
+        .orderBy("appointmentTime", "asc")
+        .orderBy("queueNumber", "asc")
+        .get();
+
+    const queue = {
+        WAITING: [],
+        IN_CONSULTATION: [],
+        COMPLETE: [],
+        MISSED: [],
+    };
+
+    snapshot.forEach((doc) => {
+        const patient = { queueItemId: doc.id, ...doc.data() };
+        if (queue[patient.status] !== undefined) {
+            queue[patient.status].push(patient);
+        }
+    });
+
+    return queue;
+};
