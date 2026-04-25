@@ -482,3 +482,49 @@ const getQueue = async (clinicId) => {
 
     return queue;
 };
+
+const startConsultation = async (clinicId, queueItemId, staffId) => {
+    const today = new Date().toISOString().split("T")[0];
+
+    const patientsRef = db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("queues")
+        .doc(today)
+        .collection("patients");
+
+    // Check this staff member doesn't already have a patient IN_CONSULTATION
+    const staffActiveSnapshot = await patientsRef
+        .where("assignedStaffId", "==", staffId)
+        .where("status", "==", "IN_CONSULTATION")
+        .get();
+
+    if (!staffActiveSnapshot.empty) {
+        throw new Error("Staff member already has a patient IN_CONSULTATION");
+    }
+
+    // Fetch the target patient
+    const patientRef = patientsRef.doc(queueItemId);
+    const patientDoc = await patientRef.get();
+
+    if (!patientDoc.exists) {
+        throw new Error("Queue item not found");
+    }
+
+    const patient = patientDoc.data();
+
+    if (patient.status !== "WAITING") {
+        throw new Error("Patient is not in WAITING status");
+    }
+
+    const updatedFields = {
+        status: "IN_CONSULTATION",
+        assignedStaffId: staffId,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: staffId,
+    };
+
+    await patientRef.update(updatedFields);
+
+    return { queueItemId, ...patient, ...updatedFields };
+};

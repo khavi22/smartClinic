@@ -216,6 +216,24 @@ describe("Queue Controllers", () => {
                 expect.objectContaining({ message: "staffId is required" })
             );
         });
+        it("should return 400 if staff already has a patient IN_CONSULTATION", async () => {
+            req.params = { clinicId: "clinic1" };
+            req.body = { queueItemId: "q1", staffId: "staff1" };
+
+            firebaseService.startConsultation.mockRejectedValue(
+                new Error("Staff member already has a patient IN_CONSULTATION")
+            );
+
+            await startConsultation(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message: "Invalid status transition",
+                    error: "Staff member already has a patient IN_CONSULTATION",
+                })
+            );
+        });
 
         it("should return 200 and include the next patient when one exists", async () => {
             req.params = { clinicId: "clinic1" };
