@@ -266,6 +266,24 @@ function loadHospitalData() {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Extract and ensure clinic exists in DB (Organic Onboarding)
+    const urlParams = new URLSearchParams(window.location.search);
+    const clinicId = urlParams.get('id');
+    const name = urlParams.get('name');
+    const address = urlParams.get('address');
+
+    if (clinicId && name) {
+        try {
+            await fetch('/api/clinics/ensure-exists', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clinicId, name, address })
+            });
+            console.log("Clinic initialized/verified");
+        } catch (e) {
+            console.error("Failed to ensure clinic exists", e);
+        }
+    }
 
     const dialog = document.getElementById('bookingModal');
     const cancelBtn = document.getElementById('cancelBookingBtn');

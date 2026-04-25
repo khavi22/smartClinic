@@ -36,7 +36,7 @@ exports.postAppointment = async (req, res) => {
     } catch (error) {
         console.error("Failed to create appointment:", error);
 
-        if (error.message.includes("full and unavailable") ||
+        if (error.message.includes("slot is full") ||
             error.message.includes("already have a booking")) {
             return res.status(400).json({ error: error.message });
         }
