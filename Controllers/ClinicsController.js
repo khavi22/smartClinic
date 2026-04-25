@@ -35,3 +35,86 @@ exports.getClinics = async (req, res) => {
     res.status(500).json({ error: "Error fetching clinics" });
   }
 };
+const seedServiceTemplates = async (req, res) => {
+    try {
+        const result = await firebaseService.seedServiceTemplates();
+
+        return res.status(200).json({
+            success: true,
+            message: result.message
+        });
+
+    } catch (error) {
+        console.error("Seed error:", error);
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+const getServiceTemplates = async (req, res) => {
+    try {
+        const templates = await firebaseService.db
+            .collection("serviceTemplates")
+            .get();
+
+        const data = templates.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Fetch templates error:", error);
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+const firebaseService = require("../services/firebaseService");
+
+// GET services
+const getServices = async (req, res) => {
+  const clinicId = req.user.clinicId;
+
+  const services = await firebaseService.getClinicServices(clinicId);
+  res.json(services);
+};
+
+
+const addService = async (req, res) => {
+  const clinicId = req.user.clinicId;
+
+  const id = await firebaseService.addClinicService(clinicId, req.body);
+
+  res.json({ message: "Service added", id });
+};
+
+
+const updateService = async (req, res) => {
+  const clinicId = req.user.clinicId;
+
+  await firebaseService.updateClinicService(
+    clinicId,
+    req.params.serviceId,
+    req.body
+  );
+
+  res.json({ message: "Updated" });
+};
+
+
+const deleteService = async (req, res) => {
+  const clinicId = req.user.clinicId;
+
+  await firebaseService.deleteClinicService(
+    clinicId,
+    req.params.serviceId
+  );
+
+  res.json({ message: "Deleted" });
+};
