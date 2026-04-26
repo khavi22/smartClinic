@@ -25,8 +25,15 @@ const emailService = require("../services/emailService");
 const { db } = require("../services/config/firebase");
 
 describe("Admin Staff Workflow Tests", () => {
+    let consoleErrorSpy;
+
     beforeEach(() => {
         jest.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        if (consoleErrorSpy) consoleErrorSpy.mockRestore();
     });
 
     describe("firebaseService staff methods", () => {
