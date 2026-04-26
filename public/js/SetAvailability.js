@@ -4,6 +4,9 @@ import {
     addDoc,
     getDocs,
     query,
+    doc,
+    setDoc,
+    updateDoc,
     where
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
@@ -134,13 +137,35 @@ document.addEventListener("DOMContentLoaded", function(){
                     return;
                 }
                 try{
+                    
+                    //const staffNumber = localStorage.getItem("staffCode");
+                    const staffNumber="STF-330AFB";
+
+                    const q = query(
+                        collection(db, "staff"),
+                        where("staffCode" , "==","STF-330AFB")
+                    )
+ 
+                    const snaphshot = await getDocs(q);
+
+                    if(snaphshot.empty){
+                        alert("Staff member not found");
+                        return;
+                    }
+                    console.log("staff member found")
+                    //get reference
+                    const StaffClinicsRef= snaphshot.docs[0].ref;
+
+
                     for(const date  of selectedDates){
-                        await addDoc(collection(db,"staffAvailability_times"), {
+                        await setDoc(
+                            doc(StaffClinicsRef,"staffAvailability_times",date), {
                             Available:Checked_value,
                             date: date,
                             startTime:StartTime,
                             endTime:EndTime,
                         });
+                        console.log("Field successfully added!");
                     }
                     selectedDates = [];
                     renderCalendar();
