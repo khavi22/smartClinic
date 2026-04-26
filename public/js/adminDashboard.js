@@ -243,22 +243,23 @@ async function loadPendingStaff(clinicId) {
 }
 
 function renderPendingStaff(staff) {
-    if (!pendingStaffList) return;
-
+    const container = document.getElementById('pendingStaffList');
+    if (!container) return;
+    
     if (!staff || staff.length === 0) {
-        pendingStaffList.innerHTML = '<p class="text-muted" style="font-size: 0.88rem;">No pending approvals</p>';
+        container.innerHTML = '<p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>';
         return;
     }
 
-    pendingStaffList.innerHTML = staff.map(s => `
-        <div class="pending-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
-            <div>
-                <p style="font-weight: 600; font-size: 0.9rem; margin: 0;">${s.fullName}</p>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">${s.email}</p>
+    container.innerHTML = staff.map(s => `
+        <div class="staff-item">
+            <div class="staff-info">
+                <span class="staff-name">${s.fullName}</span>
+                <span class="staff-email">${s.email}</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button onclick="processApproval('${s.uid}', 'approved')" class="btn-approve" style="background: var(--success-green); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer;">Approve</button>
-                <button onclick="processApproval('${s.uid}', 'rejected')" class="btn-reject" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer;">Reject</button>
+            <div class="staff-actions">
+                <button onclick="processApproval('${s.uid}', 'approved')" class="btn-approve">Approve</button>
+                <button onclick="processApproval('${s.uid}', 'rejected')" class="btn-reject">Reject</button>
             </div>
         </div>
     `).join('');
@@ -285,10 +286,11 @@ window.processApproval = async (staffUid, status) => {
             await loadPendingStaff(currentClinicId);
         } else {
             const result = await response.json();
+            console.error('Approval API error:', result);
             alert('Error: ' + (result.message || 'Failed to process approval'));
         }
     } catch (error) {
-        console.error('Approval error:', error);
-        alert('An unexpected error occurred.');
+        console.error('Approval exception:', error);
+        alert('An unexpected network error occurred. Please check your connection and try again.');
     }
 };

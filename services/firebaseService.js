@@ -173,7 +173,7 @@ const getAppointmentsByPatientId = async (patientId) => {
         throw error;
     }
 };
-// ======================= USERS =======================
+
 
 const getUserProfileById = async (userId) => {
     for (const collectionName of SEARCH_COLLECTIONS) {
@@ -402,7 +402,7 @@ const deleteUserRoleDocuments = async (uid) => {
 const inviteStaffByEmail = async (adminUid, clinicId, email) => {
     const trimmedEmail = email.toLowerCase().trim();
     const existingInvite = await db.collection("clinicInvites").doc(trimmedEmail).get();
-    
+
     if (existingInvite.exists) {
         throw new Error("This email has already been invited.");
     }

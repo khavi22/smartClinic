@@ -13,7 +13,11 @@ exports.inviteStaff = async (req, res) => {
         await firebaseService.inviteStaffByEmail(adminUid, clinicId, email);
 
         const clinicName = await firebaseService.getClinicNameById(clinicId);
-        await emailService.sendStaffInvitation(email, clinicName);
+        const adminProfile = await firebaseService.getUserProfileById(adminUid);
+        const adminName = adminProfile?.fullName || "A Clinic Administrator";
+        const adminEmail = adminProfile?.email || req.user.email;
+        
+        await emailService.sendStaffInvitation(email, clinicName, adminName, adminEmail);
 
         res.json({ success: true, message: "Staff member invited successfully." });
     } catch (error) {
@@ -52,12 +56,19 @@ exports.processStaffApproval = async (req, res) => {
         await firebaseService.updateStaffApprovalStatus(staffUid, status);
 
         const staffProfile = await firebaseService.getUserProfileById(staffUid);
+        if (!staffProfile || !staffProfile.email) {
+            return res.status(404).json({ success: false, message: "Staff profile not found." });
+        }
+
         const clinicName = await firebaseService.getClinicNameById(clinicId);
+        const adminProfile = await firebaseService.getUserProfileById(req.user.uid);
+        const adminName = adminProfile?.fullName || "The Clinic Administrator";
+        const adminEmail = adminProfile?.email || req.user.email;
 
         if (status === "approved") {
-            await emailService.sendStaffApproval(staffProfile.email, clinicName);
+            await emailService.sendStaffApproval(staffProfile.email, clinicName, adminName, adminEmail);
         } else {
-            await emailService.sendStaffRejection(staffProfile.email, clinicName);
+            await emailService.sendStaffRejection(staffProfile.email, clinicName, adminName, adminEmail);
         }
 
         res.json({ success: true, message: `Staff member ${status} successfully.` });
