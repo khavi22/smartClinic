@@ -609,12 +609,4 @@ module.exports = {
     getInviteByEmail,
     updateStaffApprovalStatus,
     getPendingStaffByClinic
-    getAppointmentsByPatientId,
-    getServiceTemplates,
-    getClinicServices,
-    addClinicService,
-    updateClinicService,
-    deleteClinicService,
-    serviceExists
-
 };

@@ -294,3 +294,10 @@ window.processApproval = async (staffUid, status) => {
         alert('An unexpected network error occurred. Please check your connection and try again.');
     }
 };
+// ── MANAGE SERVICES ────────────────────────────────────────
+const manageServicesBtn = document.getElementById("manageServicesBtn");
+if (manageServicesBtn) {
+    manageServicesBtn.addEventListener("click", () => {
+        window.location.href = "manageservices.html";
+    });
+}
