@@ -1,21 +1,7 @@
-import { db } from './firebase_setAvailability.js';
-import {
-    collection,
-    addDoc,
-    getDocs,
-    query,
-    doc,
-    setDoc,
-    updateDoc,
-    where
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-
 const today = new Date();
 let currentViewMonth = today.getMonth();
 let currentViewYear = today.getFullYear();
 let selectedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-
-// Your own variables
 let selectedDates = [];
 
 function renderCalendar() {
@@ -48,33 +34,28 @@ function renderCalendar() {
             <span class="cal-day-label">Sa</span>
     `;
 
-    // show current month slots
     const firstDayOfMonth = new Date(currentViewYear, currentViewMonth, 1).getDay();
     const daysInMonth = new Date(currentViewYear, currentViewMonth + 1, 0).getDate();
-
 
     for (let i = 0; i < firstDayOfMonth; i++) {
         html += '<span class="cal-day empty"></span>';
     }
 
-    //  All days from 1st to end of month
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(currentViewYear, currentViewMonth, day);
         const dateStr = `${currentViewYear}-${(currentViewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
-        const isSelected = dateStr === selectedDate;
+        const isSelected = selectedDates.includes(dateStr);
         const isToday = dateObj.toDateString() === today.toDateString();
-        const isPast = dateObj < today && !isToday; // disable strictly past dates
-        const isAvailable = !isPast;
+        const isPast = dateObj < today && !isToday;
 
         html += `
-            <button type="button" class="cal-day ${isSelected ? 'selected' : ''} ${isAvailable ? 'available' : ''} ${isToday ? 'today' : ''} ${isPast ? 'disabled' : ''}" 
+            <button type="button" class="cal-day ${isSelected ? 'selected' : ''} ${!isPast ? 'available' : ''} ${isToday ? 'today' : ''} ${isPast ? 'disabled' : ''}" 
                  onclick="${isPast ? '' : `window.handleDateSelection('${dateStr}')`}">
                 <time datetime="${dateStr}">${day}</time>
             </button>
         `;
     }
-
 
     const totalSlotsUsed = firstDayOfMonth + daysInMonth;
     const remainingSlots = (7 - (totalSlotsUsed % 7)) % 7;
@@ -85,200 +66,159 @@ function renderCalendar() {
     html += '</section>';
     container.innerHTML = html;
 }
+
 window.handleDateSelection = function(dateStr) {
     selectedDate = dateStr;
     if (selectedDates.includes(dateStr)) {
         selectedDates = selectedDates.filter(d => d !== dateStr);
     } else {
-       
         selectedDates.push(dateStr);
     }
     renderCalendar();
     console.log("Selected dates:", selectedDates);
 };
 
-window.changeMonth = function (delta) {
+window.changeMonth = function(delta) {
     currentViewMonth += delta;
-    if (currentViewMonth > 11) {
-        currentViewMonth = 0;
-        currentViewYear++;
-    } else if (currentViewMonth < 0) {
-        currentViewMonth = 11;
-        currentViewYear--;
-    }
+    if (currentViewMonth > 11) { currentViewMonth = 0; currentViewYear++; }
+    else if (currentViewMonth < 0) { currentViewMonth = 11; currentViewYear--; }
     renderCalendar();
 };
 
-document.addEventListener("DOMContentLoaded", function(){
-    renderCalendar();
-    LoadAvailability()
+//save to firestore
+async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
+    const staffCode = "STF-330AFB";
+    // later: localStorage.getItem("staffCode");
 
+    const response = await fetch("/api/staff/availability/set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            staffCode: staffCode,
+            dates: selectedDates,
+            startTime: startTime,
+            endTime: endTime,
+            available: checkedValue
+        })
+    });
 
-    const Button_addAvailability=document.getElementById("Add_Availability");
-           if(Button_addAvailability){
-              Button_addAvailability.addEventListener("click",async function(){
-                const StartTime = document.getElementById("Startime").value;
-                const EndTime = document.getElementById("Endtime").value;
-                const Available_bool=document.getElementById("available-check");
-                let Checked_value;
-                if(Available_bool.checked){
-                    Checked_value="true";
-                }
-                else if (!Available_bool.checked){
-                    Checked_value="false";
-                }
+    const data = await response.json();
 
-                if(selectedDates.length === 0){
-                alert("Please select at least one date");
-                    return;
-                }
-
-                if(StartTime >=EndTime){
-                    alert("End time must be after start time");
-                    return;
-                }
-                try{
-                    //get the staff number when staff logs in 
-                    //const staffNumber = localStorage.getItem("staffCode");
-                    const staffNumber="STF-330AFB";
-
-                    const q = query(
-                        collection(db, "staff"),
-                        where("staffCode" , "==","STF-330AFB")
-                    )
- 
-                    const snaphshot = await getDocs(q);
-
-                    if(snaphshot.empty){
-                        alert("Staff member not found");
-                        return;
-                    }
-                    console.log("staff member found")
-                    //get reference
-                    const StaffClinicsRef= snaphshot.docs[0].ref;
-
-                    const AvailabilityUpdate={};
-
-
-                    for(const date  of selectedDates){
-                          AvailabilityUpdate[`Staff_Availability.${date}`]={
-                            Available:Checked_value,
-                            startTime:StartTime,
-                            endTime:EndTime,
-                        };
-                        console.log("Field successfully added!");
-                   }
-                    await updateDoc(StaffClinicsRef,AvailabilityUpdate);
-                    selectedDates = [];
-                    renderCalendar();
-                    LoadAvailability()
-                } 
-              catch(error) {
-                    console.error("Error saving availability:", error);
-                    alert("Failed to save availability");
-                }
-            })
-           }
-          
-});
-
-async function LoadAvailability(){
-    try{
-         //get the staff number when staff logs in 
-        //const staffNumber = localStorage.getItem("staffCode");
-        
-        const staffNumber="STF-330AFB";
-
-        const q = query(
-                        collection(db, "staff"),
-                        where("staffCode" , "==","STF-330AFB")
-                    )
-         const snapshots= await getDocs(q);
-
-         if(snapshots.empty){
-            console.log("staff not found");
-            return;
-         }
-
-         const getStaffData = snapshots.docs[0].data();
-
-         const Availabiity_field=getStaffData.Staff_Availability;
-
-         const display_availability=document.getElementById("Availability_content");
-
-         display_availability.innerHTML="";
-
-         for(const date  in  Availabiity_field){
-            const slot =  Availabiity_field[date];
-
-            const formatedDate= new Date(date).toDateString('default',{
-                weekday :'long',
-                year :'numeric',
-                month:'long',
-                day:'numeric'
-            });
-
-            const card = document.createElement("article");
-            card.className = "availabiity-card";
-            card.innerHTML=`
-                
-             <section class="card-info">
-                    <p class="card-date">${formatedDate}</p>
-                    <p class="card-time">${slot.startTime} - ${slot.endTime}</p>
-                </section>
-                <button class="remove-btn" data-date="${date}">Remove</button>
-            
-            `;
-        
-         display_availability.appendChild(card);
-
-         }
-
-        document.querySelectorAll(".remove-btn").forEach(function(btn){
-            btn.addEventListener("click", async function(){
-                const dateToRemove = this.getAttribute("data-date");
-                await removeAvailability(dateToRemove);
-            });
-        });
-
-         
-
-        
-    }
-    catch(error) {
-         console.error("Error loading availability:", error);
+    if(response.ok){
+        alert("Availability saved successfully!");
+        selectedDates = [];
+        renderCalendar();
+        LoadAvailability();
+    } else {
+        alert("Error: " + data.error);
     }
 }
 
-async function removeAvailability(date){
-    try{
-         //get the staff number when staff logs in 
-        //const staffNumber = localStorage.getItem("staffCode");
-        
-        const staffNumber="STF-330AFB";
+// get data from firestore
+async function LoadAvailability() {
+    const staffCode = "STF-330AFB";
+    // later: localStorage.getItem("staffCode");
 
-        const q = query(
-                        collection(db, "staff"),
-                        where("staffCode" , "==","STF-330AFB")
-                    )
+    try {
+        const response = await fetch(`/api/staff/availability/${staffCode}`);
+        const data = await response.json();
+        const availability = data.availability;
+        displayAvailability(availability);
+    } catch(error) {
+        console.error("Error loading availability:", error);
+    }
+}
 
-         const snaphshots= await getDocs(q);
-          
-         const StaffClinicsRef= snaphshots.docs[0].ref;
+//Display availability cards
+function displayAvailability(availability) {
+    const display = document.getElementById("Availability_content");
+    display.innerHTML = "";
 
+    if(!availability || Object.keys(availability).length === 0){
+        display.innerHTML = "<p>No availability set yet.</p>";
+        return;
+    }
 
-         const {deleteField} = await import(
-             "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"
-         );
+    for(const date in availability){
+        const slot = availability[date];
 
-         await updateDoc(StaffClinicsRef, {
-            [`Staff_Availability.${date}`]: deleteField()
+        const formattedDate = new Date(date).toLocaleDateString('default', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
 
-        console.log("Availability removed!");
-        LoadAvailability()
+        const card = document.createElement("article");
+        card.className = "availability-card";
+        card.innerHTML = `
+            <section class="card-info">
+                <p class="card-date">${formattedDate}</p>
+                <p class="card-time">${slot.startTime} - ${slot.endTime}</p>
+            </section>
+            <button class="remove-btn" data-date="${date}">Remove</button>
+        `;
+
+        display.appendChild(card);
     }
-    catch(error) {
+
+    // Add remove button listeners
+    document.querySelectorAll(".remove-btn").forEach(function(btn){
+        btn.addEventListener("click", async function(){
+            const dateToRemove = this.getAttribute("data-date");
+            await removeAvailabilityFromBackend(dateToRemove);
+        });
+    });
+}
+
+//Remove from backend
+async function removeAvailabilityFromBackend(date) {
+    const staffCode = "STF-330AFB";
+    // later: localStorage.getItem("staffCode");
+
+    try {
+        const response = await fetch("/api/staff/availability/remove", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ staffCode, date })
+        });
+
+        const data = await response.json();
+
+        if(response.ok){
+            LoadAvailability();
+        } else {
+            alert("Error: " + data.error);
+        }
+    } catch(error) {
         console.error("Error removing:", error);
     }
 }
+
+//DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function(){
+    renderCalendar();
+    LoadAvailability();
+
+    const Button_addAvailability = document.getElementById("Add_Availability");
+    if(Button_addAvailability){
+        Button_addAvailability.addEventListener("click", async function(){
+            const StartTime = document.getElementById("Starttime").value;
+            const EndTime = document.getElementById("Endtime").value;
+            const Available_bool = document.getElementById("available-check");
+            const Checked_value = Available_bool.checked ? "true" : "false";
+
+            if(selectedDates.length === 0){
+                alert("Please select at least one date");
+                return;
+            }
+
+            if(StartTime >= EndTime){
+                alert("End time must be after start time");
+                return;
+            }
+
+            await saveAvailabilityToBackend(StartTime, EndTime, Checked_value);
+        });
+    }
+});

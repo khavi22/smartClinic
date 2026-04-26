@@ -36,4 +36,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 app.use(express.static("public"));
 
+const staffAvailabilityRoutes = require("./Routes/StaffAvailability");
+app.use("/api/staff/availability", staffAvailabilityRoutes);
+
 module.exports = app;
