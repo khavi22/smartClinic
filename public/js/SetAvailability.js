@@ -111,6 +111,7 @@ window.changeMonth = function (delta) {
 
 document.addEventListener("DOMContentLoaded", function(){
     renderCalendar();
+    LoadAvailability()
 
 
     const Button_addAvailability=document.getElementById("Add_Availability");
@@ -127,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function(){
                     Checked_value="false";
                 }
 
-                if(selectedDate.length === 0){
+                if(selectedDates.length === 0){
                 alert("Please select at least one date");
                     return;
                 }
@@ -137,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function(){
                     return;
                 }
                 try{
-                    
+                    //get the staff number when staff logs in 
                     //const staffNumber = localStorage.getItem("staffCode");
                     const staffNumber="STF-330AFB";
 
@@ -156,20 +157,23 @@ document.addEventListener("DOMContentLoaded", function(){
                     //get reference
                     const StaffClinicsRef= snaphshot.docs[0].ref;
 
+                    const AvailabilityUpdate={};
+
 
                     for(const date  of selectedDates){
-                        await setDoc(
-                            doc(StaffClinicsRef,"staffAvailability_times",date), {
+                          AvailabilityUpdate[`Staff_Availability.${date}`]={
                             Available:Checked_value,
-                            date: date,
                             startTime:StartTime,
                             endTime:EndTime,
-                        });
+                        };
                         console.log("Field successfully added!");
-                    }
+                   }
+                    await updateDoc(StaffClinicsRef,AvailabilityUpdate);
                     selectedDates = [];
                     renderCalendar();
-                } catch(error) {
+                    LoadAvailability()
+                } 
+              catch(error) {
                     console.error("Error saving availability:", error);
                     alert("Failed to save availability");
                 }
@@ -178,3 +182,103 @@ document.addEventListener("DOMContentLoaded", function(){
           
 });
 
+async function LoadAvailability(){
+    try{
+         //get the staff number when staff logs in 
+        //const staffNumber = localStorage.getItem("staffCode");
+        
+        const staffNumber="STF-330AFB";
+
+        const q = query(
+                        collection(db, "staff"),
+                        where("staffCode" , "==","STF-330AFB")
+                    )
+         const snapshots= await getDocs(q);
+
+         if(snapshots.empty){
+            console.log("staff not found");
+            return;
+         }
+
+         const getStaffData = snapshots.docs[0].data();
+
+         const Availabiity_field=getStaffData.Staff_Availability;
+
+         const display_availability=document.getElementById("Availability_content");
+
+         display_availability.innerHTML="";
+
+         for(const date  in  Availabiity_field){
+            const slot =  Availabiity_field[date];
+
+            const formatedDate= new Date(date).toDateString('default',{
+                weekday :'long',
+                year :'numeric',
+                month:'long',
+                day:'numeric'
+            });
+
+            const card = document.createElement("article");
+            card.className = "availabiity-card";
+            card.innerHTML=`
+                
+             <section class="card-info">
+                    <p class="card-date">${formatedDate}</p>
+                    <p class="card-time">${slot.startTime} - ${slot.endTime}</p>
+                </section>
+                <button class="remove-btn" data-date="${date}">Remove</button>
+            
+            `;
+        
+         display_availability.appendChild(card);
+
+         }
+
+        document.querySelectorAll(".remove-btn").forEach(function(btn){
+            btn.addEventListener("click", async function(){
+                const dateToRemove = this.getAttribute("data-date");
+                await removeAvailability(dateToRemove);
+            });
+        });
+
+         
+
+        
+    }
+    catch(error) {
+         console.error("Error loading availability:", error);
+    }
+}
+
+async function removeAvailability(date){
+    try{
+         //get the staff number when staff logs in 
+        //const staffNumber = localStorage.getItem("staffCode");
+        
+        const staffNumber="STF-330AFB";
+
+        const q = query(
+                        collection(db, "staff"),
+                        where("staffCode" , "==","STF-330AFB")
+                    )
+
+         const snaphshots= await getDocs(q);
+          
+         const StaffClinicsRef= snaphshots.docs[0].ref;
+
+
+         const {deleteField} = await import(
+             "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"
+         );
+
+         await updateDoc(StaffClinicsRef, {
+            [`Staff_Availability.${date}`]: deleteField()
+        });
+
+        console.log("Availability removed!");
+        LoadAvailability()
+    }
+    catch(error) {
+        console.error("Error removing:", error);
+    }
+}

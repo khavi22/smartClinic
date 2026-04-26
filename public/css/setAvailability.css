@@ -98,3 +98,39 @@
     background: none;
     cursor: default;
 }
+.availability-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: white;
+}
+
+.card-date {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.card-time {
+    font-size: 13px;
+    color: #666;
+}
+
+.remove-btn {
+    padding: 8px 16px;
+    background: #e53935;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.remove-btn:hover {
+    background: #b71c1c;
+}
