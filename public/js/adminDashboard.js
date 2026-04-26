@@ -32,6 +32,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             // Clinic hours search might still hit rules, 
             // but at least we have the clinic ID and profile secure.
             await loadClinicHours(currentClinicId);
+            await loadPendingStaff(currentClinicId);
         }
 
     } catch (error) {
@@ -178,4 +179,118 @@ if (hoursForm) {
     });
 }
 
+// ── STAFF MANAGEMENT ──────────────────────────────────────────
+const inviteForm = document.getElementById('inviteStaffForm');
+const inviteStatus = document.getElementById('inviteStatus');
+const inviteBtn = document.getElementById('inviteBtn');
+const pendingStaffList = document.getElementById('pendingStaffList');
 
+if (inviteForm) {
+    inviteForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('inviteEmail').value.trim();
+        if (!email || !currentClinicId) return;
+
+        inviteBtn.disabled = true;
+        inviteStatus.textContent = 'Sending invitation...';
+        inviteStatus.style.color = 'var(--text-muted)';
+
+        try {
+            const idToken = await firebase.auth().currentUser.getIdToken();
+            const response = await fetch('/api/admin/invite-staff', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ email, clinicId: currentClinicId })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                inviteStatus.textContent = '✓ Invitation sent successfully';
+                inviteStatus.style.color = 'var(--success-green)';
+                inviteForm.reset();
+            } else {
+                throw new Error(result.message || 'Failed to send invitation');
+            }
+        } catch (error) {
+            console.error('Invite error:', error);
+            inviteStatus.textContent = '× ' + error.message;
+            inviteStatus.style.color = '#ef4444';
+        } finally {
+            inviteBtn.disabled = false;
+        }
+    });
+}
+
+async function loadPendingStaff(clinicId) {
+    if (!pendingStaffList) return;
+
+    try {
+        const idToken = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch(`/api/admin/pending-staff?clinicId=${clinicId}`, {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            renderPendingStaff(result.staff);
+        }
+    } catch (error) {
+        console.error('Error loading pending staff:', error);
+    }
+}
+
+function renderPendingStaff(staff) {
+    const container = document.getElementById('pendingStaffList');
+    if (!container) return;
+    
+    if (!staff || staff.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>';
+        return;
+    }
+
+    container.innerHTML = staff.map(s => `
+        <div class="staff-item">
+            <div class="staff-info">
+                <span class="staff-name">${s.fullName}</span>
+                <span class="staff-email">${s.email}</span>
+            </div>
+            <div class="staff-actions">
+                <button onclick="processApproval('${s.uid}', 'approved')" class="btn-approve">Approve</button>
+                <button onclick="processApproval('${s.uid}', 'rejected')" class="btn-reject">Reject</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.processApproval = async (staffUid, status) => {
+    if (!currentClinicId) return;
+
+    const confirmMsg = status === 'approved' ? 'Approve this staff member?' : 'Reject this staff application?';
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const idToken = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch('/api/admin/process-staff', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ staffUid, status, clinicId: currentClinicId })
+        });
+
+        if (response.ok) {
+            await loadPendingStaff(currentClinicId);
+        } else {
+            const result = await response.json();
+            console.error('Approval API error:', result);
+            alert('Error: ' + (result.message || 'Failed to process approval'));
+        }
+    } catch (error) {
+        console.error('Approval exception:', error);
+        alert('An unexpected network error occurred. Please check your connection and try again.');
+    }
+};

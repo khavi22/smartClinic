@@ -211,6 +211,45 @@
             </aside>
 
         </section>
+        
+        <!-- ── STAFF MANAGEMENT ── -->
+        <section class="admin-grid staff-section" aria-labelledby="staff-heading">
+            
+            <article class="admin-card staff-card">
+                <header class="card-header">
+                    <span class="card-icon"><i class='bx bx-user-plus' aria-hidden="true"></i></span>
+                    <div>
+                        <h2 id="staff-heading">Invite Staff</h2>
+                        <p>Add new staff members to your clinic by email</p>
+                    </div>
+                </header>
+                
+                <div class="card-body">
+                    <form id="inviteStaffForm" class="invite-form">
+                        <input type="email" id="inviteEmail" placeholder="staff@example.com" required>
+                        <button type="submit" class="btn-save" id="inviteBtn">Invite</button>
+                    </form>
+                    <p id="inviteStatus" class="save-status" style="margin-top: 10px;"></p>
+                </div>
+            </article>
+
+            <article class="admin-card approvals-card">
+                <header class="card-header">
+                    <span class="card-icon cyan"><i class='bx bx-list-check' aria-hidden="true"></i></span>
+                    <div>
+                        <h2>Pending Approvals</h2>
+                        <p>Review staff who signed up via invitation</p>
+                    </div>
+                </header>
+                
+                <div class="card-body">
+                    <div id="pendingStaffList" class="pending-list">
+                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>
+                    </div>
+                </div>
+            </article>
+
+        </section>
 
         <!-- ── DANGER ZONE ── -->
         <section class="danger-zone" aria-labelledby="danger-heading">
