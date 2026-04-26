@@ -109,7 +109,7 @@ exports.ensureClinicExistsController = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to initialize clinic", error: error.message });
   }
 };
-const seedServiceTemplates = async (req, res) => {
+exports.seedServiceTemplates = async (req, res) => {
     try {
         const result = await firebaseService.seedServiceTemplates();
 
@@ -127,68 +127,51 @@ const seedServiceTemplates = async (req, res) => {
         });
     }
 };
-const getServiceTemplates = async (req, res) => {
-    try {
-        const templates = await firebaseService.db
-            .collection("serviceTemplates")
-            .get();
 
-        const data = templates.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
 
-        return res.status(200).json(data);
+exports.getServiceTemplates = async (req, res) => {
+  try {
+    const templates = await db.collection("serviceTemplates").get();
 
-    } catch (error) {
-        console.error("Fetch templates error:", error);
+    const data = templates.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
-const firebaseService = require("../services/firebaseService");
 
-// GET services
-const getServices = async (req, res) => {
+exports.seedServiceTemplates = async (req, res) => {
+  try {
+    const result = await firebaseService.seedServiceTemplates();
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getServices = async (req, res) => {
   const clinicId = req.user.clinicId;
-
   const services = await firebaseService.getClinicServices(clinicId);
   res.json(services);
 };
-
-
-const addService = async (req, res) => {
+exports.addService = async (req, res) => {
   const clinicId = req.user.clinicId;
-
   const id = await firebaseService.addClinicService(clinicId, req.body);
-
   res.json({ message: "Service added", id });
 };
 
-
-const updateService = async (req, res) => {
+exports.updateService = async (req, res) => {
   const clinicId = req.user.clinicId;
-
-  await firebaseService.updateClinicService(
-    clinicId,
-    req.params.serviceId,
-    req.body
-  );
-
+  await firebaseService.updateClinicService(clinicId, req.params.serviceId, req.body);
   res.json({ message: "Updated" });
 };
 
-
-const deleteService = async (req, res) => {
+exports.deleteService = async (req, res) => {
   const clinicId = req.user.clinicId;
-
-  await firebaseService.deleteClinicService(
-    clinicId,
-    req.params.serviceId
-  );
-
+  await firebaseService.deleteClinicService(clinicId, req.params.serviceId);
   res.json({ message: "Deleted" });
 };

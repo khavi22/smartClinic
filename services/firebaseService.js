@@ -431,74 +431,58 @@ const deleteUserAccount = async (uid) => {
     return profile;
 };
 
-module.exports = {
-    createUserProfile,
-    createClinic,
-    ensureClinicExists,
-    claimClinic,
-    updateClinicOperatingHours,
-    getClinicNameById,
-    getClinicIdFromAdminCode,
-    getStaffAssignmentFromCode,
-    getClinicIdFromVerificationCode,
-    getUserProfileByEmail,
-    validateAdminCode,
-    getUserProfileById,
-    deleteUserAccount,
-    createAppointment,
-    getAvailabilityForDate,
-    cancelAppointment,
-    getAppointmentsByPatientId
-};
-
 //Adding possible services to the database
-const seedServiceTemplates = async () => {
-    try {
-        const templates = [
-            { name: "General Consultation", description: "Initial consultation with a general practitioner", duration: 30 },
-            { name: "Dental Cleaning", description: "Professional teeth cleaning and examination", duration: 45 },
-            { name: "Physical Therapy Session", description: "One-on-one physical therapy treatment", duration: 60 },
-            { name: "Blood Test", description: "Routine blood work and laboratory analysis", duration: 15 },
-            { name: "X-Ray Imaging", description: "Digital X-ray examination", duration: 20 },
-            { name: "Vaccination", description: "Immunization and vaccine administration", duration: 15 },
-            { name: "Eye Examination", description: "Comprehensive vision and eye health check", duration: 40 },
-            { name: "Dermatology Consultation", description: "Skin condition assessment and treatment", duration: 35 },
-            { name: "Cardiology Consultation", description: "Heart health assessment and consultation", duration: 50 },
-            { name: "Pediatric Check-up", description: "Routine wellness exam for children", duration: 30 },
-            { name: "Mental Health Counseling", description: "Therapy session with mental health professional", duration: 60 },
-            { name: "Nutrition Consultation", description: "Dietary assessment and nutrition planning", duration: 45 },
-            { name: "Ultrasound", description: "Diagnostic ultrasound imaging", duration: 30 },
-            { name: "ECG/EKG", description: "Electrocardiogram heart monitoring", duration: 20 },
-            { name: "Allergy Testing", description: "Comprehensive allergy screening", duration: 60 },
-            { name: "Minor Surgery", description: "Outpatient surgical procedure", duration: 90 },
-            { name: "Physiotherapy", description: "Physical rehabilitation therapy", duration: 45 },
-            { name: "Diabetes Management", description: "Blood sugar monitoring and consultation", duration: 30 },
-            { name: "Prenatal Check-up", description: "Routine pregnancy health monitoring", duration: 40 },
-            { name: "Occupational Therapy", description: "Daily living skills rehabilitation", duration: 60 }
-        ];
 
-        const batch = db.batch();
+const templates = [
+  { name: "General Consultation", description: "Initial consultation with a general practitioner", duration: 30 },
+  { name: "Dental Cleaning", description: "Professional teeth cleaning and examination", duration: 45 },
+  { name: "Physical Therapy Session", description: "One-on-one physical therapy treatment", duration: 60 },
+  { name: "Blood Test", description: "Routine blood work and laboratory analysis", duration: 15 },
+  { name: "X-Ray Imaging", description: "Digital X-ray examination", duration: 20 },
+  { name: "Vaccination", description: "Immunization and vaccine administration", duration: 15 },
+  { name: "Eye Examination", description: "Comprehensive vision and eye health check", duration: 40 },
+  { name: "Dermatology Consultation", description: "Skin condition assessment and treatment", duration: 35 },
+  { name: "Cardiology Consultation", description: "Heart health assessment and consultation", duration: 50 },
+  { name: "Pediatric Check-up", description: "Routine wellness exam for children", duration: 30 },
+  { name: "Mental Health Counseling", description: "Therapy session with mental health professional", duration: 60 },
+  { name: "Nutrition Consultation", description: "Dietary assessment and nutrition planning", duration: 45 },
+  { name: "Ultrasound", description: "Diagnostic ultrasound imaging", duration: 30 },
+  { name: "ECG/EKG", description: "Electrocardiogram heart monitoring", duration: 20 },
+  { name: "Allergy Testing", description: "Comprehensive allergy screening", duration: 60 },
+  { name: "Minor Surgery", description: "Outpatient surgical procedure", duration: 90 },
+  { name: "Physiotherapy", description: "Physical rehabilitation therapy", duration: 45 },
+  { name: "Diabetes Management", description: "Blood sugar monitoring and consultation", duration: 30 },
+  { name: "Prenatal Check-up", description: "Routine pregnancy health monitoring", duration: 40 },
+  { name: "Occupational Therapy", description: "Daily living skills rehabilitation", duration: 60 },
+];
 
-        templates.forEach((service) => {
-            const ref = db.collection("serviceTemplates").doc();
-            batch.set(ref, {
-                ...service,
-                createdAt: new Date().toISOString()
-            });
-        });
+const seed = async () => {
+  // Check if already seeded — don't duplicate
+  const existing = await db.collection("serviceTemplates").limit(1).get();
+  if (!existing.empty) {
+    console.log("serviceTemplates already seeded. Skipping.");
+    process.exit(0);
+  }
 
-        await batch.commit();
+  const batch = db.batch();
 
-        return { success: true, message: "Service templates seeded successfully" };
+  templates.forEach(template => {
+    const ref = db.collection("serviceTemplates").doc();
+    batch.set(ref, {
+      ...template,
+      createdAt: new Date().toISOString(),
+    });
+  });
 
-    } catch (error) {
-        console.error("Error seeding service templates:", error);
-        throw error;
-    }
+  await batch.commit();
+  console.log(`Seeded ${templates.length} service templates successfully.`);
+  process.exit(0);
 };
-const { admin } = require("./config/firebase");
-const db = admin.firestore();
 
+seed().catch(err => {
+  console.error("Seeding failed:", err);
+  process.exit(1);
+});
 
 const getServiceTemplates = async () => {
   const snapshot = await db.collection("serviceTemplates").get();
@@ -521,6 +505,7 @@ const getClinicServices = async (clinicId) => {
     ...doc.data(),
   }));
 };
+
 const addClinicService = async (clinicId, data) => {
   const ref = await db
     .collection("clinics")
@@ -528,7 +513,8 @@ const addClinicService = async (clinicId, data) => {
     .collection("services")
     .add({
       ...data,
-      createdAt: new Date(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       active: true,
     });
 
@@ -543,7 +529,7 @@ const updateClinicService = async (clinicId, serviceId, data) => {
     .doc(serviceId)
     .update({
       ...data,
-      updatedAt: new Date(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 };
 
@@ -562,8 +548,35 @@ const serviceExists = async (clinicId, name) => {
     .doc(clinicId)
     .collection("services")
     .where("name", "==", name)
+    .limit(1)
     .get();
 
   return !snapshot.empty;
 };
-module.exports = { admin, db, getUserProfileById, createAppointment, getAvailabilityForDate, cancelAppointment, getAppointmentsByPatientId, cancelAppointment, seedServiceTemplates,getClinicServices,addClinicService,updateClinicService,deleteClinicService,serviceExists, getServiceTemplates };
+
+module.exports = {
+    createUserProfile,
+    createClinic,
+    ensureClinicExists,
+    claimClinic,
+    updateClinicOperatingHours,
+    getClinicNameById,
+    getClinicIdFromAdminCode,
+    getStaffAssignmentFromCode,
+    getClinicIdFromVerificationCode,
+    getUserProfileByEmail,
+    validateAdminCode,
+    getUserProfileById,
+    deleteUserAccount,
+    createAppointment,
+    getAvailabilityForDate,
+    cancelAppointment,
+    getAppointmentsByPatientId,
+    getServiceTemplates,
+    getClinicServices,
+    addClinicService,
+    updateClinicService,
+    deleteClinicService,
+    serviceExists
+
+};

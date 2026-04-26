@@ -1,15 +1,28 @@
 const express = require("express");
 const router = express.Router();
-const { getClinics, updateClinicHoursController, ensureClinicExistsController } = require("../controllers/ClinicsController");
-
+const { authMiddleware, requireAdmin } = require("../middlewares/auth");
+const {
+  getClinics,
+  updateClinicHoursController,
+  ensureClinicExistsController,
+  getServiceTemplates,
+  seedServiceTemplates,
+  getServices,
+  addService,
+  updateService,
+  deleteService
+} = require("../controllers/ClinicsController");
 router.get("/", getClinics); // GET /api/clinics
 router.post("/update-hours", updateClinicHoursController); // POST /api/clinics/update-hours
 router.post("/ensure-exists", ensureClinicExistsController); // POST /api/clinics/ensure-exists
+// service templates
+router.get("/templates", getServiceTemplates);
+router.post("/templates/seed", authMiddleware, requireAdmin, seedServiceTemplates); // seeding protected
 
-router.get("/templates", controller.getTemplates);
-router.post("/templates/seed", controller.seedServiceTemplates);
-router.get("/:clinicId", controller.getServices);
-router.post("/:clinicId", controller.addService);
-router.put("/:clinicId/:serviceId", controller.updateService);
-router.delete("/:clinicId/:serviceId", controller.deleteService);
+// services 
+router.get("/services", authMiddleware, getServices);
+router.post("/services", authMiddleware, addService);
+router.put("/services/:serviceId", authMiddleware, updateService);
+router.delete("/services/:serviceId", authMiddleware, deleteService);
+
 module.exports = router;
