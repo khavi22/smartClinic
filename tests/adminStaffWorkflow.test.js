@@ -97,7 +97,7 @@ describe("Admin Staff Workflow Tests", () => {
 
         beforeEach(() => {
             req = {
-                user: { uid: "admin-1" },
+                user: { uid: "admin-1", email: "admin@test.com" },
                 body: {},
                 query: {}
             };
@@ -113,7 +113,8 @@ describe("Admin Staff Workflow Tests", () => {
             // Mock firebaseService calls within controller
             jest.spyOn(firebaseService, "inviteStaffByEmail").mockResolvedValue();
             jest.spyOn(firebaseService, "getClinicNameById").mockResolvedValue("Test Clinic");
-            jest.spyOn(firebaseService, "getUserProfileById").mockResolvedValue({ fullName: "Admin Name" });
+            jest.spyOn(firebaseService, "getUserProfileById").mockResolvedValue({ fullName: "Admin Name", email: "admin@test.com" });
+            jest.spyOn(emailService, "sendStaffInvitation").mockResolvedValue();
 
             await adminController.inviteStaff(req, res);
 
@@ -128,8 +129,9 @@ describe("Admin Staff Workflow Tests", () => {
             jest.spyOn(firebaseService, "updateStaffApprovalStatus").mockResolvedValue();
             jest.spyOn(firebaseService, "getUserProfileById")
                 .mockResolvedValueOnce({ email: "staff@test.com" }) // first call for staff profile
-                .mockResolvedValueOnce({ fullName: "Admin Name" }); // second call for admin profile
+                .mockResolvedValueOnce({ fullName: "Admin Name", email: "admin@test.com" }); // second call for admin profile
             jest.spyOn(firebaseService, "getClinicNameById").mockResolvedValue("Test Clinic");
+            jest.spyOn(emailService, "sendStaffApproval").mockResolvedValue();
 
             await adminController.processStaffApproval(req, res);
 
@@ -143,9 +145,10 @@ describe("Admin Staff Workflow Tests", () => {
             
             jest.spyOn(firebaseService, "updateStaffApprovalStatus").mockResolvedValue();
             jest.spyOn(firebaseService, "getUserProfileById")
-                .mockResolvedValueOnce({ email: "staff@test.com" })
-                .mockResolvedValueOnce({ fullName: "Admin Name" });
+                .mockResolvedValueOnce({ email: "staff@test.com" }) // for staff
+                .mockResolvedValueOnce({ fullName: "Admin Name", email: "admin@test.com" }); // for admin
             jest.spyOn(firebaseService, "getClinicNameById").mockResolvedValue("Test Clinic");
+            jest.spyOn(emailService, "sendStaffRejection").mockResolvedValue();
 
             await adminController.processStaffApproval(req, res);
 
