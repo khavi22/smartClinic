@@ -45,6 +45,17 @@ async function redirectBasedOnUser(user) {
         const data = await response.json();
 
         if (response.ok && data.exists) {
+            if (data.pending) {
+                alert(data.message || "Your account is awaiting admin approval.");
+                await auth.signOut();
+                return;
+            }
+            if (data.rejected) {
+                alert(data.message || "Your staff application was declined.");
+                await auth.signOut();
+                return;
+            }
+
             storeUserSession(user, data.profile);
             
             const serverRedirect = data.redirect ? (data.redirect.startsWith("/") ? data.redirect.substring(1) : data.redirect) : null;

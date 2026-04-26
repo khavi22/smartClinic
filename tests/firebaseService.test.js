@@ -466,7 +466,7 @@ describe("firebaseService", () => {
             await expect(validateAdminCode("ADM-BAD", "clinic-1")).resolves.toBe(false);
         });
 
-        it("creates a clinic with admin and staff codes", async () => {
+        it("creates a clinic with admin code", async () => {
             const set = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({ set }))
@@ -476,8 +476,7 @@ describe("firebaseService", () => {
 
             expect(result).toEqual({
                 clinicId: "clinic-1",
-                adminCode: expect.stringMatching(/^ADM-/),
-                staffCode: expect.stringMatching(/^STF-/)
+                adminCode: expect.stringMatching(/^ADM-/)
             });
             expect(set).toHaveBeenCalled();
         });
@@ -526,25 +525,6 @@ describe("firebaseService", () => {
             await expect(getClinicIdFromAdminCode("ADM-MISSING")).resolves.toBeNull();
         });
 
-        it("gets clinic id from staff code", async () => {
-            const query = createLoopQuery({
-                empty: false,
-                docs: [{ id: "clinic-2" }]
-            });
-            db.collection.mockReturnValue(query);
-
-            await expect(getStaffAssignmentFromCode("STF-1")).resolves.toBe("clinic-2");
-        });
-
-        it("returns null when staff code is not found", async () => {
-            const query = createLoopQuery({
-                empty: true,
-                docs: []
-            });
-            db.collection.mockReturnValue(query);
-
-            await expect(getStaffAssignmentFromCode("STF-MISSING")).resolves.toBeNull();
-        });
 
         it("gets clinic id and role from admin verification code", async () => {
             const adminQuery = createLoopQuery({
@@ -553,7 +533,7 @@ describe("firebaseService", () => {
             });
             const adminCollection = { where: jest.fn(() => adminQuery) };
 
-            db.collection.mockImplementationOnce(() => adminCollection);
+            db.collection.mockReturnValue(adminCollection);
             adminQuery.where.mockReturnValue(adminQuery);
 
             await expect(getClinicIdFromVerificationCode("ADM-1")).resolves.toEqual({
@@ -562,41 +542,12 @@ describe("firebaseService", () => {
             });
         });
 
-        it("gets clinic id and role from generic verification code", async () => {
+        it("returns null when verification code does not match admin", async () => {
             const adminQuery = createLoopQuery({ empty: true, docs: [] });
-            const staffQuery = createLoopQuery({
-                empty: false,
-                docs: [{ id: "clinic-2" }]
-            });
             const adminCollection = { where: jest.fn(() => adminQuery) };
-            const staffCollection = { where: jest.fn(() => staffQuery) };
 
-            db.collection
-                .mockImplementationOnce(() => adminCollection)
-                .mockImplementationOnce(() => staffCollection);
+            db.collection.mockReturnValue(adminCollection);
             adminQuery.where.mockReturnValue(adminQuery);
-            staffQuery.where.mockReturnValue(staffQuery);
-
-            await expect(getClinicIdFromVerificationCode("STF-1")).resolves.toEqual({
-                clinicId: "clinic-2",
-                role: "staff"
-            });
-
-            expect(adminCollection.where).toHaveBeenCalledWith("adminCode", "==", "STF-1");
-            expect(staffCollection.where).toHaveBeenCalledWith("staffCode", "==", "STF-1");
-        });
-
-        it("returns null when verification code matches neither admin nor staff", async () => {
-            const adminQuery = createLoopQuery({ empty: true, docs: [] });
-            const staffQuery = createLoopQuery({ empty: true, docs: [] });
-            const adminCollection = { where: jest.fn(() => adminQuery) };
-            const staffCollection = { where: jest.fn(() => staffQuery) };
-
-            db.collection
-                .mockImplementationOnce(() => adminCollection)
-                .mockImplementationOnce(() => staffCollection);
-            adminQuery.where.mockReturnValue(adminQuery);
-            staffQuery.where.mockReturnValue(staffQuery);
 
             await expect(getClinicIdFromVerificationCode("NONE")).resolves.toBeNull();
         });

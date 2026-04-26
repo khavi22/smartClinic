@@ -20,6 +20,24 @@ exports.checkUserLogin = async (req, res) => {
             if (user.role === "admin") {
                 redirectUrl = "/adminDashboard.html";
             } else if (user.role === "staff") {
+                if (user.approvalStatus === "pending") {
+                    return res.json({
+                        success: true,
+                        exists: true,
+                        pending: true,
+                        message: "Your account is awaiting admin approval.",
+                        profile: user
+                    });
+                }
+                if (user.approvalStatus === "rejected") {
+                    return res.json({
+                        success: true,
+                        exists: true,
+                        rejected: true,
+                        message: "Your staff application was declined.",
+                        profile: user
+                    });
+                }
                 redirectUrl = "/staffDashboard.html";
             }
 
@@ -156,29 +174,26 @@ exports.registerUser = async (req, res) => {
             await firebaseService.createUserProfile(userData, roleData);
             await firebaseService.claimClinic(clinicId, uid);
         } else if (role === "staff") {
-            const code = verificationCode || staffCode;
+            const invite = await firebaseService.getInviteByEmail(email);
 
-            if (!code) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Staff code is required"
-                });
-            }
-
-            const clinicId = await firebaseService.getStaffAssignmentFromCode(code);
-
-            if (!clinicId) {
+            if (!invite) {
                 return res.status(403).json({
                     success: false,
-                    message: "Invalid staff code"
+                    message: "You must be invited by an administrator to sign up as staff."
                 });
             }
 
-            roleData = { staffCode: code, clinicId };
-            redirect = "/staffDashboard.html";
-            message = "Staff account created successfully";
+            roleData = { clinicId: invite.clinicId, approvalStatus: "pending" };
+            redirect = "/login.html"; // Redirect to login to show pending message
+            message = "Staff account created successfully. Awaiting admin approval.";
 
             await firebaseService.createUserProfile(userData, roleData);
+            
+            // Mark invite as accepted
+            await admin.firestore().collection("clinicInvites").doc(email.toLowerCase().trim()).update({
+                status: "accepted",
+                acceptedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
         } else {
             await firebaseService.createUserProfile(userData);
         }

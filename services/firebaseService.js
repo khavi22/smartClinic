@@ -173,7 +173,7 @@ const getAppointmentsByPatientId = async (patientId) => {
         throw error;
     }
 };
-// ======================= USERS =======================
+
 
 const getUserProfileById = async (userId) => {
     for (const collectionName of SEARCH_COLLECTIONS) {
@@ -206,6 +206,10 @@ const createUserProfile = async (userData, roleData = {}) => {
         ...roleData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
     };
+
+    if (role === "staff") {
+        profileData.approvalStatus = "pending";
+    }
 
     await db.collection(collectionName).doc(uid).set(profileData);
 };
@@ -263,7 +267,6 @@ const validateAdminCode = async (adminCode, clinicId) => {
 
 const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
-    const staffCode = "STF-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
 
     await db.collection("clinics").doc(placeId).set({
@@ -281,13 +284,12 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
             sunday: { ...defaultHours }
         },
         adminCode,
-        staffCode,
         adminUid: null,
         isActive: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return { clinicId: placeId, adminCode, staffCode };
+    return { clinicId: placeId, adminCode };
 };
 
 const ensureClinicExists = async ({ clinicId, name, address }) => {
@@ -321,15 +323,7 @@ const getClinicIdFromAdminCode = async (adminCode) => {
 };
 
 const getStaffAssignmentFromCode = async (staffCode) => {
-    const snapshot = await db.collection("clinics")
-        .where("staffCode", "==", staffCode)
-        .get();
-
-    if (snapshot.empty) {
-        return null;
-    }
-
-    return snapshot.docs[0].id;
+    return null; // Legacy support removed
 };
 
 const getClinicIdFromVerificationCode = async (verificationCode) => {
@@ -339,15 +333,6 @@ const getClinicIdFromVerificationCode = async (verificationCode) => {
         return {
             clinicId: adminClinicId,
             role: "admin"
-        };
-    }
-
-    const staffClinicId = await getStaffAssignmentFromCode(verificationCode);
-
-    if (staffClinicId) {
-        return {
-            clinicId: staffClinicId,
-            role: "staff"
         };
     }
 
@@ -414,6 +399,49 @@ const deleteUserRoleDocuments = async (uid) => {
     );
 };
 
+const inviteStaffByEmail = async (adminUid, clinicId, email) => {
+    const trimmedEmail = email.toLowerCase().trim();
+    const existingInvite = await db.collection("clinicInvites").doc(trimmedEmail).get();
+
+    if (existingInvite.exists) {
+        throw new Error("This email has already been invited.");
+    }
+
+    await db.collection("clinicInvites").doc(trimmedEmail).set({
+        email: trimmedEmail,
+        clinicId,
+        invitedBy: adminUid,
+        status: "pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
+const getInviteByEmail = async (email) => {
+    const trimmedEmail = email.toLowerCase().trim();
+    const doc = await db.collection("clinicInvites").doc(trimmedEmail).get();
+    return doc.exists ? doc.data() : null;
+};
+
+const updateStaffApprovalStatus = async (staffUid, status) => {
+    await db.collection("staff").doc(staffUid).update({
+        approvalStatus: status,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
+const getPendingStaffByClinic = async (clinicId) => {
+    const snapshot = await db.collection("staff")
+        .where("clinicId", "==", clinicId)
+        .where("approvalStatus", "==", "pending")
+        .get();
+
+    const staff = [];
+    snapshot.forEach(doc => {
+        staff.push({ uid: doc.id, ...doc.data() });
+    });
+    return staff;
+};
+
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -423,6 +451,11 @@ const deleteUserAccount = async (uid) => {
 
     if (profile?.role === "patient") {
         await deleteUserAppointments(uid);
+    }
+
+    if (profile?.role === "staff" && profile?.email) {
+        // Clean up invitation if account is deleted before approval or in general
+        await db.collection("clinicInvites").doc(profile.email.toLowerCase().trim()).delete();
     }
 
     await deleteUserRoleDocuments(uid);
@@ -571,6 +604,11 @@ module.exports = {
     createAppointment,
     getAvailabilityForDate,
     cancelAppointment,
+    getAppointmentsByPatientId,
+    inviteStaffByEmail,
+    getInviteByEmail,
+    updateStaffApprovalStatus,
+    getPendingStaffByClinic
     getAppointmentsByPatientId,
     getServiceTemplates,
     getClinicServices,
