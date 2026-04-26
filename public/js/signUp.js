@@ -21,21 +21,20 @@ function storeUserSession(user, profile = {}) {
 
 function updateRoleCodeField() {
     const role = roleSelect.value;
-    const isSpecialRole = role === "admin" || role === "staff";
+    const isAdmin = role === "admin";
 
     // Explicitly toggle display to avoid browser-specific hidden attribute bugs
-    roleCodeFields.style.display = isSpecialRole ? "block" : "none";
-    roleCodeFields.setAttribute("aria-hidden", String(!isSpecialRole));
-    roleCodeInput.required = isSpecialRole;
+    roleCodeFields.style.display = isAdmin ? "block" : "none";
+    roleCodeFields.setAttribute("aria-hidden", String(!isAdmin));
+    roleCodeInput.required = isAdmin;
 
-    if (!isSpecialRole) {
+    if (!isAdmin) {
         roleCodeInput.value = "";
         return;
     }
 
-    const isAdmin = role === "admin";
-    roleCodeLegend.textContent = isAdmin ? "Admin Verification" : "Staff Verification";
-    roleCodeLabel.textContent = isAdmin ? "Admin Code" : "Staff Code";
+    roleCodeLegend.textContent = "Admin Verification";
+    roleCodeLabel.textContent = "Admin Code";
 }
 
 updateRoleCodeField();
@@ -63,8 +62,8 @@ signupForm.addEventListener("submit", async (e) => {
     const role = roleSelect.value;
     const roleCode = roleCodeInput.value.trim();
 
-    if ((role === "admin" || role === "staff") && !roleCode) {
-        alert(`Please enter your ${role} verification code.`);
+    if (role === "admin" && !roleCode) {
+        alert("Please enter your admin verification code.");
         return;
     }
 
