@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/setAvailability.css" />
+    <title>Set Availability</title>
+  </head>
+  <body>
+    <h2>Select Date(s)</h2>
+    <section id="SetAvailabilitycalendarContainer"></section>
+    <section class="Avilable_checkBox">
+      <label
+        ><input
+          type="checkbox"
+          id="available-check"
+          value="Available"
+        />Available</label
+      >
+    </section>
+    <section class="available_times_sections">
+      <section class="StartTime_section">
+        <h2>StartTime</h2>
+        <select id="Startime" class="Starttime">
+          <option value="08:00">08:00</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+        </select>
+      </section>
+      <section class="EndTime_section">
+        <h2>EndTime</h2>
+        <select id="Endtime" class="Endtime">
+          <option value="08:00">08:00</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+        </select>
+      </section>
+    </section>
+    <button id="Add_Availability">Add Availability</button>
+    <section id="availability-display">
+      <h2>Your Scheduled Availability</h2>
+      <section id="Availability_content"></section>
+    </section>
+
+    <script type="module" src="js/SetAvailability.js"></script>
+    <script src=""></script>
+  </body>
+</html>
