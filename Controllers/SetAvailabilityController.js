@@ -7,16 +7,11 @@ const {
 
 async function setAvailability(req, res) {
     try {
-        console.log("Request received:", req.body);
+        
         
         const staffCode = "STF-330AFB";
         const {dates, startTime, endTime, available } = req.body;
-        
-        console.log("STAFF:", staffCode);
-        console.log("dates:", dates);
-        console.log("startTime:", startTime);
-        console.log("endTime:", endTime);
-
+       
         if(!dates || !startTime || !endTime || available === undefined){
             return res.status(400).json({ error: "Missing required fields" });
         }
@@ -40,8 +35,7 @@ async function setAvailability(req, res) {
 async function fetchAvailability(req, res) {
     try {
         const staffCode = "STF-330AFB";
-        console.log("Fetching availability for:", staffCode);
-
+        
         const availability = await getAvailability(staffCode);
         res.json({ availability });
 
