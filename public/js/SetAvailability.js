@@ -87,18 +87,17 @@ window.changeMonth = function(delta) {
 
 //save to firestore
 async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
-    const staffCode = "STF-330AFB";
+    //const staffCode = "STF-330AFB";
     // later: localStorage.getItem("staffCode");
 
     const response = await fetch("http://localhost:3000/api/staff/availability/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({
-            StaffCode: staffCode,
-            StartTime: startTime,
-            EndTime: endTime,
-            selectedDates: selectedDates,
-            Available:checkedValue
+        body: JSON.stringify({
+            dates: selectedDates,   
+            startTime: startTime,    
+            endTime: endTime,        
+            available: checkedValue 
 })
     });
 

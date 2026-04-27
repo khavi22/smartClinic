@@ -1,10 +1,9 @@
-
 const { db, admin } = require("./config/firebase");
 console.log("DB",db);
 
 
 async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Available){
-        // co StaffCode="STF-330AFB";
+        //StaffCode="STF-330AFB";
         const snaphshot =  await  db.collection("staff")
                             .where("staffCode" , "==",StaffCode)
                             .get();
@@ -46,21 +45,21 @@ async function getAvailability(staffCode){
              }
     
             const getStaffData = snapshots.docs[0].data();
-            getStaffData.Staff_Availability || {};
+            return getStaffData.Staff_Availability || {};
 }
 
-async function removeStaffAvailability(staffCode, date){
+async function removeAvailability(staffCode, date){
   const snapshots= await  db.collection("staff")
-                    .where("staffCode" , "==",staffCode)
+                    .where("staffCode" ,"==",staffCode)
                     .get();
 
 
-    const StaffClinicsRef= snaphshots.docs[0].ref;
+    const StaffClinicsRef= snapshots.docs[0].ref;
 
     await StaffClinicsRef.update({
-                [`Staff_Availability.${date}`]: admin.firestore.FieldValue.delete
+                [`Staff_Availability.${date}`]: admin.firestore.FieldValue.delete()
             });
     return { success: true };
 }
 
-module.exports = {SaveAvailability,getAvailability,removeStaffAvailability};
+module.exports = {SaveAvailability,getAvailability,removeAvailability};
