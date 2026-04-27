@@ -10,7 +10,7 @@ async function setAvailability(req, res) {
         console.log("Request received:", req.body);
         
         const staffCode = "STF-330AFB";
-        const { dates, startTime, endTime, available } = req.body;
+        const {dates, startTime, endTime, available } = req.body;
         
         console.log("STAFF:", staffCode);
         console.log("dates:", dates);
@@ -22,11 +22,11 @@ async function setAvailability(req, res) {
         }
 
         const result = await SaveAvailability(
-            staffCode,
-            dates,
-            startTime,
-            endTime,
-            available
+            staffCode,     // 1. StaffCode
+            startTime,     // 2. StartTime (changed from dates)
+            endTime,       // 3. EndTime (changed from startTime)
+            dates,         // 4. selectedDates (changed from endTime)
+            available 
         );
 
         res.json(result);
