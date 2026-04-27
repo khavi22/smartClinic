@@ -119,7 +119,7 @@ async function LoadAvailability() {
     // later: localStorage.getItem("staffCode");
 
     try {
-        const response = await fetch(`http://localhost:3000/api/staff/availability/${staffCode}`);
+        const response = await fetch(`/api/staff/availability/${staffCode}`);
         const data = await response.json();
         const availability = data.availability;
         displayAvailability(availability);
@@ -176,7 +176,7 @@ async function removeAvailabilityFromBackend(date) {
     // later: localStorage.getItem("staffCode");
 
     try {
-        const response = await fetch("http://localhost:3000/api/staff/availability/remove", {
+        const response = await fetch("/api/staff/availability/remove", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ staffCode, date })
