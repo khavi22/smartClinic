@@ -1,92 +1,72 @@
 const axios = require("axios");
-const { updateClinicOperatingHours, ensureClinicExists } = require("../services/firebaseService");
+const { updateClinicOperatingHours, ensureClinicExists, getClinicServices, addClinicService, updateClinicService, deleteClinicService, serviceExists } = require("../services/firebaseService");
 const { admin, db } = require("../services/config/firebase");
 
+// ── OPERATING HOURS ─────────────────────────────────────────
 exports.updateClinicHoursController = async (req, res) => {
   try {
     const { clinicId, operatingHours } = req.body;
     const authHeader = req.headers.authorization;
 
-    console.log("Update Hours Request:", { clinicId, hasHours: !!operatingHours, hasAuth: !!authHeader });
-
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ success: false, message: "Unauthorized: Missing or invalid token" });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     const idToken = authHeader.split("Bearer ")[1];
     let decodedToken;
-    
+
     try {
       decodedToken = await admin.auth().verifyIdToken(idToken);
     } catch (authError) {
-      console.error("Token verification failed:", authError);
-      return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
+      return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
     const uid = decodedToken.uid;
-    console.log("Decoded UID:", uid);
 
     if (!clinicId || !operatingHours) {
       return res.status(400).json({ success: false, message: "Missing clinicId or operatingHours" });
     }
 
-    // Verify ownership: Does this clinic belong to this admin?
     const clinicDoc = await db.collection("clinics").doc(clinicId).get();
     if (!clinicDoc.exists) {
-        return res.status(404).json({ success: false, message: "Clinic not found" });
+      return res.status(404).json({ success: false, message: "Clinic not found" });
     }
 
-    const clinicData = clinicDoc.data();
-    if (clinicData.adminUid !== uid) {
-        return res.status(403).json({ success: false, message: "Forbidden: You do not have permission to manage this clinic" });
+    if (clinicDoc.data().adminUid !== uid) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
     await updateClinicOperatingHours(clinicId, operatingHours);
+    res.json({ success: true, message: "Operating hours updated successfully" });
 
-    res.json({
-      success: true,
-      message: "Operating hours updated successfully",
-      clinicId: clinicId
-    });
   } catch (error) {
     console.error("Error updating clinic hours:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update operating hours",
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// ── GET CLINICS ─────────────────────────────────────────────
 exports.getClinics = async (req, res) => {
   const searchName = req.query.search;
   const latitude = req.query.lat;
   const longitude = req.query.lon;
   let Query;
 
-  ///search name exits checking if it has a value
-  if (searchName) {
-    Query = `clinic named ${searchName} in South Africa`;
-  }
-  //check if latitude and longitude exist if the patient search using location
-  if (latitude && longitude) {
-    Query = `clinic near ${latitude},${longitude} in South Africa`
-  }
+  if (searchName) Query = `clinic named ${searchName} in South Africa`;
+  if (latitude && longitude) Query = `clinic near ${latitude},${longitude} in South Africa`;
+
   try {
     const response = await axios.post(
       "https://places.googleapis.com/v1/places:searchText",
-      {
-        textQuery: Query
-      },
+      { textQuery: Query },
       {
         headers: {
           "Content-Type": "application/json",
-          "X-Goog-Api-Key":"AIzaSyAKqDTfRFmKVJw2W3PQDGyIgcm_BVpeWBk",
+          "X-Goog-Api-Key": "AIzaSyAKqDTfRFmKVJw2W3PQDGyIgcm_BVpeWBk",
           "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.id"
         }
       }
     );
-
     res.json(response.data);
   } catch (err) {
     console.error("Google Places error:", err.response?.data || err.message);
@@ -94,84 +74,105 @@ exports.getClinics = async (req, res) => {
   }
 };
 
+// ── ENSURE CLINIC EXISTS ────────────────────────────────────
 exports.ensureClinicExistsController = async (req, res) => {
   try {
     const { clinicId, name, address } = req.body;
-    
     if (!clinicId || !name) {
       return res.status(400).json({ success: false, message: "Missing clinicId or name" });
     }
-
     const result = await ensureClinicExists({ clinicId, name, address });
     res.json(result);
   } catch (error) {
     console.error("Error ensuring clinic exists:", error);
-    res.status(500).json({ success: false, message: "Failed to initialize clinic", error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-exports.seedServiceTemplates = async (req, res) => {
-    try {
-        const result = await firebaseService.seedServiceTemplates();
 
-        return res.status(200).json({
-            success: true,
-            message: result.message
-        });
-
-    } catch (error) {
-        console.error("Seed error:", error);
-
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-};
-
-
+// ── SERVICE TEMPLATES ───────────────────────────────────────
 exports.getServiceTemplates = async (req, res) => {
   try {
     const templates = await db.collection("serviceTemplates").get();
-
-    const data = templates.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
+    const data = templates.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(data);
   } catch (error) {
+    console.error("Get templates error:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
 exports.seedServiceTemplates = async (req, res) => {
   try {
-    const result = await firebaseService.seedServiceTemplates();
-    res.json({ success: true, message: result.message });
+    const existing = await db.collection("serviceTemplates").limit(1).get();
+    if (!existing.empty) {
+      return res.status(200).json({ success: true, message: "Already seeded" });
+    }
+    // Run the seed script manually instead — this route is just a safety check
+    res.status(200).json({ success: true, message: "Use node scripts/seedServiceTemplates.js to seed" });
   } catch (error) {
+    console.error("Seed error:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
+// ── CLINIC SERVICES ─────────────────────────────────────────
 exports.getServices = async (req, res) => {
-  const clinicId = req.user.clinicId;
-  const services = await firebaseService.getClinicServices(clinicId);
-  res.json(services);
+  try {
+    console.log("req.user:", req.user);
+    const clinicId = req.user.clinicId;
+    console.log("clinicId:", clinicId);
+    if (!clinicId) {
+      return res.status(400).json({ error: "No clinicId found on user token. Set custom claims first." });
+    }
+    const services = await getClinicServices(clinicId);
+    res.json(services);
+  } catch (err) {
+    console.error("getServices error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
+
 exports.addService = async (req, res) => {
-  const clinicId = req.user.clinicId;
-  const id = await firebaseService.addClinicService(clinicId, req.body);
-  res.json({ message: "Service added", id });
+  try {
+    const clinicId = req.user.clinicId;
+    if (!clinicId) return res.status(400).json({ error: "No clinicId on token" });
+
+    const { name, description, duration } = req.body;
+    if (!name || !description || !duration || duration < 1) {
+      return res.status(400).json({ error: "name, description and duration are required" });
+    }
+
+    const exists = await serviceExists(clinicId, name);
+    if (exists) return res.status(409).json({ error: "A service with that name already exists" });
+
+    const id = await addClinicService(clinicId, { name, description, duration });
+    res.status(201).json({ message: "Service added", id });
+  } catch (err) {
+    console.error("addService error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.updateService = async (req, res) => {
-  const clinicId = req.user.clinicId;
-  await firebaseService.updateClinicService(clinicId, req.params.serviceId, req.body);
-  res.json({ message: "Updated" });
+  try {
+    const clinicId = req.user.clinicId;
+    if (!clinicId) return res.status(400).json({ error: "No clinicId on token" });
+    await updateClinicService(clinicId, req.params.serviceId, req.body);
+    res.json({ message: "Updated" });
+  } catch (err) {
+    console.error("updateService error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.deleteService = async (req, res) => {
-  const clinicId = req.user.clinicId;
-  await firebaseService.deleteClinicService(clinicId, req.params.serviceId);
-  res.json({ message: "Deleted" });
+  try {
+    const clinicId = req.user.clinicId;
+    if (!clinicId) return res.status(400).json({ error: "No clinicId on token" });
+    await deleteClinicService(clinicId, req.params.serviceId);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error("deleteService error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };

@@ -1,4 +1,7 @@
+// ── STATE ───────────────────────────────────────────────────
+let editingServiceId = null;
 
+// ── AUTH GUARD ──────────────────────────────────────────────
 firebase.auth().onAuthStateChanged(async (user) => {
   if (!user) {
     window.location.href = "login.html";
@@ -33,30 +36,10 @@ firebase.auth().onAuthStateChanged(async (user) => {
   }
 });
 
-
-let editingServiceId = null;
-
-async function loadServices() {
-  try {
-    const res = await fetch("/api/services", {
-      headers: { "Authorization": `Bearer ${window.authToken}` }
-    });
-    if (!res.ok) throw new Error("Failed to fetch services");
-    const services = await res.json();
-
-    renderTable(services);
-    renderStats(services);
-
-  } catch (err) {
-    showError("Could not load services. Please try again.");
-    console.error(err);
-  }
-}
-
-
+// ── LOAD TEMPLATES INTO MODAL DROPDOWN ─────────────────────
 async function loadTemplates() {
   try {
-    const res = await fetch("/api/services/templates", {
+    const res = await fetch("/api/clinics/templates", {
       headers: { "Authorization": `Bearer ${window.authToken}` }
     });
     if (!res.ok) throw new Error("Failed to fetch templates");
@@ -77,7 +60,7 @@ async function loadTemplates() {
   }
 }
 
-
+// ── HANDLE TEMPLATE SELECTION ───────────────────────────────
 function handleTemplateChange() {
   const select = document.getElementById("templateSelect");
   if (!select.value) return;
@@ -88,7 +71,25 @@ function handleTemplateChange() {
   document.getElementById("serviceDuration").value = template.duration;
 }
 
+// ── LOAD SERVICES ───────────────────────────────────────────
+async function loadServices() {
+  try {
+    const res = await fetch("/api/clinics/services", {
+      headers: { "Authorization": `Bearer ${window.authToken}` }
+    });
+    if (!res.ok) throw new Error("Failed to fetch services");
+    const services = await res.json();
 
+    renderTable(services);
+    renderStats(services);
+
+  } catch (err) {
+    showError("Could not load services. Please try again.");
+    console.error(err);
+  }
+}
+
+// ── RENDER TABLE ────────────────────────────────────────────
 function renderTable(services) {
   const tbody = document.getElementById("servicesTableBody");
   tbody.innerHTML = "";
@@ -140,6 +141,7 @@ function renderTable(services) {
   });
 }
 
+// ── RENDER STATS ────────────────────────────────────────────
 function renderStats(services) {
   document.getElementById("totalServices").textContent = services.length;
 
@@ -150,7 +152,7 @@ function renderStats(services) {
   document.getElementById("avgDuration").textContent = `${avg} min`;
 }
 
-
+// ── MODAL: OPEN (ADD) ───────────────────────────────────────
 function openModal() {
   editingServiceId = null;
   document.getElementById("modalTitle").textContent = "Add New Service";
@@ -160,15 +162,14 @@ function openModal() {
   document.getElementById("modalOverlay").classList.add("active");
 }
 
-
+// ── MODAL: OPEN (EDIT) ──────────────────────────────────────
 function openEditModal(service) {
   editingServiceId = service.id;
   document.getElementById("modalTitle").textContent = "Edit Service";
   document.getElementById("submitBtn").textContent = "Save Changes";
 
-  
+  // Hide template dropdown when editing
   document.getElementById("templateSelectGroup").style.display = "none";
-
 
   document.getElementById("serviceName").value = service.name;
   document.getElementById("serviceDescription").value = service.description;
@@ -177,7 +178,7 @@ function openEditModal(service) {
   document.getElementById("modalOverlay").classList.add("active");
 }
 
-
+// ── MODAL: CLOSE ────────────────────────────────────────────
 function closeModal() {
   document.getElementById("modalOverlay").classList.remove("active");
   document.getElementById("serviceForm").reset();
@@ -185,7 +186,7 @@ function closeModal() {
   editingServiceId = null;
 }
 
-
+// ── FORM SUBMIT (ADD / EDIT) ────────────────────────────────
 async function handleSubmit(event) {
   event.preventDefault();
 
@@ -195,15 +196,14 @@ async function handleSubmit(event) {
     duration: Number(document.getElementById("serviceDuration").value),
   };
 
-  // Basic client-side guard
   if (!data.name || !data.description || !data.duration || data.duration < 1) {
     showError("Please fill in all fields correctly.");
     return;
   }
 
   const url = editingServiceId
-    ? `/api/services/${editingServiceId}`
-    : `/api/services`;
+    ? `/api/clinics/services/${editingServiceId}`
+    : `/api/clinics/services`;
 
   const method = editingServiceId ? "PUT" : "POST";
 
@@ -238,7 +238,7 @@ async function handleDelete(id) {
   if (!confirm("Are you sure you want to delete this service?")) return;
 
   try {
-    const res = await fetch(`/api/services/${id}`, {
+    const res = await fetch(`/api/clinics/services/${id}`, {
       method: "DELETE",
       headers: { "Authorization": `Bearer ${window.authToken}` }
     });
@@ -252,6 +252,7 @@ async function handleDelete(id) {
   }
 }
 
+// ── LIVE SEARCH ─────────────────────────────────────────────
 document.getElementById("searchInput").addEventListener("input", function () {
   const query = this.value.toLowerCase();
   const rows = document.querySelectorAll("#servicesTableBody tr");
@@ -260,7 +261,7 @@ document.getElementById("searchInput").addEventListener("input", function () {
   });
 });
 
-
+// ── ERROR HELPER ────────────────────────────────────────────
 function showError(message) {
-  alert(message); 
+  alert(message);
 }
