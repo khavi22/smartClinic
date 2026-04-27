@@ -1,136 +1,333 @@
-/* Calendar Container */
-#SetAvailabilitycalendarContainer {
-    width: 320px;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 16px;
-    background: white;
-    margin: 20px auto;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
-/* Header with arrows and month name */
+/* Navbar */
+.nav {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #185FA5;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, #185FA5, #1D9E75);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hero-text h1 {
+  color: white;
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.hero-text p {
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+}
+
+/* Content */
+.content {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Calendar */
+#SetAvailabilitycalendarContainer {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
 .cal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .month-title {
-    font-size: 15px;
-    font-weight: 500;
-    color: #333;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
 }
 
 .cal-nav-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #333;
 }
 
-.cal-nav-btn:hover {
-    background: #f0f0f0;
-}
+.cal-nav-btn:hover { background: #f0f0f0; }
 
-/* Grid - 7 columns for days */
 .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
 }
 
-/* Day labels Su Mo Tu... */
 .cal-day-label {
-    text-align: center;
-    font-size: 12px;
-    color: #999;
-    padding: 4px 0;
-    font-weight: 500;
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  padding: 4px 0;
+  font-weight: 500;
 }
 
-/* Each day button */
 .cal-day {
-    aspect-ratio: 1;
-    border: none;
-    background: none;
-    border-radius: 50%;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #333;
+  aspect-ratio: 1;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
 }
 
-.cal-day:hover {
-    background: #f0f0f0;
-}
+.cal-day:hover { background: #f0f0f0; }
 
-/* Today */
 .cal-day.today {
-    border: 1.5px solid #185FA5;
-    color: #185FA5;
-    font-weight: 500;
+  border: 1.5px solid #185FA5;
+  color: #185FA5;
+  font-weight: 500;
 }
 
-/* Selected date */
 .cal-day.selected {
-    background: #185FA5;
-    color: white;
-    font-weight: 500;
+  background: #185FA5;
+  color: white;
+  font-weight: 500;
 }
 
-.cal-day.selected:hover {
-    background: #0C447C;
-}
+.cal-day.selected:hover { background: #0C447C; }
 
-/* Past dates */
 .cal-day.disabled {
-    color: #ccc;
-    cursor: not-allowed;
+  color: #ccc;
+  cursor: not-allowed;
 }
 
-/* Empty spaces */
 .cal-day.empty {
-    background: none;
-    cursor: default;
+  background: none;
+  cursor: default;
 }
+
+/* Selected date display */
+.selected-date-display {
+  margin-top: 16px;
+  padding: 14px;
+  background: #f0f7ff;
+  border-radius: 8px;
+  border: 1px solid #d0e8ff;
+}
+
+.selected-date-label {
+  font-size: 12px;
+  color: #185FA5;
+  margin-bottom: 4px;
+}
+
+.selected-date-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Checkbox */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+/* Times */
+.times-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.time-label {
+  font-size: 13px;
+  color: #666;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.time-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background: white;
+}
+
+.time-select:focus {
+  outline: none;
+  border-color: #185FA5;
+}
+
+/* Save Button */
+.save-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #185FA5, #1D9E75);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.save-btn:hover { opacity: 0.9; }
+
+.save-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Availability Cards */
 .availability-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: white;
 }
 
 .card-date {
-    font-size: 15px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
 }
 
 .card-time {
-    font-size: 13px;
-    color: #666;
+  font-size: 13px;
+  color: #666;
 }
 
 .remove-btn {
-    padding: 8px 16px;
-    background: #e53935;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
+  padding: 8px 16px;
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
-.remove-btn:hover {
-    background: #b71c1c;
+.remove-btn:hover { background: #b71c1c; }
+
+.empty-msg {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 40px 0;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: #999;
+  background: #f5f5f5;
+}
+.clinic-info {
+  background: #f0f7ff;
+  border: 1px solid #d0e8ff;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin: 16px 24px;
+  font-size: 14px;
+  color: #333;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.clinic-label {
+  color: #185FA5;
+  font-weight: 500;
+}
+
+.clinic-dot {
+  margin: 0 8px;
+  color: #999;
 }

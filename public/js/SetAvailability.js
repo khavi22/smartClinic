@@ -75,6 +75,21 @@ window.handleDateSelection = function(dateStr) {
         selectedDates.push(dateStr);
     }
     renderCalendar();
+    const display = document.getElementById("selected-date-display");
+    const value = document.getElementById("selected-date-value");
+    
+    if(selectedDates.length > 0){
+        display.style.display = "block";
+        const lastSelected = selectedDates[selectedDates.length - 1];
+        value.textContent = new Date(lastSelected).toLocaleDateString('default', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } else {
+        display.style.display = "none";
+    }
     console.log("Selected dates:", selectedDates);
 };
 
@@ -198,6 +213,17 @@ async function removeAvailabilityFromBackend(date) {
 document.addEventListener("DOMContentLoaded", function(){
     renderCalendar();
     LoadAvailability();
+
+
+    // const clinicName = localStorage.getItem("clinicName");
+    // const clinicAddress = localStorage.getItem("clinicAddress");
+
+    // if(clinicName){
+    //     document.getElementById("clinic-name").textContent = clinicName;
+    // }
+    // if(clinicAddress){
+    //     document.getElementById("clinic-address").textContent = clinicAddress;
+    // }
 
     const Button_addAvailability = document.getElementById("Add_Availability");
     if(Button_addAvailability){
