@@ -1,9 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const setAvailabilityController = require("../Controllers/SetAvailabilityController");
+const { 
+    setAvailability, 
+    fetchAvailability,
+    deleteAvailability 
+} = require("../Controllers/SetAvailabilityController");
 
-router.post("/set", setAvailabilityController.setAvailability);
-router.get("/:staffCode", setAvailabilityController.fetchAvailability);
-router.delete("/remove", setAvailabilityController.deleteAvailability);
+// Save availability
+router.post("/set", setAvailability);
+
+// Get availability
+router.get("/:staffCode", fetchAvailability);
+
+// Remove availability
+router.delete("/remove", deleteAvailability);
 
 module.exports = router;

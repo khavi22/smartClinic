@@ -90,16 +90,16 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     const staffCode = "STF-330AFB";
     // later: localStorage.getItem("staffCode");
 
-    const response = await fetch("/api/staff/availability/set", {
+    const response = await fetch("http://localhost:3000/api/staff/availability/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            staffCode: staffCode,
-            dates: selectedDates,
-            startTime: startTime,
-            endTime: endTime,
-            available: checkedValue
-        })
+       body: JSON.stringify({
+            StaffCode: staffCode,
+            StartTime: startTime,
+            EndTime: endTime,
+            selectedDates: selectedDates,
+            Available:checkedValue
+})
     });
 
     const data = await response.json();
@@ -120,7 +120,7 @@ async function LoadAvailability() {
     // later: localStorage.getItem("staffCode");
 
     try {
-        const response = await fetch(`/api/staff/availability/${staffCode}`);
+        const response = await fetch(`http://localhost:3000/api/staff/availability/${staffCode}`);
         const data = await response.json();
         const availability = data.availability;
         displayAvailability(availability);
@@ -177,7 +177,7 @@ async function removeAvailabilityFromBackend(date) {
     // later: localStorage.getItem("staffCode");
 
     try {
-        const response = await fetch("/api/staff/availability/remove", {
+        const response = await fetch("http://localhost:3000/api/staff/availability/remove", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ staffCode, date })
@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function(){
     const Button_addAvailability = document.getElementById("Add_Availability");
     if(Button_addAvailability){
         Button_addAvailability.addEventListener("click", async function(){
-            const StartTime = document.getElementById("Starttime").value;
+            const StartTime = document.getElementById("Startime").value;
             const EndTime = document.getElementById("Endtime").value;
             const Available_bool = document.getElementById("available-check");
             const Checked_value = Available_bool.checked ? "true" : "false";

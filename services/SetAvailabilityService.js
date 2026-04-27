@@ -1,12 +1,12 @@
-const admin = require("firebase-admin");
-const db = admin.firestore();
+
+const { db, admin } = require("./config/firebase");
+console.log("DB",db);
 
 
 async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Available){
-        const StaffCode="STF-330AFB";
-     
+        // co StaffCode="STF-330AFB";
         const snaphshot =  await  db.collection("staff")
-                            .where("staffCode" , "==",staffCode)
+                            .where("staffCode" , "==",StaffCode)
                             .get();
      
         if(snaphshot.empty){
@@ -27,18 +27,15 @@ async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Availa
                 };
             console.log("Field successfully added!");
            }
-      await StaffClinicsRef.updateDoc(AvailabilityUpdate);
+      await StaffClinicsRef.update(AvailabilityUpdate);
       return{success:true};
 
 }
 
 async function getAvailability(staffCode){
-           const staffCode="STF-330AFB";
+        //    const staffCode="STF-330AFB";
     
-            const q = query(
-                            collection(db, "staff"),
-                            where("staffCode" , "==",staffCode).get()
-                        )
+           
              const snapshots= await  db.collection("staff")
                    .where("staffCode" , "==",staffCode)
                    .get();
@@ -60,7 +57,7 @@ async function removeStaffAvailability(staffCode, date){
 
     const StaffClinicsRef= snaphshots.docs[0].ref;
 
-    await StaffClinicsRef.updateDoc({
+    await StaffClinicsRef.update({
                 [`Staff_Availability.${date}`]: admin.firestore.FieldValue.delete
             });
     return { success: true };
