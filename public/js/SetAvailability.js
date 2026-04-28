@@ -4,6 +4,10 @@ let currentViewYear = today.getFullYear();
 let selectedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
 let selectedDates = [];
 
+const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+const daysLeftInMonth = daysInCurrentMonth - currentDate;
+const showNextMonth = daysLeftInMonth <= 5;
+
 function renderCalendar() {
     const container = document.getElementById('SetAvailabilitycalendarContainer');
     if (!container) return;
@@ -94,10 +98,57 @@ window.handleDateSelection = function(dateStr) {
 };
 
 window.changeMonth = function(delta) {
+    // i will just make all months available for testing and demonstration
     currentViewMonth += delta;
     if (currentViewMonth > 11) { currentViewMonth = 0; currentViewYear++; }
     else if (currentViewMonth < 0) { currentViewMonth = 11; currentViewYear--; }
+    //but this is the idea of showing a  month 5 days before it starts
+    // let newMonth = currentViewMonth + delta;
+    // let newYear = currentViewYear;
+    //reset to january after reaching deccember
+    // if (newMonth > 11) { 
+    //     newMonth = 0; 
+    //     newYear++; 
+    // } else if (newMonth < 0) { 
+    //     newMonth = 11; 
+    //     newYear--; 
+    // }
+    
+    // // Check if trying to go to next month
+    // if (delta > 0) {
+    //     // Calculate which month we're trying to go to
+    //     const targetMonth = newMonth;
+    //     const targetYear = newYear;
+        
+    //     // block if trying to go beyond next month
+    //     if (targetYear > currentYear || (targetYear === currentYear && targetMonth > currentMonth + 1)) {
+    //         alert("Cannot view months beyond next month");
+    //         return;
+    //     }
+        
+    //     // block next month if not yet within 5 days of it starting
+    //     if (targetMonth === currentMonth + 1 && !showNextMonth) {
+    //         const daysUntilNextMonth = daysLeftInMonth;
+    //         alert(`Next month will be available in ${daysUntilNextMonth} days`);
+    //         return;
+    //     }
+    // }
+    
+    // // block the past months
+    // if (delta < 0) {
+    //     if (newYear < currentYear || (newYear === currentYear && newMonth < currentMonth)) {
+    //         alert("Cannot view past months");
+    //         return;
+    //     }
+    // }
+    
+    // currentViewMonth = newMonth;
+    // currentViewYear = newYear;
+    
+   
     renderCalendar();
+
+
 };
 
 //save to firestore
