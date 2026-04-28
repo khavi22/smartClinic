@@ -4,6 +4,7 @@ let currentViewYear = today.getFullYear();
 let selectedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
 let selectedDates = [];
 
+//will work maybe maybe next  month but  the project is due tomorrow
 const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 const daysLeftInMonth = daysInCurrentMonth - currentDate;
 const showNextMonth = daysLeftInMonth <= 5;
