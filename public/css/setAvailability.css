@@ -5,7 +5,6 @@
   font-family: Arial, sans-serif;
 }
 
-/* Navbar */
 .nav {
   display: flex;
   align-items: center;
@@ -23,7 +22,7 @@
   color: #185FA5;
 }
 
-/* Hero */
+
 .hero {
   background: linear-gradient(135deg, #185FA5, #1D9E75);
   padding: 24px;
@@ -55,7 +54,6 @@
   font-size: 14px;
 }
 
-/* Content */
 .content {
   padding: 24px;
   background: #f5f5f5;
@@ -67,7 +65,6 @@
   margin: 0 auto;
 }
 
-/* Card */
 .card {
   background: white;
   border-radius: 12px;
@@ -85,7 +82,7 @@
   gap: 8px;
 }
 
-/* Calendar */
+
 #SetAvailabilitycalendarContainer {
   width: 100%;
   max-width: 320px;
@@ -169,7 +166,7 @@
   cursor: default;
 }
 
-/* Selected date display */
+
 .selected-date-display {
   margin-top: 16px;
   padding: 14px;
@@ -190,7 +187,6 @@
   color: #333;
 }
 
-/* Checkbox */
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -201,7 +197,7 @@
   cursor: pointer;
 }
 
-/* Times */
+
 .times-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -231,7 +227,7 @@
   border-color: #185FA5;
 }
 
-/* Save Button */
+
 .save-btn {
   width: 100%;
   padding: 13px;
@@ -257,7 +253,6 @@
   color: #999;
 }
 
-/* Availability Cards */
 .availability-card {
   display: flex;
   justify-content: space-between;
@@ -301,7 +296,6 @@
   padding: 40px 0;
 }
 
-/* Footer */
 .footer {
   text-align: center;
   padding: 16px;
