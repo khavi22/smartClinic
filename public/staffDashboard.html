@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartClinic | Staff Dashboard (Demo)</title>
+    <title>SmartClinic | Staff Dashboard</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
     
@@ -13,47 +13,69 @@
     <script src="js/firebase-config.js"></script>
 </head>
 <body>
-    <div class="dashboard-container">
+    <div class="dashboard-wrapper">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <span class="logo">SmartClinic</span>
-                <span class="badge">Staff Demo</span>
+            <div class="logo-details">
+                <span class="logo_name">SmartClinic</span>
             </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="active">Overview</a>
-                <a href="#">Patient List</a>
-                <a href="#">Schedule</a>
-            </nav>
-            <div class="sidebar-footer">
-                <button id="logoutBtn" class="btn-logout">Logout</button>
-            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active" aria-current="page"><span>Overview</span></a></li>
+                <li><a href="#"><span>Patient List</span></a></li>
+                <li><a href="#"><span>Schedule</span></a></li>
+                <li><a href="#" id="logoutBtn"><span>Logout</span></a></li>
+            </ul>
         </aside>
 
         <main class="main-content">
-            <header class="content-header">
+            <header class="top-bar">
                 <h1 id="userGreeting">Loading...</h1>
-                <div class="header-actions">
-                    <span id="clinicNameDisplay" class="clinic-tag">Clinic Access</span>
-                </div>
+                <figure class="user-profile">
+                    <span id="clinicNameDisplay" class="role-badge staff">Clinic Access</span>
+                </figure>
             </header>
 
-            <section class="demo-notice">
-                <h2>Welcome to the Staff Portal Demo</h2>
-                <p>This is a placeholder for the SmartClinic Staff experience. Features like real-time queue management and patient check-ins are currently being stylized for a premium feel.</p>
+            <section aria-labelledby="queueStatsLabel">
+                <p id="queueStatsLabel" class="section-label">Today's Queue</p>
+                <ul class="stats-grid">
+                    <li class="stat-card">
+                        <h3>Today's Load</h3>
+                        <p id="totalQueueCount" class="stat-value">--</p>
+                        <p class="stat-sub">Patients in queue</p>
+                    </li>
+                    <li class="stat-card">
+                        <h3>Waiting</h3>
+                        <p id="waitingQueueCount" class="stat-value">--</p>
+                        <p class="stat-sub">Ready for consultation</p>
+                    </li>
+                    <li class="stat-card">
+                        <h3>In Consultation</h3>
+                        <p id="consultationQueueCount" class="stat-value">--</p>
+                        <p class="stat-sub">Currently being seen</p>
+                    </li>
+                </ul>
             </section>
 
-            <div class="dashboard-grid">
-                <div class="card stat-card">
-                    <h3>Today's Load</h3>
-                    <p class="stat-value">12</p>
-                    <p class="stat-desc">Appointments scheduled</p>
-                </div>
-                <div class="card stat-card">
-                    <h3>Avg Wait Time</h3>
-                    <p class="stat-value">15m</p>
-                    <p class="stat-desc">Patient throughput</p>
-                </div>
-            </div>
+            <section aria-labelledby="queueTableLabel">
+                <p id="queueTableLabel" class="section-label">Patient Queue</p>
+                <figure class="table-wrapper">
+                    <table id="queueTable">
+                        <thead>
+                            <tr>
+                                <th>Number</th>
+                                <th>Patient</th>
+                                <th>Time</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueTableBody">
+                            <tr>
+                                <td colspan="5" class="table-empty">Loading queue...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </figure>
+            </section>
         </main>
     </div>
 

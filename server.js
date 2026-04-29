@@ -16,8 +16,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-app.use(express.static(path.join(__dirname, "public")));
-app.use(cors());
 
 const clinicsRoutes = require("./routes/clinics");
 app.use("/api/clinics", clinicsRoutes);
@@ -30,6 +28,9 @@ app.use("/api/user", userRoutes);
 
 const adminRoutes = require("./routes/admin");
 app.use("/api/admin", adminRoutes);
+
+const queueRoutes = require("./routes/queue");
+app.use("/api/queue", queueRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {

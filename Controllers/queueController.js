@@ -1,24 +1,25 @@
-const { getQueue, startConsultation } = require("../services/firebaseService");
+const { getQueue, startConsultation, addTodaysAppointmentsToQueue } = require("../services/firebaseService");
 
 exports.getQueue = async (req, res) => {
-    try {
-        const { clinicId } = req.params;
+  try {
+    const { clinicId } = req.params;
 
-        if (!clinicId) {
-            return res.status(400).json({ success: false, message: "clinicId is required" });
-        }
+    await addTodaysAppointmentsToQueue(clinicId);
 
-        const queue = await getQueue(clinicId);
+    const queue = await getQueue(clinicId);
 
-        res.status(200).json({ success: true, queue });
-    } catch (error) {
-        console.error("Error fetching queue:", error);
-        res.status(500).json({
-            success: false,
-            message: "Failed to fetch queue",
-            error: error.message
-        });
-    }
+    res.status(200).json({
+      success: true,
+      queue
+    });
+  } catch (error) {
+    console.error("Error fetching queue:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch queue",
+      error: error.message
+    });
+  }
 };
 
 exports.startConsultation = async (req, res) => {
@@ -60,3 +61,6 @@ exports.startConsultation = async (req, res) => {
         });
     }
 };
+
+
+

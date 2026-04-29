@@ -464,60 +464,54 @@ const deleteUserAccount = async (uid) => {
     return profile;
 };
 
-module.exports = {
-    createUserProfile,
-    createClinic,
-    ensureClinicExists,
-    claimClinic,
-    updateClinicOperatingHours,
-    getClinicNameById,
-    getClinicIdFromAdminCode,
-    getStaffAssignmentFromCode,
-    getClinicIdFromVerificationCode,
-    getUserProfileByEmail,
-    validateAdminCode,
-    getUserProfileById,
-    deleteUserAccount,
-    createAppointment,
-    getAvailabilityForDate,
-    cancelAppointment,
-    getAppointmentsByPatientId,
-    inviteStaffByEmail,
-    getInviteByEmail,
-    updateStaffApprovalStatus,
-    getPendingStaffByClinic
-};
 
 // ======================= QUEUE =======================
 const getQueue = async (clinicId) => {
-    const today = new Date().toISOString().split("T")[0]; // "2026-04-24"
+  const today = new Date().toISOString().split("T")[0];
 
-    const snapshot = await db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("queues")
-        .doc(today)
-        .collection("patients")
-        .orderBy("priority", "asc")
-        .orderBy("appointmentTime", "asc")
-        .orderBy("queueNumber", "asc")
-        .get();
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("queues")
+    .doc(today)
+    .collection("queueItems")
+    .get();
 
-    const queue = {
-        WAITING: [],
-        IN_CONSULTATION: [],
-        COMPLETE: [],
-        MISSED: [],
-    };
+  const patients = [];
 
-    snapshot.forEach((doc) => {
-        const patient = { queueItemId: doc.id, ...doc.data() };
-        if (queue[patient.status] !== undefined) {
-            queue[patient.status].push(patient);
-        }
+  snapshot.forEach((doc) => {
+    patients.push({
+      queueItemId: doc.id,
+      ...doc.data()
     });
+  });
 
-    return queue;
+  patients.sort((a, b) => {
+    if ((a.priority || 0) !== (b.priority || 0)) {
+      return (a.priority || 0) - (b.priority || 0);
+    }
+
+    if ((a.appointmentTime || "") !== (b.appointmentTime || "")) {
+      return (a.appointmentTime || "").localeCompare(b.appointmentTime || "");
+    }
+
+    return (a.queueNumber || 0) - (b.queueNumber || 0);
+  });
+
+  const queue = {
+    WAITING: [],
+    IN_CONSULTATION: [],
+    COMPLETE: [],
+    MISSED: [],
+  };
+
+  patients.forEach((patient) => {
+    if (queue[patient.status]) {
+      queue[patient.status].push(patient);
+    }
+  });
+
+  return queue;
 };
 
 const startConsultation = async (clinicId, queueItemId, staffId) => {
@@ -564,4 +558,92 @@ const startConsultation = async (clinicId, queueItemId, staffId) => {
     await patientRef.update(updatedFields);
 
     return { queueItemId, ...patient, ...updatedFields };
+};
+
+const addTodaysAppointmentsToQueue = async (clinicId) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const appointmentsSnapshot = await db
+    .collection("appointments")
+    .where("clinicId", "==", clinicId)
+    .where("date", "==", today)
+    .where("status", "==", "booked")
+    .get();
+
+  if (appointmentsSnapshot.empty) {
+    return [];
+  }
+
+  const addedToQueue = [];
+
+  for (const doc of appointmentsSnapshot.docs) {
+    const appointment = doc.data();
+
+    const queueDocRef = db
+      .collection("clinics")
+      .doc(clinicId)
+      .collection("queues")
+      .doc(today)
+      .collection("queueItems")
+      .doc(doc.id);
+
+    const existingQueueDoc = await queueDocRef.get();
+
+    if (existingQueueDoc.exists) {
+      continue;
+    }
+
+    const queueData = {
+      appointmentId: doc.id,
+      patientId: appointment.patientId,
+      clinicId: appointment.clinicId,
+      clinicName: appointment.clinicName,
+      clinicAddress: appointment.clinicAddress,
+      date: appointment.date,
+      timeSlot: appointment.timeSlot,
+
+      status: "WAITING",
+      priority: 0,
+      appointmentTime: appointment.timeSlot,
+      queueNumber: Date.now(),
+
+      createdAt: new Date()
+    };
+
+    await queueDocRef.set(queueData);
+
+    addedToQueue.push({
+      queueItemId: doc.id,
+      ...queueData
+    });
+  }
+
+  return addedToQueue;
+};
+
+module.exports = {
+    createUserProfile,
+    createClinic,
+    ensureClinicExists,
+    claimClinic,
+    updateClinicOperatingHours,
+    getClinicNameById,
+    getClinicIdFromAdminCode,
+    getStaffAssignmentFromCode,
+    getClinicIdFromVerificationCode,
+    getUserProfileByEmail,
+    validateAdminCode,
+    getUserProfileById,
+    deleteUserAccount,
+    createAppointment,
+    getAvailabilityForDate,
+    cancelAppointment,
+    getAppointmentsByPatientId,
+    inviteStaffByEmail,
+    getInviteByEmail,
+    updateStaffApprovalStatus,
+    getPendingStaffByClinic,
+    getQueue,
+    startConsultation,
+    addTodaysAppointmentsToQueue
 };
