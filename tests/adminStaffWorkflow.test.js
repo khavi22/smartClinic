@@ -200,6 +200,56 @@ describe("Admin Staff Workflow Tests", () => {
             });
         });
 
+        describe("getActiveStaff", () => {
+            it("returns active staff for a clinic", async () => {
+                req.query = { clinicId: "clinic-1" };
+                const mockStaff = [{ uid: "s1", fullName: "Staff One", approvalStatus: "approved" }];
+                jest.spyOn(firebaseService, "getActiveStaffByClinic").mockResolvedValue(mockStaff);
+
+                await adminController.getActiveStaff(req, res);
+
+                expect(res.json).toHaveBeenCalledWith({ success: true, staff: mockStaff });
+            });
+
+            it("returns 400 when clinicId is missing", async () => {
+                req.query = {};
+                await adminController.getActiveStaff(req, res);
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("returns 500 on service error", async () => {
+                req.query = { clinicId: "clinic-1" };
+                jest.spyOn(firebaseService, "getActiveStaffByClinic").mockRejectedValueOnce(new Error("Fail"));
+                await adminController.getActiveStaff(req, res);
+                expect(res.status).toHaveBeenCalledWith(500);
+            });
+        });
+
+        describe("removeStaff", () => {
+            it("removes a staff member successfully", async () => {
+                req.body = { staffUid: "s1", clinicId: "c1" };
+                jest.spyOn(firebaseService, "removeStaffFromClinic").mockResolvedValueOnce();
+
+                await adminController.removeStaff(req, res);
+
+                expect(firebaseService.removeStaffFromClinic).toHaveBeenCalledWith("s1");
+                expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+            });
+
+            it("returns 400 when fields are missing", async () => {
+                req.body = { staffUid: "s1" };
+                await adminController.removeStaff(req, res);
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("returns 500 on service error", async () => {
+                req.body = { staffUid: "s1", clinicId: "c1" };
+                jest.spyOn(firebaseService, "removeStaffFromClinic").mockRejectedValueOnce(new Error("Fail"));
+                await adminController.removeStaff(req, res);
+                expect(res.status).toHaveBeenCalledWith(500);
+            });
+        });
+
         it("processStaffApproval returns 400 for missing fields", async () => {
             req.body = { staffUid: "s1" }; // missing status/clinicId
             await adminController.processStaffApproval(req, res);
@@ -214,8 +264,8 @@ describe("Admin Staff Workflow Tests", () => {
 
         it("processStaffApproval returns 404 if staff profile is missing", async () => {
             req.body = { staffUid: "s1", status: "approved", clinicId: "c1" };
-            jest.spyOn(firebaseService, "updateStaffApprovalStatus").mockResolvedValue();
-            jest.spyOn(firebaseService, "getUserProfileById").mockResolvedValue(null);
+            jest.spyOn(firebaseService, "updateStaffApprovalStatus").mockResolvedValueOnce();
+            jest.spyOn(firebaseService, "getUserProfileById").mockResolvedValueOnce(null);
             
             await adminController.processStaffApproval(req, res);
             expect(res.status).toHaveBeenCalledWith(404);
@@ -223,10 +273,44 @@ describe("Admin Staff Workflow Tests", () => {
 
         it("processStaffApproval returns 500 on service error", async () => {
             req.body = { staffUid: "s1", status: "approved", clinicId: "c1" };
-            jest.spyOn(firebaseService, "updateStaffApprovalStatus").mockRejectedValue(new Error("Fail"));
+            jest.spyOn(firebaseService, "updateStaffApprovalStatus").mockRejectedValueOnce(new Error("Fail"));
             
             await adminController.processStaffApproval(req, res);
             expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe("additional firebaseService staff methods", () => {
+        it("getActiveStaffByClinic returns list of approved staff", async () => {
+            const mockSnapshot = {
+                forEach: (cb) => {
+                    cb({ id: "s1", data: () => ({ fullName: "Staff One", approvalStatus: "approved" }) });
+                }
+            };
+            const query = {
+                where: jest.fn().mockReturnThis(),
+                get: jest.fn().mockResolvedValue(mockSnapshot)
+            };
+            db.collection.mockReturnValue(query);
+
+            const result = await firebaseService.getActiveStaffByClinic("clinic-1");
+
+            expect(result).toHaveLength(1);
+            expect(result[0].uid).toBe("s1");
+        });
+
+        it("removeStaffFromClinic updates status to removed", async () => {
+            const update = jest.fn().mockResolvedValue();
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({ update }))
+            });
+
+            await firebaseService.removeStaffFromClinic("staff-1");
+
+            expect(update).toHaveBeenCalledWith(expect.objectContaining({
+                approvalStatus: "removed",
+                clinicId: null
+            }));
         });
     });
 });
