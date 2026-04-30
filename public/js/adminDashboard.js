@@ -29,10 +29,9 @@ firebase.auth().onAuthStateChanged(async (user) => {
         const data = result.profile;
         currentClinicId = data.clinicId;
         if (currentClinicId) {
-            // Clinic hours search might still hit rules, 
-            // but at least we have the clinic ID and profile secure.
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
+            await loadActiveStaff(currentClinicId);
         }
 
     } catch (error) {
@@ -41,13 +40,27 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 });
 
+// ── TAB SWITCHING ───────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab');
+        
+        // Update buttons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update content
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+    });
+});
+
 
 async function loadClinicHours(clinicId) {
     const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
     if (doc.exists) {
         const data = doc.data();
         const hours = data.operatingHours;
-        const statusEl = document.getElementById('clinicStatus');
 
         //show clinic name in header
         const clinicNameText    = document.getElementById('clinicNameText');
@@ -71,12 +84,6 @@ async function loadClinicHours(clinicId) {
                 toggleDay(checkbox, document.getElementById(`${day.substring(0,3)}-fields`), checkbox.closest('.day-row'));
             });
         }
-        
-        if (data.isActive) {
-            statusEl.textContent = "Active";
-            statusEl.style.color = "var(--success-green)";
-        }
-        updateStats();
     }
 }
 
@@ -91,7 +98,6 @@ daysShort.forEach(day => {
     if (checkbox) {
         checkbox.addEventListener('change', () => {
             toggleDay(checkbox, fields, row);
-            updateStats();
         });
     }
 });
@@ -107,17 +113,6 @@ function toggleDay(checkbox, fields, row) {
         fields.style.opacity = '0.3';
         row.classList.add('is-closed');
     }
-}
-
-// ── STATS: count open days & today's status ─────────────────
-function updateStats() {
-    const openCount = daysShort.filter(d => {
-        const el = document.getElementById(`${d}-open`);
-        return el && el.checked;
-    }).length;
-
-    const openDaysEl = document.getElementById('openDaysCount');
-    if (openDaysEl) openDaysEl.textContent = `${openCount} / 7`;
 }
 
 // ── FORM SAVE ───────────────────────────────────────────────
@@ -174,7 +169,6 @@ if (hoursForm) {
             saveStatus.style.color = '#ef4444';
         } finally {
             saveBtn.disabled = false;
-            updateStats();
         }
     });
 }
@@ -284,16 +278,92 @@ window.processApproval = async (staffUid, status) => {
 
         if (response.ok) {
             await loadPendingStaff(currentClinicId);
+            await loadActiveStaff(currentClinicId);
         } else {
             const result = await response.json();
-            console.error('Approval API error:', result);
             alert('Error: ' + (result.message || 'Failed to process approval'));
         }
     } catch (error) {
         console.error('Approval exception:', error);
-        alert('An unexpected network error occurred. Please check your connection and try again.');
+        alert('An unexpected network error occurred.');
     }
 };
+
+async function loadActiveStaff(clinicId) {
+    const container = document.getElementById('activeStaffList');
+    if (!container) return;
+
+    try {
+        const idToken = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch(`/api/admin/active-staff?clinicId=${clinicId}`, {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            renderActiveStaff(result.staff);
+        } else {
+            throw new Error(result.message || "Failed to load staff members");
+        }
+    } catch (error) {
+        console.error('Error loading active staff:', error);
+        const container = document.getElementById('activeStaffList');
+        if (container) {
+            container.innerHTML = '<p class="text-muted" style="font-size: 0.88rem; padding: 12px 0; color: #ef4444;">Error loading staff members. Please try again.</p>';
+        }
+    }
+}
+
+function renderActiveStaff(staff) {
+    const container = document.getElementById('activeStaffList');
+    if (!container) return;
+
+    if (!staff || staff.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No active staff members</p>';
+        return;
+    }
+
+    container.innerHTML = staff.map(s => `
+        <div class="active-staff-item">
+            <div class="staff-avatar-mini">${s.fullName ? s.fullName[0].toUpperCase() : 'S'}</div>
+            <div class="staff-main-info">
+                <div class="staff-name">${s.fullName}</div>
+                <div class="staff-email">${s.email}</div>
+            </div>
+            <button onclick="fireStaff('${s.uid}', '${s.fullName}')" class="btn-fire">
+                <i class='bx bx-user-x'></i>
+                Fire
+            </button>
+        </div>
+    `).join('');
+}
+
+window.fireStaff = async (staffUid, name) => {
+    if (!confirm(`Are you sure you want to remove ${name} from your staff? They will lose all access to the clinic.`)) return;
+
+    try {
+        const idToken = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch('/api/admin/remove-staff', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ staffUid, clinicId: currentClinicId })
+        });
+
+        if (response.ok) {
+            await loadActiveStaff(currentClinicId);
+        } else {
+            const result = await response.json();
+            alert('Error: ' + (result.message || 'Failed to remove staff'));
+        }
+    } catch (error) {
+        console.error('Fire staff error:', error);
+        alert('An unexpected network error occurred.');
+    }
+};
+
 // ── MANAGE SERVICES ────────────────────────────────────────
 const manageServicesBtn = document.getElementById("manageServicesBtn");
 if (manageServicesBtn) {

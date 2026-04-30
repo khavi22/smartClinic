@@ -442,6 +442,27 @@ const getPendingStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+const getActiveStaffByClinic = async (clinicId) => {
+    const snapshot = await db.collection("staff")
+        .where("clinicId", "==", clinicId)
+        .where("approvalStatus", "==", "approved")
+        .get();
+
+    const staff = [];
+    snapshot.forEach(doc => {
+        staff.push({ uid: doc.id, ...doc.data() });
+    });
+    return staff;
+};
+
+const removeStaffFromClinic = async (staffUid) => {
+    await db.collection("staff").doc(staffUid).update({
+        approvalStatus: "removed",
+        clinicId: null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -557,6 +578,8 @@ module.exports = {
     getInviteByEmail,
     updateStaffApprovalStatus,
     getPendingStaffByClinic,
+    getActiveStaffByClinic,
+    removeStaffFromClinic,
     getServiceTemplates,
     getClinicServices,
     addClinicService,

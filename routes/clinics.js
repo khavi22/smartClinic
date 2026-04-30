@@ -1,6 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const { getClinics, updateClinicHoursController, ensureClinicExistsController } = require("../Controllers/ClinicsController");
+const { 
+    getClinics, 
+    updateClinicHoursController, 
+    ensureClinicExistsController, 
+    getServiceTemplates, 
+    seedServiceTemplates, 
+    getServices, 
+    addService, 
+    updateService, 
+    deleteService 
+} = require("../Controllers/ClinicsController");
+const { authMiddleware, requireAdmin } = require("../middlewares/auth");
 
 router.get("/", getClinics); // GET /api/clinics
 router.post("/update-hours", updateClinicHoursController); // POST /api/clinics/update-hours

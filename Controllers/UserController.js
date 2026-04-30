@@ -174,9 +174,18 @@ exports.registerUser = async (req, res) => {
             await firebaseService.createUserProfile(userData, roleData);
             await firebaseService.claimClinic(clinicId, uid);
         } else if (role === "staff") {
-            const invite = await firebaseService.getInviteByEmail(email);
+            const code = verificationCode || staffCode;
 
-            if (!invite) {
+            if (!code) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Staff code is required"
+                });
+            }
+
+            const clinicId = await firebaseService.getStaffAssignmentFromCode(code);
+
+            if (!clinicId) {
                 return res.status(403).json({
                     success: false,
                     message: "You must be invited by an administrator to sign up as staff."

@@ -10,7 +10,6 @@ let selectedSlotId = null;
 
 
 async function fetchTodayDate() {
-
     return new Promise(resolve => {
         setTimeout(() => {
             resolve(new Date()); // today's date

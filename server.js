@@ -28,8 +28,8 @@ app.use("/api", appointmentRoutes);
 const userRoutes = require("./routes/user");
 app.use("/api/user", userRoutes);
 
-const adminRoutes = require("./routes/admin");
-app.use("/api/admin", adminRoutes);
+const staffAvailabilityRoutes = require("./routes/StaffAvailability");
+app.use("/api/staff/availability", staffAvailabilityRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
@@ -38,5 +38,6 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 app.use(express.static("public"));
+
 
 module.exports = app;
