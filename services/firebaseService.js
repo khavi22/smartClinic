@@ -464,6 +464,77 @@ const deleteUserAccount = async (uid) => {
     return profile;
 };
 
+
+const getServiceTemplates = async () => {
+  const snapshot = await db.collection("serviceTemplates").get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const getClinicServices = async (clinicId) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const addClinicService = async (clinicId, data) => {
+  const ref = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .add({
+      ...data,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      active: true,
+    });
+
+  return ref.id;
+};
+
+const updateClinicService = async (clinicId, serviceId, data) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .update({
+      ...data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+};
+
+const deleteClinicService = async (clinicId, serviceId) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .delete();
+};
+
+const serviceExists = async (clinicId, name) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .where("name", "==", name)
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
+};
+
 module.exports = {
     createUserProfile,
     createClinic,
@@ -485,5 +556,11 @@ module.exports = {
     inviteStaffByEmail,
     getInviteByEmail,
     updateStaffApprovalStatus,
-    getPendingStaffByClinic
+    getPendingStaffByClinic,
+    getServiceTemplates,
+    getClinicServices,
+    addClinicService,
+    updateClinicService,
+    deleteClinicService,
+    serviceExists
 };
