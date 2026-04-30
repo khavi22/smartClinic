@@ -18,7 +18,7 @@ exports.updateClinicHoursController = async (req, res) => {
     try {
       decodedToken = await admin.auth().verifyIdToken(idToken);
     } catch (authError) {
-      return res.status(401).json({ success: false, message: "Invalid token" });
+      return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
     }
 
     const uid = decodedToken.uid;
@@ -85,7 +85,7 @@ exports.ensureClinicExistsController = async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error("Error ensuring clinic exists:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Failed to initialize clinic", error: error.message });
   }
 };
 
