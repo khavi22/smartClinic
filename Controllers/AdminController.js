@@ -77,3 +77,29 @@ exports.processStaffApproval = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.getActiveStaff = async (req, res) => {
+    try {
+        const { clinicId } = req.query;
+        if (!clinicId) return res.status(400).json({ success: false, message: "Clinic ID is required." });
+
+        const activeStaff = await firebaseService.getActiveStaffByClinic(clinicId);
+        res.json({ success: true, staff: activeStaff });
+    } catch (error) {
+        console.error("Get active staff error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.removeStaff = async (req, res) => {
+    try {
+        const { staffUid, clinicId } = req.body;
+        if (!staffUid || !clinicId) return res.status(400).json({ success: false, message: "Missing staffUid or clinicId" });
+
+        await firebaseService.removeStaffFromClinic(staffUid);
+        res.json({ success: true, message: "Staff removed successfully" });
+    } catch (error) {
+        console.error("Remove staff error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

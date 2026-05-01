@@ -165,4 +165,119 @@ describe("ClinicsController", () => {
             expect(res.status).toHaveBeenCalledWith(500);
         });
     });
+
+    describe("getServiceTemplates", () => {
+        it("should return templates successfully", async () => {
+            const mockTemplates = [{ id: "t1", name: "Consultation" }];
+            db.collection.mockReturnValue({
+                get: jest.fn().mockResolvedValue({
+                    docs: [{ id: "t1", data: () => ({ name: "Consultation" }) }]
+                })
+            });
+
+            const controller = require("../Controllers/ClinicsController");
+            await controller.getServiceTemplates(req, res);
+
+            expect(res.json).toHaveBeenCalledWith(mockTemplates);
+        });
+
+        it("should return 500 on error", async () => {
+            db.collection.mockReturnValue({
+                get: jest.fn().mockRejectedValue(new Error("DB Error"))
+            });
+            await require("../Controllers/ClinicsController").getServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe("seedServiceTemplates", () => {
+        it("should return already seeded message if not empty", async () => {
+            db.collection.mockReturnValue({
+                limit: jest.fn().mockReturnThis(),
+                get: jest.fn().mockResolvedValue({ empty: false })
+            });
+            await require("../Controllers/ClinicsController").seedServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Already seeded" }));
+        });
+
+        it("should return instructions if empty", async () => {
+            db.collection.mockReturnValue({
+                limit: jest.fn().mockReturnThis(),
+                get: jest.fn().mockResolvedValue({ empty: true })
+            });
+            await require("../Controllers/ClinicsController").seedServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining("Use node scripts") }));
+        });
+
+        it("should return 500 on error", async () => {
+            db.collection.mockReturnValue({
+                limit: jest.fn().mockReturnThis(),
+                get: jest.fn().mockRejectedValue(new Error("Seed fail"))
+            });
+            await require("../Controllers/ClinicsController").seedServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe("Service Management", () => {
+        beforeEach(() => {
+            req.user = { clinicId: "clinic-123" };
+        });
+
+        it("getServices should return services successfully", async () => {
+            const mockServices = [{ id: "s1", name: "Checkup" }];
+            firebaseService.getClinicServices.mockResolvedValue(mockServices);
+            
+            await require("../Controllers/ClinicsController").getServices(req, res);
+            
+            expect(res.json).toHaveBeenCalledWith(mockServices);
+        });
+
+        it("addService should create a service", async () => {
+            req.body = { name: "S1", description: "D", duration: 30 };
+            firebaseService.serviceExists.mockResolvedValue(false);
+            firebaseService.addClinicService.mockResolvedValue("new-id");
+
+            await require("../Controllers/ClinicsController").addService(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: "new-id" }));
+        });
+
+        it("addService should return 409 if exists", async () => {
+            req.body = { name: "S1", description: "D", duration: 30 };
+            firebaseService.serviceExists.mockResolvedValue(true);
+
+            await require("../Controllers/ClinicsController").addService(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(409);
+        });
+
+        it("updateService should call service with data", async () => {
+            req.params = { serviceId: "s1" };
+            req.body = { duration: 45 };
+            
+            await require("../Controllers/ClinicsController").updateService(req, res);
+            
+            expect(firebaseService.updateClinicService).toHaveBeenCalledWith("clinic-123", "s1", req.body);
+            expect(res.json).toHaveBeenCalled();
+        });
+
+        it("deleteService should call service with id", async () => {
+            req.params = { serviceId: "s1" };
+            
+            await require("../Controllers/ClinicsController").deleteService(req, res);
+            
+            expect(firebaseService.deleteClinicService).toHaveBeenCalledWith("clinic-123", "s1");
+            expect(res.json).toHaveBeenCalled();
+        });
+
+        it("should return 400 if clinicId is missing on user", async () => {
+            req.user = {};
+            await require("../Controllers/ClinicsController").getServices(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+        });
+    });
 });

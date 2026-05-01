@@ -442,6 +442,27 @@ const getPendingStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+const getActiveStaffByClinic = async (clinicId) => {
+    const snapshot = await db.collection("staff")
+        .where("clinicId", "==", clinicId)
+        .where("approvalStatus", "==", "approved")
+        .get();
+
+    const staff = [];
+    snapshot.forEach(doc => {
+        staff.push({ uid: doc.id, ...doc.data() });
+    });
+    return staff;
+};
+
+const removeStaffFromClinic = async (staffUid) => {
+    await db.collection("staff").doc(staffUid).update({
+        approvalStatus: "removed",
+        clinicId: null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -462,6 +483,77 @@ const deleteUserAccount = async (uid) => {
     await admin.auth().deleteUser(uid);
 
     return profile;
+};
+
+
+const getServiceTemplates = async () => {
+  const snapshot = await db.collection("serviceTemplates").get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const getClinicServices = async (clinicId) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const addClinicService = async (clinicId, data) => {
+  const ref = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .add({
+      ...data,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      active: true,
+    });
+
+  return ref.id;
+};
+
+const updateClinicService = async (clinicId, serviceId, data) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .update({
+      ...data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+};
+
+const deleteClinicService = async (clinicId, serviceId) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .delete();
+};
+
+const serviceExists = async (clinicId, name) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .where("name", "==", name)
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
 };
 
 module.exports = {
@@ -485,5 +577,13 @@ module.exports = {
     inviteStaffByEmail,
     getInviteByEmail,
     updateStaffApprovalStatus,
-    getPendingStaffByClinic
+    getPendingStaffByClinic,
+    getActiveStaffByClinic,
+    removeStaffFromClinic,
+    getServiceTemplates,
+    getClinicServices,
+    addClinicService,
+    updateClinicService,
+    deleteClinicService,
+    serviceExists
 };
