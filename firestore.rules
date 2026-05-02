@@ -34,10 +34,14 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
-    // Clinics are publicly searchable but only the server can modify them
+    // Clinics are publicly searchable; only the owning admin can update profile fields
     match /clinics/{clinicId} {
-      allow read: if true; 
-      allow write: if false; 
+      allow read: if true;
+      // Server can write freely (handled via Admin SDK)
+      // Authenticated admin can update their own clinic's profile metadata
+      allow write: if signedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.clinicId == clinicId;
     }
 
     // Appointments are private to the patient, but readable by clinic staff

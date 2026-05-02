@@ -22,7 +22,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         if (!result.exists || !result.profile || result.profile.role !== "admin") {
             console.warn("Unauthorized or missing admin profile");
-            window.location.href = "dashboard.html";
+            window.location.href = "index.html";
             return;
         }
 
@@ -33,11 +33,12 @@ firebase.auth().onAuthStateChanged(async (user) => {
             // but at least we have the clinic ID and profile secure.
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
+            await loadClinicProfile(currentClinicId);
         }
 
     } catch (error) {
         console.error("Admin Dashboard: Error loading profile:", error);
-        window.location.href = "dashboard.html";
+        window.location.href = "index.html";
     }
 });
 
@@ -294,3 +295,87 @@ window.processApproval = async (staffUid, status) => {
         alert('An unexpected network error occurred. Please check your connection and try again.');
     }
 };
+
+// ── CLINIC PROFILE: load ────────────────────────────────────────────────────
+async function loadClinicProfile(clinicId) {
+    const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    // Facility type
+    if (data.facilityType) {
+        const radio = document.querySelector(`input[name="facilityType"][value="${data.facilityType}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    // Province
+    if (data.province) {
+        const sel = document.getElementById("clinicProvince");
+        if (sel) sel.value = data.province;
+    }
+
+    // District & Region
+    if (data.district) {
+        const el = document.getElementById("clinicDistrict");
+        if (el) el.value = data.district;
+    }
+    if (data.region) {
+        const el = document.getElementById("clinicRegion");
+        if (el) el.value = data.region;
+    }
+
+    // Services
+    if (data.services && Array.isArray(data.services)) {
+        data.services.forEach(svc => {
+            const cb = document.querySelector(`#profileForm input[name="services"][value="${svc}"]`);
+            if (cb) cb.checked = true;
+        });
+    }
+}
+
+// ── CLINIC PROFILE: save ─────────────────────────────────────────────────────
+document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+    if (!currentClinicId) {
+        alert("No clinic associated with your account.");
+        return;
+    }
+
+    const btn    = document.getElementById("saveProfileBtn");
+    const status = document.getElementById("profileSaveStatus");
+
+    const facilityTypeEl = document.querySelector('input[name="facilityType"]:checked');
+    const facilityType   = facilityTypeEl ? facilityTypeEl.value : "";
+    const province       = document.getElementById("clinicProvince").value;
+    const district       = document.getElementById("clinicDistrict").value.trim();
+    const region         = document.getElementById("clinicRegion").value.trim();
+    const services       = [...document.querySelectorAll('#profileForm input[name="services"]:checked')]
+                               .map(cb => cb.value);
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving…`;
+    status.textContent = "";
+    status.className = "save-status";
+
+    try {
+        await firebase.firestore().collection("clinics").doc(currentClinicId).set({
+            facilityType,
+            province,
+            district,
+            region,
+            services
+        }, { merge: true });
+
+        status.textContent = "✓ Profile saved successfully";
+        status.className = "save-status";
+        btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
+        btn.disabled = false;
+
+        setTimeout(() => { status.textContent = ""; }, 4000);
+    } catch (err) {
+        console.error("Save profile error:", err);
+        status.textContent = "Failed to save. Please try again.";
+        status.className = "save-status error";
+        btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
+        btn.disabled = false;
+    }
+});

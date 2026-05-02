@@ -104,6 +104,95 @@
                         Use My Location
                     </button>
                 </form>
+                <!-- ── FILTER PANEL ── -->
+                <section class="filter-section" aria-labelledby="filter-heading">
+                    <header class="filter-section-header" id="filterToggleBtn" role="button" tabindex="0" aria-expanded="false" aria-controls="filterBody">
+                        <span class="filter-heading-text">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                            Filter Clinics
+                        </span>
+                        <span class="filter-badge" id="filterBadge" hidden>0</span>
+                        <svg class="filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                    </header>
+
+                    <div class="filter-body" id="filterBody" hidden>
+
+                        <!-- Facility Type -->
+                        <fieldset class="filter-group">
+                            <legend>Facility Type</legend>
+                            <select id="filterFacilityType" class="filter-select">
+                                <option value="">All Types</option>
+                                <option>Community Health Centre</option>
+                                <option>District Hospital</option>
+                                <option>Regional Hospital</option>
+                                <option>Tertiary Hospital</option>
+                                <option>Clinic</option>
+                                <option>Private Hospital</option>
+                                <option>Specialised Hospital</option>
+                                <option>Gateway Clinic</option>
+                            </select>
+                        </fieldset>
+
+                        <!-- Province -->
+                        <fieldset class="filter-group">
+                            <legend>Province</legend>
+                            <select id="filterProvince" class="filter-select">
+                                <option value="">All Provinces</option>
+                                <option>Eastern Cape</option>
+                                <option>Free State</option>
+                                <option>Gauteng</option>
+                                <option>KwaZulu-Natal</option>
+                                <option>Limpopo</option>
+                                <option>Mpumalanga</option>
+                                <option>Northern Cape</option>
+                                <option>North West</option>
+                                <option>Western Cape</option>
+                            </select>
+                        </fieldset>
+
+                        <!-- District -->
+                        <fieldset class="filter-group">
+                            <legend>District</legend>
+                            <input type="text" id="filterDistrict" class="premium-input filter-input" placeholder="e.g. City of Cape Town">
+                        </fieldset>
+
+                        <!-- Region -->
+                        <fieldset class="filter-group">
+                            <legend>Region / Sub-district</legend>
+                            <input type="text" id="filterRegion" class="premium-input filter-input" placeholder="e.g. Tygerberg">
+                        </fieldset>
+
+                        <!-- Services -->
+                        <fieldset class="filter-group">
+                            <legend>Services Required</legend>
+                            <div class="services-chip-list" id="servicesChipList">
+                                <label class="svc-chip"><input type="checkbox" value="General Outpatient"> General Outpatient</label>
+                                <label class="svc-chip"><input type="checkbox" value="Emergency &amp; Casualty"> Emergency &amp; Casualty</label>
+                                <label class="svc-chip"><input type="checkbox" value="Maternal &amp; Child Health"> Maternal &amp; Child Health</label>
+                                <label class="svc-chip"><input type="checkbox" value="HIV/AIDS &amp; TB"> HIV/AIDS &amp; TB</label>
+                                <label class="svc-chip"><input type="checkbox" value="Mental Health"> Mental Health</label>
+                                <label class="svc-chip"><input type="checkbox" value="Chronic Disease Management"> Chronic Disease Management</label>
+                                <label class="svc-chip"><input type="checkbox" value="Dental"> Dental</label>
+                                <label class="svc-chip"><input type="checkbox" value="Ophthalmology"> Ophthalmology</label>
+                                <label class="svc-chip"><input type="checkbox" value="Physiotherapy"> Physiotherapy</label>
+                                <label class="svc-chip"><input type="checkbox" value="Pharmacy"> Pharmacy</label>
+                                <label class="svc-chip"><input type="checkbox" value="Radiology &amp; Imaging"> Radiology &amp; Imaging</label>
+                                <label class="svc-chip"><input type="checkbox" value="Laboratory"> Laboratory</label>
+                                <label class="svc-chip"><input type="checkbox" value="Paediatrics"> Paediatrics</label>
+                                <label class="svc-chip"><input type="checkbox" value="Surgery"> Surgery</label>
+                                <label class="svc-chip"><input type="checkbox" value="Nutrition &amp; Dietetics"> Nutrition &amp; Dietetics</label>
+                            </div>
+                        </fieldset>
+
+                        <footer class="filter-actions">
+                            <button type="button" id="clearFiltersBtn" class="filter-clear-btn">Clear All</button>
+                            <button type="button" id="applyFiltersBtn" class="premium-btn primary-action filter-apply-btn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                Apply Filters
+                            </button>
+                        </footer>
+                    </div>
+                </section>
             </aside>
 
             <!-- results panel -->
