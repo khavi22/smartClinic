@@ -207,7 +207,7 @@ async function LoadAvailability() {
     }
 }
 
-//Display availability cards
+
 function displayAvailability(availability) {
     const display = document.getElementById("Availability_content");
     display.innerHTML = "";

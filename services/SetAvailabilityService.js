@@ -32,8 +32,6 @@ async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Availa
 
 async function getAvailability(staffCode){
         //    const staffCode="STF-330AFB";
-    
-           
              const snapshots= await  db.collection("staff")
                    .where("uid" , "==",staffCode)
                    .get();
@@ -51,8 +49,6 @@ async function removeAvailability(staffCode, date){
   const snapshots= await  db.collection("staff")
                     .where("uid" ,"==",staffCode)
                     .get();
-
-
     const StaffClinicsRef= snapshots.docs[0].ref;
 
     await StaffClinicsRef.update({
