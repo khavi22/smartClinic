@@ -2,26 +2,11 @@ const firebaseService = require("../services/firebaseService");
 const { admin } = require("../services/config/firebase");
 
 const mockVerifyIdToken = jest.fn();
-const mockUpdate = jest.fn().mockResolvedValue();
-const mockDoc = jest.fn(() => ({ update: mockUpdate }));
-const mockCollection = jest.fn(() => ({ doc: mockDoc }));
-const mockFirestore = jest.fn(() => ({ collection: mockCollection }));
-
 jest.mock("../services/config/firebase", () => ({
     admin: {
         auth: () => ({
-            verifyIdToken: (idToken) => mockVerifyIdToken(idToken)
-        }),
-        firestore: Object.assign(
-            () => ({
-                collection: (name) => mockCollection(name)
-            }),
-            {
-                FieldValue: {
-                    serverTimestamp: () => "mock-server-timestamp"
-                }
-            }
-        )
+            verifyIdToken: mockVerifyIdToken
+        })
     }
 }));
 
@@ -56,8 +41,8 @@ describe("UserController", () => {
     });
 
     afterEach(() => {
-        if (consoleErrorSpy) consoleErrorSpy.mockRestore();
-        if (consoleWarnSpy) consoleWarnSpy.mockRestore();
+        consoleErrorSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
     });
 
     describe("checkUserLogin", () => {
@@ -116,37 +101,19 @@ describe("UserController", () => {
             });
         });
 
-        it("should return pending status when a staff account is not yet approved", async () => {
-            req.params = { userId: "staff-uid" };
-            firebaseService.getUserProfileById.mockResolvedValue({
+        it("should fall back to email lookup and return staff redirect", async () => {
+            req.params = {};
+            req.query = { email: "staff@example.com" };
+            firebaseService.getUserProfileByEmail.mockResolvedValue({
                 uid: "staff-uid",
-                role: "staff",
-                approvalStatus: "pending"
+                role: "staff"
             });
 
             await checkUserLogin(req, res);
 
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 exists: true,
-                pending: true,
-                message: "Your account is awaiting admin approval."
-            }));
-        });
-
-        it("should return rejected status when a staff account is declined", async () => {
-            req.params = { userId: "staff-uid" };
-            firebaseService.getUserProfileById.mockResolvedValue({
-                uid: "staff-uid",
-                role: "staff",
-                approvalStatus: "rejected"
-            });
-
-            await checkUserLogin(req, res);
-
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-                exists: true,
-                rejected: true,
-                message: "Your staff application was declined."
+                redirect: "/staffDashboard.html"
             }));
         });
 
@@ -323,34 +290,32 @@ describe("UserController", () => {
             expect(res.status).toHaveBeenCalledWith(403);
         });
 
-        it("should create a staff profile when a valid invitation exists", async () => {
+        it("should create a staff profile when a valid staff code is provided", async () => {
             req.body.role = "staff";
-            req.body.email = "staff@example.com";
-            
-            firebaseService.getInviteByEmail.mockResolvedValue({ clinicId: "clinic-555" });
+            req.body.staffCode = "STF-123";
+            firebaseService.getStaffAssignmentFromCode.mockResolvedValue("clinic-555");
             firebaseService.createUserProfile.mockResolvedValue();
 
             await registerUser(req, res);
 
-            expect(firebaseService.getInviteByEmail).toHaveBeenCalledWith("staff@example.com");
             expect(firebaseService.createUserProfile).toHaveBeenCalledWith(
                 expect.objectContaining({ role: "staff" }),
-                expect.objectContaining({ clinicId: "clinic-555", approvalStatus: "pending" })
+                { staffCode: "STF-123", clinicId: "clinic-555" }
             );
             expect(res.status).toHaveBeenCalledWith(201);
         });
 
-        it("should return 403 when no staff invitation exists", async () => {
+        it("should return 4-03 when staff code is invalid", async () => {
             req.body.role = "staff";
-            req.body.email = "uninvited@example.com";
-            firebaseService.getInviteByEmail.mockResolvedValue(null);
+            req.body.staffCode = "STF-BAD";
+            firebaseService.getStaffAssignmentFromCode.mockResolvedValue(null);
 
             await registerUser(req, res);
 
             expect(res.status).toHaveBeenCalledWith(403);
             expect(res.json).toHaveBeenCalledWith({
                 success: false,
-                message: "You must be invited by an administrator to sign up as staff."
+                message: "Invalid staff code"
             });
         });
 
