@@ -165,7 +165,14 @@ function renderQueue(queue) {
         updateButton.disabled = statusLocked;
         updateButton.addEventListener("click", () => updatePatientStatus(patient, statusSelect.value));
 
-        actionsCell.append(startButton, statusSelect, updateButton);
+        const rescheduleButton = document.createElement("button");
+        rescheduleButton.type = "button";
+        rescheduleButton.className = "queue-action-btn";
+        rescheduleButton.textContent = "Reschedule";
+        rescheduleButton.disabled = patientStatus !== "WAITING";
+        rescheduleButton.addEventListener("click", () => showReschedulePicker(patient, actionsCell));
+
+        actionsCell.append(startButton, rescheduleButton, statusSelect, updateButton);
         row.appendChild(actionsCell);
 
         queueTableBody.appendChild(row);
@@ -254,6 +261,118 @@ async function addPatientToQueue(event) {
         setActionStatus(error.message || "Failed to add patient.", true);
     } finally {
         submitButton.disabled = false;
+    }
+}
+
+async function fetchAvailableSlots(patient) {
+    const params = new URLSearchParams({
+        date: patient.date || getTodayKey(),
+        queueItemId: patient.queueItemId
+    });
+
+    const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/available-slots?${params.toString()}`, {
+        headers: {
+            "Authorization": `Bearer ${currentIdToken}`
+        }
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || result.success === false) {
+        throw new Error(result.message || `Available slots request failed with ${response.status}`);
+    }
+
+    return Array.isArray(result.slots) ? result.slots : [];
+}
+
+async function showReschedulePicker(patient, actionsCell) {
+    if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
+        setActionStatus("This queue item cannot be rescheduled.", true);
+        return;
+    }
+
+    if ((patient.status || "WAITING") !== "WAITING") {
+        setActionStatus("Only waiting patients can be rescheduled.", true);
+        return;
+    }
+
+    try {
+        setActionStatus(`Loading slots for ${getPatientName(patient)}...`);
+        const slots = await fetchAvailableSlots(patient);
+
+        if (slots.length === 0) {
+            setActionStatus("No available slots left for this day.", true);
+            return;
+        }
+
+        const picker = document.createElement("span");
+        picker.className = "reschedule-picker";
+
+        const slotSelect = document.createElement("select");
+        slotSelect.className = "queue-status-select";
+        slotSelect.setAttribute("aria-label", `Choose new slot for ${getPatientName(patient)}`);
+
+        slots.forEach((slot) => {
+            const option = document.createElement("option");
+            option.value = slot.time;
+            option.textContent = `${slot.time} (${Math.max(0, slot.total - slot.taken)} open)`;
+            option.selected = slot.time === (patient.timeSlot || patient.appointmentTime);
+            slotSelect.appendChild(option);
+        });
+
+        const saveButton = document.createElement("button");
+        saveButton.type = "button";
+        saveButton.className = "queue-action-btn start";
+        saveButton.textContent = "Save";
+        saveButton.addEventListener("click", () => reschedulePatient(patient, slotSelect.value));
+
+        const cancelButton = document.createElement("button");
+        cancelButton.type = "button";
+        cancelButton.className = "queue-action-btn";
+        cancelButton.textContent = "Cancel";
+        cancelButton.addEventListener("click", () => refreshQueue());
+
+        picker.append(slotSelect, saveButton, cancelButton);
+        actionsCell.replaceChildren(picker);
+        setActionStatus(`Choose a new slot for ${getPatientName(patient)}.`);
+    } catch (error) {
+        console.error("Error loading reschedule slots:", error);
+        setActionStatus(error.message || "Failed to load available slots.", true);
+    }
+}
+
+async function reschedulePatient(patient, timeSlot) {
+    if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
+        setActionStatus("This queue item cannot be rescheduled.", true);
+        return;
+    }
+
+    try {
+        setActionStatus(`Rescheduling ${getPatientName(patient)}...`);
+        const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/${encodeURIComponent(patient.queueItemId)}/reschedule`, {
+            method: "PATCH",
+            headers: {
+                "Authorization": `Bearer ${currentIdToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                timeSlot,
+                staffId: currentStaffId
+            })
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || result.success === false) {
+            throw new Error(result.message || `Reschedule failed with ${response.status}`);
+        }
+
+        const assignedTime = result.queueItem?.timeSlot || timeSlot;
+        setActionStatus(`${getPatientName(patient)} was rescheduled for ${assignedTime}.`);
+        await refreshQueue();
+    } catch (error) {
+        console.error("Error rescheduling patient:", error);
+        setActionStatus(error.message || "Failed to reschedule patient.", true);
     }
 }
 

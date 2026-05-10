@@ -186,7 +186,7 @@ const isSlotStillUsableToday = (date, slotTime, now = new Date()) => {
   return now.getTime() - startTime.getTime() < MISSED_GRACE_PERIOD_MINUTES * 60 * 1000;
 };
 
-const getQueueManualCountForSlot = async (clinicId, date, slotTime) => {
+const getQueueManualCountForSlot = async (clinicId, date, slotTime, excludeQueueItemId = null) => {
   const snapshot = await getQueueItemsRef(clinicId, date)
     .where("timeSlot", "==", slotTime)
     .get();
@@ -196,6 +196,10 @@ const getQueueManualCountForSlot = async (clinicId, date, slotTime) => {
   snapshot.forEach((doc) => {
     const queueItem = doc.data();
 
+    if (excludeQueueItemId && doc.id === excludeQueueItemId) {
+      return;
+    }
+
     if (!queueItem.appointmentId && !LOCKED_QUEUE_STATUSES.includes(queueItem.status)) {
       manualQueueCount += 1;
     }
@@ -204,11 +208,11 @@ const getQueueManualCountForSlot = async (clinicId, date, slotTime) => {
   return manualQueueCount;
 };
 
-const getQueueSlotAvailability = async (clinicId, date) => {
+const getQueueSlotAvailability = async (clinicId, date, excludeQueueItemId = null) => {
   const slots = await getAvailabilityForDate(clinicId, date);
 
   return Promise.all(slots.map(async (slot) => {
-    const manualQueueCount = await getQueueManualCountForSlot(clinicId, date, slot.time);
+    const manualQueueCount = await getQueueManualCountForSlot(clinicId, date, slot.time, excludeQueueItemId);
     const taken = slot.taken + manualQueueCount;
     const status = taken >= slot.total ? "full" : slot.status;
 
@@ -220,15 +224,22 @@ const getQueueSlotAvailability = async (clinicId, date) => {
   }));
 };
 
-const resolveAvailableQueueSlot = async (clinicId, date, requestedTime) => {
-  const requestedSlot = normalizeToHourSlot(requestedTime);
-  const slots = await getQueueSlotAvailability(clinicId, date);
+const getAvailableQueueSlots = async (clinicId, date = new Date().toISOString().split("T")[0], excludeQueueItemId = null) => {
+  const slots = await getQueueSlotAvailability(clinicId, date, excludeQueueItemId);
   const now = new Date();
-  const availableSlots = slots.filter((slot) =>
+
+  return slots.filter((slot) =>
     slot.taken < slot.total &&
     slot.status !== "full" &&
     isSlotStillUsableToday(date, slot.time, now)
   );
+};
+
+const resolveAvailableQueueSlot = async (clinicId, date, requestedTime, excludeQueueItemId = null) => {
+  const requestedSlot = normalizeToHourSlot(requestedTime);
+  const slots = await getQueueSlotAvailability(clinicId, date, excludeQueueItemId);
+  const availableSlots = await getAvailableQueueSlots(clinicId, date, excludeQueueItemId);
+  const now = new Date();
 
   if (requestedSlot) {
     const slot = slots.find((entry) => entry.time === requestedSlot);
@@ -481,6 +492,45 @@ const updateQueueItemStatus = async (clinicId, queueItemId, status, staffId) => 
   return enrichQueueItemWithPatient({ queueItemId, ...queueItem, ...updatedFields });
 };
 
+const rescheduleQueueItem = async (clinicId, queueItemId, timeSlot, staffId) => {
+  const queueItemRef = getQueueItemsRef(clinicId).doc(queueItemId);
+  const queueItemDoc = await queueItemRef.get();
+
+  if (!queueItemDoc.exists) {
+    throw new Error("Queue item not found");
+  }
+
+  const queueItem = queueItemDoc.data();
+
+  if (LOCKED_QUEUE_STATUSES.includes(queueItem.status)) {
+    throw new Error("Cannot reschedule a missed or complete queue item");
+  }
+
+  const date = queueItem.date || new Date().toISOString().split("T")[0];
+  const availableSlot = await resolveAvailableQueueSlot(clinicId, date, timeSlot, queueItemId);
+  const updatedFields = {
+    timeSlot: availableSlot,
+    appointmentTime: availableSlot,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: staffId || null
+  };
+
+  await queueItemRef.update(updatedFields);
+
+  if (queueItem.appointmentId) {
+    await db.collection("appointments").doc(queueItem.appointmentId).update({
+      timeSlot: availableSlot,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  return enrichQueueItemWithPatient({
+    queueItemId,
+    ...queueItem,
+    ...updatedFields
+  });
+};
+
 const removeQueueItem = async (clinicId, queueItemId) => {
   const queueItemRef = getQueueItemsRef(clinicId).doc(queueItemId);
   const queueItemDoc = await queueItemRef.get();
@@ -558,6 +608,8 @@ module.exports = {
   startConsultation,
   completeConsultation,
   addQueueItem,
+  getAvailableQueueSlots,
+  rescheduleQueueItem,
   updateQueueItemStatus,
   removeQueueItem,
   addTodaysAppointmentsToQueue

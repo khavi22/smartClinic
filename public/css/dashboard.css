@@ -518,6 +518,13 @@ figure.table-wrapper { margin: 0; }
     gap: 8px;
 }
 
+.reschedule-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .queue-status-select {
     min-width: 150px;
 }
