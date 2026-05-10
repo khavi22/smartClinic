@@ -38,7 +38,7 @@ exports.checkUserLogin = async (req, res) => {
                         profile: user
                     });
                 }
-                redirectUrl = "/SetAvailability.html";
+                redirectUrl = "/staffDashboard.html";
             }
 
             if ((user.role === "admin" || user.role === "staff") && user.clinicId) {

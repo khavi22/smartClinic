@@ -129,7 +129,7 @@ describe("UserController", () => {
 
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 exists: true,
-                redirect: "/SetAvailability.html"
+                redirect: "/staffDashboard.html"
             }));
         });
 
