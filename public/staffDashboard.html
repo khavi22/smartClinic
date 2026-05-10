@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartClinic | Staff Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/availability_styles.css?v=2">
+    <link rel="stylesheet" href="css/global_nav.css?v=1">
+    <link rel="stylesheet" href="css/dashboard.css?v=4">
     
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -13,39 +17,60 @@
     <script src="js/firebase-config.js"></script>
 </head>
 <body class="staff-dashboard-page">
-    <div class="dashboard-wrapper">
-        <main class="main-content">
-            <header class="top-bar">
-                <div>
-                    <p class="brand-kicker">SmartClinic Staff</p>
-                    <h1 id="userGreeting">Loading...</h1>
-                </div>
-                <figure class="user-profile">
-                    <span id="clinicNameDisplay" class="role-badge staff">Clinic Access</span>
-                    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
-                </figure>
-            </header>
+    <nav class="global-app-bar" aria-label="Main Navigation">
+        <section class="nav-container">
+            <a href="staffDashboard.html" class="nav-brand" aria-label="smartClinic staff dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+                <strong>smartClinic</strong>
+            </a>
 
-            <section class="queue-tools" aria-labelledby="queueToolsLabel">
-                <div class="section-heading-row">
-                    <div>
+            <section class="nav-user" aria-label="Staff account">
+                <strong id="clinicNameDisplay" class="role-badge staff">Clinic Access</strong>
+                <button type="button" id="logoutBtn" class="nav-logout-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <path d="M16 17l5-5-5-5M21 12H9"></path>
+                    </svg>
+                    Logout
+                </button>
+            </section>
+        </section>
+    </nav>
+
+    <main class="staff-main">
+        <header class="staff-page-header">
+            <section class="staff-header-inner" aria-labelledby="userGreeting">
+                <p class="brand-kicker">SmartClinic Staff</p>
+                <h1 id="userGreeting">Loading...</h1>
+                <p>Manage walk-ins, appointment queues, and consultation progress.</p>
+            </section>
+        </header>
+
+        <section class="staff-grid">
+            <article class="queue-tools staff-card" aria-labelledby="queueToolsLabel">
+                <header class="section-heading-row">
+                    <section>
                         <p id="queueToolsLabel" class="section-label">Queue Controls</p>
                         <h2>Add Patient</h2>
-                    </div>
-                    <p id="queueActionStatus" class="queue-action-status" role="status" aria-live="polite"></p>
-                </div>
+                    </section>
+                    <output id="queueActionStatus" class="queue-action-status" role="status" aria-live="polite"></output>
+                </header>
 
                 <form id="addQueueForm" class="queue-form">
                     <label class="field">
-                        <span>Patient name</span>
+                        <small>Patient name</small>
                         <input type="text" id="patientNameInput" placeholder="e.g. Amina Jacobs" required>
                     </label>
                     <label class="field">
-                        <span>Time</span>
-                        <input type="time" id="appointmentTimeInput">
+                        <small>Time slot</small>
+                        <select id="appointmentTimeInput" required>
+                            <option value="">Loading slots...</option>
+                        </select>
                     </label>
                     <label class="field">
-                        <span>Priority</span>
+                        <small>Priority</small>
                         <select id="priorityInput">
                             <option value="0">Normal</option>
                             <option value="-1">Urgent</option>
@@ -54,7 +79,7 @@
                     </label>
                     <button type="submit" class="queue-primary-btn">Add to queue</button>
                 </form>
-            </section>
+            </article>
 
             <section aria-labelledby="queueStatsLabel">
                 <p id="queueStatsLabel" class="section-label">Today's Queue</p>
@@ -79,7 +104,7 @@
 
             <section aria-labelledby="queueTableLabel">
                 <p id="queueTableLabel" class="section-label">Patient Queue</p>
-                <figure class="table-wrapper">
+                <figure class="table-wrapper staff-card">
                     <table id="queueTable">
                         <thead>
                             <tr>
@@ -99,9 +124,9 @@
                     </table>
                 </figure>
             </section>
-        </main>
-    </div>
+        </section>
+    </main>
 
-    <script src="js/staffDashboard.js"></script>
+    <script src="js/staffDashboard.js?v=4"></script>
 </body>
 </html>

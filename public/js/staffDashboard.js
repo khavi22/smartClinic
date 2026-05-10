@@ -77,7 +77,12 @@ function getQueueNumber(patient, index) {
 }
 
 function getTodayKey() {
-    return new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 function formatStatus(status) {
@@ -129,7 +134,7 @@ function renderQueue(queue) {
         });
 
         const statusCell = document.createElement("td");
-        const statusTag = document.createElement("span");
+        const statusTag = document.createElement("mark");
         statusTag.className = "status-tag";
         statusTag.textContent = formatStatus(patient.status);
         statusCell.appendChild(statusTag);
@@ -207,6 +212,57 @@ async function refreshQueue() {
     await loadQueue(currentClinicId, currentIdToken);
 }
 
+function renderAddQueueSlotOptions(slots, selectedSlot = "") {
+    if (!appointmentTimeInput) return;
+
+    appointmentTimeInput.innerHTML = "";
+
+    if (slots.length === 0) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No slots available";
+        appointmentTimeInput.appendChild(option);
+        appointmentTimeInput.disabled = true;
+        return;
+    }
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a time slot";
+    appointmentTimeInput.appendChild(placeholder);
+
+    slots.forEach((slot) => {
+        const openCount = Math.max(0, Number(slot.total || 0) - Number(slot.taken || 0));
+        const option = document.createElement("option");
+        option.value = slot.time;
+        option.textContent = `${slot.time} (${openCount} open)`;
+        option.selected = slot.time === selectedSlot;
+        appointmentTimeInput.appendChild(option);
+    });
+
+    appointmentTimeInput.disabled = false;
+}
+
+async function loadAddQueueSlots(selectedSlot = "", showError = true) {
+    if (!currentClinicId || !currentIdToken || !appointmentTimeInput) return;
+
+    appointmentTimeInput.disabled = true;
+    appointmentTimeInput.innerHTML = '<option value="">Loading slots...</option>';
+
+    try {
+        const slots = await fetchAvailableSlots({ date: getTodayKey() });
+        renderAddQueueSlotOptions(slots, selectedSlot);
+    } catch (error) {
+        console.error("Error loading add queue slots:", error);
+        appointmentTimeInput.innerHTML = '<option value="">Slots unavailable</option>';
+        appointmentTimeInput.disabled = true;
+
+        if (showError) {
+            setActionStatus(error.message || "Failed to load available slots.", true);
+        }
+    }
+}
+
 async function addPatientToQueue(event) {
     event.preventDefault();
 
@@ -221,12 +277,17 @@ async function addPatientToQueue(event) {
         return;
     }
 
+    const appointmentTime = appointmentTimeInput.value;
+    if (!appointmentTime) {
+        setActionStatus("Choose an available one-hour time slot.", true);
+        return;
+    }
+
     const submitButton = addQueueForm.querySelector("button[type='submit']");
     submitButton.disabled = true;
     setActionStatus("Adding patient...");
 
     try {
-        const appointmentTime = appointmentTimeInput.value || "--";
         const priority = Number(priorityInput.value || 0);
 
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}`, {
@@ -256,6 +317,7 @@ async function addPatientToQueue(event) {
         addQueueForm.reset();
         setActionStatus(`${patientName} was added to the queue${assignedTime ? ` for ${assignedTime}` : ""}.`);
         await refreshQueue();
+        await loadAddQueueSlots("", false);
     } catch (error) {
         console.error("Error adding patient to queue:", error);
         setActionStatus(error.message || "Failed to add patient.", true);
@@ -266,9 +328,12 @@ async function addPatientToQueue(event) {
 
 async function fetchAvailableSlots(patient) {
     const params = new URLSearchParams({
-        date: patient.date || getTodayKey(),
-        queueItemId: patient.queueItemId
+        date: patient.date || getTodayKey()
     });
+
+    if (patient.queueItemId) {
+        params.set("queueItemId", patient.queueItemId);
+    }
 
     const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/available-slots?${params.toString()}`, {
         headers: {
@@ -305,8 +370,11 @@ async function showReschedulePicker(patient, actionsCell) {
             return;
         }
 
-        const picker = document.createElement("span");
+        const picker = document.createElement("fieldset");
         picker.className = "reschedule-picker";
+        const pickerLegend = document.createElement("legend");
+        pickerLegend.className = "visually-hidden";
+        pickerLegend.textContent = `Reschedule ${getPatientName(patient)}`;
 
         const slotSelect = document.createElement("select");
         slotSelect.className = "queue-status-select";
@@ -332,7 +400,7 @@ async function showReschedulePicker(patient, actionsCell) {
         cancelButton.textContent = "Cancel";
         cancelButton.addEventListener("click", () => refreshQueue());
 
-        picker.append(slotSelect, saveButton, cancelButton);
+        picker.append(pickerLegend, slotSelect, saveButton, cancelButton);
         actionsCell.replaceChildren(picker);
         setActionStatus(`Choose a new slot for ${getPatientName(patient)}.`);
     } catch (error) {
@@ -484,10 +552,15 @@ auth.onAuthStateChanged(async (user) => {
         }
 
         await loadQueue(currentClinicId, idToken);
+        await loadAddQueueSlots();
 
     } catch (error) {
         console.error("Staff Dashboard: Error loading data:", error);
         setQueueMessage(error.message || "Failed to load queue.");
+        if (appointmentTimeInput) {
+            appointmentTimeInput.innerHTML = '<option value="">Slots unavailable</option>';
+            appointmentTimeInput.disabled = true;
+        }
     }
 });
 

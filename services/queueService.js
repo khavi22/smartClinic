@@ -5,7 +5,11 @@ const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED"];
 const LOCKED_QUEUE_STATUSES = ["COMPLETE", "MISSED"];
 const MISSED_GRACE_PERIOD_MINUTES = 15;
 
-const getQueueItemsRef = (clinicId, date = new Date().toISOString().split("T")[0]) => {
+const getTodayDate = () => {
+  return new Date().toLocaleDateString("en-CA");
+};
+
+const getQueueItemsRef = (clinicId, date = getTodayDate()) => {
   return db
     .collection("clinics")
     .doc(clinicId)
@@ -13,6 +17,7 @@ const getQueueItemsRef = (clinicId, date = new Date().toISOString().split("T")[0
     .doc(date)
     .collection("queueItems");
 };
+
 
 const getAvailabilityForDate = async (clinicId, dateStr) => {
   let slots = [];
@@ -124,7 +129,7 @@ const enrichQueueItemWithPatient = async (queueItem) => {
 };
 
 const getQueueItemStartTime = (queueItem) => {
-  const date = queueItem.date || new Date().toISOString().split("T")[0];
+  const date = queueItem.date || getTodayDate();
   const rawTime = queueItem.appointmentTime || queueItem.timeSlot || queueItem.time || "";
   const match = String(rawTime).match(/\b([01]\d|2[0-3]):([0-5]\d)\b/);
 
@@ -224,7 +229,7 @@ const getQueueSlotAvailability = async (clinicId, date, excludeQueueItemId = nul
   }));
 };
 
-const getAvailableQueueSlots = async (clinicId, date = new Date().toISOString().split("T")[0], excludeQueueItemId = null) => {
+const getAvailableQueueSlots = async (clinicId, date = getTodayDate(), excludeQueueItemId = null) => {
   const slots = await getQueueSlotAvailability(clinicId, date, excludeQueueItemId);
   const now = new Date();
 
@@ -308,8 +313,7 @@ const sortQueueItems = (patients) => {
 };
 
 const getQueue = async (clinicId) => {
-  const today = new Date().toISOString().split("T")[0];
-
+  const today = getTodayDate();
   await markOverdueQueueItemsMissed(clinicId);
 
   const snapshot = await getQueueItemsRef(clinicId, today).get();
@@ -342,7 +346,7 @@ const getQueue = async (clinicId) => {
 };
 
 const startConsultation = async (clinicId, queueItemId, staffId) => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayDate();
   const queueItemsRef = getQueueItemsRef(clinicId, today);
 
   const staffActiveSnapshot = await queueItemsRef
@@ -431,7 +435,7 @@ const completeConsultation = async (clinicId, queueItemId, staffId) => {
 };
 
 const addQueueItem = async (clinicId, queueData) => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayDate();
   const patientName = String(queueData.patientName || "").trim();
 
   if (!patientName && !queueData.patientId) {
@@ -544,7 +548,7 @@ const removeQueueItem = async (clinicId, queueItemId) => {
 };
 
 const addTodaysAppointmentsToQueue = async (clinicId) => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayDate();
 
   const appointmentsSnapshot = await db
     .collection("appointments")
