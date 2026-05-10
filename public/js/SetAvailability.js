@@ -157,10 +157,10 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     //const staffCode = "STF-330AFB";
     // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
     const user = firebase.auth().currentUser;
-    console.log("user:", user);          // check if user is logged in
-    console.log("staffCode:", user ? user.uid : "NO USER"); // check uid
-    console.log("selectedDates:", selectedDates); // check dates
-    console.log("startTime:", startTime);
+    // console.log("user:", user);          // check if user is logged in
+    // console.log("staffCode:", user ? user.uid : "NO USER"); // check uid
+    // console.log("selectedDates:", selectedDates); // check dates
+    // console.log("startTime:", startTime);
     console.log("endTime:", endTime);
     const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
     // later: localStorage.getItem("staffCode");

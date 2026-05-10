@@ -1,5 +1,5 @@
 const { db, admin } = require("./config/firebase");
-console.log("DB",db);
+// console.log("DB",db);
 
 
 async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Available){
