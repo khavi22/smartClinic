@@ -8,6 +8,8 @@ router.use(verifyToken, requireRole("admin"));
 
 router.post("/invite-staff", adminController.inviteStaff);
 router.get("/pending-staff", adminController.getPendingStaff);
+router.get("/active-staff", adminController.getActiveStaff);
 router.post("/process-staff", adminController.processStaffApproval);
+router.post("/remove-staff", adminController.removeStaff);
 
 module.exports = router;

@@ -12,27 +12,49 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
 </head>
-<body>
+<body class="staff-dashboard-page">
     <div class="dashboard-wrapper">
-        <aside class="sidebar">
-            <div class="logo-details">
-                <span class="logo_name">SmartClinic</span>
-            </div>
-            <ul class="nav-links">
-                <li><a href="#" class="active" aria-current="page"><span>Overview</span></a></li>
-                <li><a href="#"><span>Patient List</span></a></li>
-                <li><a href="#"><span>Schedule</span></a></li>
-                <li><a href="#" id="logoutBtn"><span>Logout</span></a></li>
-            </ul>
-        </aside>
-
         <main class="main-content">
             <header class="top-bar">
-                <h1 id="userGreeting">Loading...</h1>
+                <div>
+                    <p class="brand-kicker">SmartClinic Staff</p>
+                    <h1 id="userGreeting">Loading...</h1>
+                </div>
                 <figure class="user-profile">
                     <span id="clinicNameDisplay" class="role-badge staff">Clinic Access</span>
+                    <button type="button" id="logoutBtn" class="logout-btn">Logout</button>
                 </figure>
             </header>
+
+            <section class="queue-tools" aria-labelledby="queueToolsLabel">
+                <div class="section-heading-row">
+                    <div>
+                        <p id="queueToolsLabel" class="section-label">Queue Controls</p>
+                        <h2>Add Patient</h2>
+                    </div>
+                    <p id="queueActionStatus" class="queue-action-status" role="status" aria-live="polite"></p>
+                </div>
+
+                <form id="addQueueForm" class="queue-form">
+                    <label class="field">
+                        <span>Patient name</span>
+                        <input type="text" id="patientNameInput" placeholder="e.g. Amina Jacobs" required>
+                    </label>
+                    <label class="field">
+                        <span>Time</span>
+                        <input type="time" id="appointmentTimeInput">
+                    </label>
+                    <label class="field">
+                        <span>Priority</span>
+                        <select id="priorityInput">
+                            <option value="0">Normal</option>
+                            <option value="-1">Urgent</option>
+                            <option value="1">Low</option>
+                        </select>
+                    </label>
+                    <button type="submit" class="queue-primary-btn">Add to queue</button>
+                </form>
+            </section>
 
             <section aria-labelledby="queueStatsLabel">
                 <p id="queueStatsLabel" class="section-label">Today's Queue</p>
@@ -66,11 +88,12 @@
                                 <th>Time</th>
                                 <th>Priority</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="queueTableBody">
                             <tr>
-                                <td colspan="5" class="table-empty">Loading queue...</td>
+                                <td colspan="6" class="table-empty">Loading queue...</td>
                             </tr>
                         </tbody>
                     </table>

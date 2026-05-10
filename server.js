@@ -1,36 +1,35 @@
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
-
 require("dotenv").config();
+
 const app = express();
 const port = process.env.PORT || 3000;
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Routes
+const clinicsRoutes = require("./routes/clinics");
+const appointmentRoutes = require("./routes/appointments");
+const userRoutes = require("./routes/user");
+const staffAvailabilityRoutes = require("./routes/StaffAvailability");
+const adminRoutes = require("./routes/admin");
+const queueRoutes = require("./routes/queue");
+
+app.use("/api/clinics", clinicsRoutes);
+app.use("/api", appointmentRoutes); 
+app.use("/api/user", userRoutes);
+app.use("/api/staff/availability", staffAvailabilityRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/queue", queueRoutes);
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-const clinicsRoutes = require("./routes/clinics");
-app.use("/api/clinics", clinicsRoutes);
-
-const appointmentRoutes = require("./routes/appointments");
-app.use("/api", appointmentRoutes); 
-
-const userRoutes = require("./routes/user");
-app.use("/api/user", userRoutes);
-
-const adminRoutes = require("./routes/admin");
-app.use("/api/admin", adminRoutes);
-
-const queueRoutes = require("./routes/queue");
-app.use("/api/queue", queueRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
@@ -38,6 +37,5 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
-app.use(express.static("public"));
-
 module.exports = app;
+

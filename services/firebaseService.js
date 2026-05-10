@@ -442,6 +442,27 @@ const getPendingStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+const getActiveStaffByClinic = async (clinicId) => {
+    const snapshot = await db.collection("staff")
+        .where("clinicId", "==", clinicId)
+        .where("approvalStatus", "==", "approved")
+        .get();
+
+    const staff = [];
+    snapshot.forEach(doc => {
+        staff.push({ uid: doc.id, ...doc.data() });
+    });
+    return staff;
+};
+
+const removeStaffFromClinic = async (staffUid) => {
+    await db.collection("staff").doc(staffUid).update({
+        approvalStatus: "removed",
+        clinicId: null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -465,160 +486,74 @@ const deleteUserAccount = async (uid) => {
 };
 
 
-// ======================= QUEUE =======================
-const getQueue = async (clinicId) => {
-  const today = new Date().toISOString().split("T")[0];
+const getServiceTemplates = async () => {
+  const snapshot = await db.collection("serviceTemplates").get();
 
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const getClinicServices = async (clinicId) => {
   const snapshot = await db
     .collection("clinics")
     .doc(clinicId)
-    .collection("queues")
-    .doc(today)
-    .collection("queueItems")
+    .collection("services")
     .get();
 
-  const patients = [];
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
 
-  snapshot.forEach((doc) => {
-    patients.push({
-      queueItemId: doc.id,
-      ...doc.data()
+const addClinicService = async (clinicId, data) => {
+  const ref = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .add({
+      ...data,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      active: true,
     });
-  });
 
-  patients.sort((a, b) => {
-    if ((a.priority || 0) !== (b.priority || 0)) {
-      return (a.priority || 0) - (b.priority || 0);
-    }
-
-    if ((a.appointmentTime || "") !== (b.appointmentTime || "")) {
-      return (a.appointmentTime || "").localeCompare(b.appointmentTime || "");
-    }
-
-    return (a.queueNumber || 0) - (b.queueNumber || 0);
-  });
-
-  const queue = {
-    WAITING: [],
-    IN_CONSULTATION: [],
-    COMPLETE: [],
-    MISSED: [],
-  };
-
-  patients.forEach((patient) => {
-    if (queue[patient.status]) {
-      queue[patient.status].push(patient);
-    }
-  });
-
-  return queue;
+  return ref.id;
 };
 
-const startConsultation = async (clinicId, queueItemId, staffId) => {
-    const today = new Date().toISOString().split("T")[0];
-
-    const patientsRef = db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("queues")
-        .doc(today)
-        .collection("patients");
-
-    // Check this staff member doesn't already have a patient IN_CONSULTATION
-    const staffActiveSnapshot = await patientsRef
-        .where("assignedStaffId", "==", staffId)
-        .where("status", "==", "IN_CONSULTATION")
-        .get();
-
-    if (!staffActiveSnapshot.empty) {
-        throw new Error("Staff member already has a patient IN_CONSULTATION");
-    }
-
-    // Fetch the target patient
-    const patientRef = patientsRef.doc(queueItemId);
-    const patientDoc = await patientRef.get();
-
-    if (!patientDoc.exists) {
-        throw new Error("Queue item not found");
-    }
-
-    const patient = patientDoc.data();
-
-    if (patient.status !== "WAITING") {
-        throw new Error("Patient is not in WAITING status");
-    }
-
-    const updatedFields = {
-        status: "IN_CONSULTATION",
-        assignedStaffId: staffId,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedBy: staffId,
-    };
-
-    await patientRef.update(updatedFields);
-
-    return { queueItemId, ...patient, ...updatedFields };
+const updateClinicService = async (clinicId, serviceId, data) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .update({
+      ...data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 };
 
-const addTodaysAppointmentsToQueue = async (clinicId) => {
-  const today = new Date().toISOString().split("T")[0];
+const deleteClinicService = async (clinicId, serviceId) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .delete();
+};
 
-  const appointmentsSnapshot = await db
-    .collection("appointments")
-    .where("clinicId", "==", clinicId)
-    .where("date", "==", today)
-    .where("status", "==", "booked")
+const serviceExists = async (clinicId, name) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .where("name", "==", name)
+    .limit(1)
     .get();
 
-  if (appointmentsSnapshot.empty) {
-    return [];
-  }
-
-  const addedToQueue = [];
-
-  for (const doc of appointmentsSnapshot.docs) {
-    const appointment = doc.data();
-
-    const queueDocRef = db
-      .collection("clinics")
-      .doc(clinicId)
-      .collection("queues")
-      .doc(today)
-      .collection("queueItems")
-      .doc(doc.id);
-
-    const existingQueueDoc = await queueDocRef.get();
-
-    if (existingQueueDoc.exists) {
-      continue;
-    }
-
-    const queueData = {
-      appointmentId: doc.id,
-      patientId: appointment.patientId,
-      clinicId: appointment.clinicId,
-      clinicName: appointment.clinicName,
-      clinicAddress: appointment.clinicAddress,
-      date: appointment.date,
-      timeSlot: appointment.timeSlot,
-
-      status: "WAITING",
-      priority: 0,
-      appointmentTime: appointment.timeSlot,
-      queueNumber: Date.now(),
-
-      createdAt: new Date()
-    };
-
-    await queueDocRef.set(queueData);
-
-    addedToQueue.push({
-      queueItemId: doc.id,
-      ...queueData
-    });
-  }
-
-  return addedToQueue;
+  return !snapshot.empty;
 };
 
 module.exports = {
@@ -643,7 +578,13 @@ module.exports = {
     getInviteByEmail,
     updateStaffApprovalStatus,
     getPendingStaffByClinic,
-    getQueue,
-    startConsultation,
-    addTodaysAppointmentsToQueue
+    getActiveStaffByClinic,
+    removeStaffFromClinic,
+    getServiceTemplates,
+    getClinicServices,
+    addClinicService,
+    updateClinicService,
+    deleteClinicService,
+    serviceExists
 };
+
