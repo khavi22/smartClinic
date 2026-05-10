@@ -12,7 +12,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase only if it hasn't been initialized already
-if (!firebase.apps.length) {
+
+
+if(!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
     console.log("Firebase initialized successfully");
 }
