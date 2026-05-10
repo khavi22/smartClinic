@@ -73,5 +73,5 @@ async function getClinicName(uid) {
     return clinicDoc.data().clinicName;
 }
 
-module.exports = {SaveAvailability, getAvailability, removeAvailability, getClinicName };
+module.exports = {SaveAvailability, getAvailability, removeAvailability, getClinicName};
 // module.exports = {SaveAvailability,getAvailability,removeAvailability};

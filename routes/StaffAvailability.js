@@ -3,7 +3,8 @@ const router = express.Router();
 const { 
     setAvailability, 
     fetchAvailability,
-    deleteAvailability 
+    deleteAvailability,
+    fetchClinicName  
 } = require("../Controllers/SetAvailabilityController");
 
 // Save availability
@@ -16,6 +17,6 @@ router.get("/:staffCode", fetchAvailability);
 router.delete("/remove", deleteAvailability);
 
 // Get the clinic name for specific staff_
-router.get("/staff/clinic/:uid", fetchClinicName);
+router.get("/staff/clinic/:uid",fetchClinicName);
 
 module.exports = router;

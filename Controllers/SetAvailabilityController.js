@@ -80,6 +80,6 @@ async function fetchClinicName(req, res) {
     }
 }
 
-module.exports = { setAvailability, fetchAvailability, deleteAvailability, fetchClinicName };
+module.exports = { setAvailability, fetchAvailability, deleteAvailability,fetchClinicName};
 
 // module.exports = { setAvailability, fetchAvailability, deleteAvailability };
