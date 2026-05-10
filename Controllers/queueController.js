@@ -6,7 +6,7 @@ const {
     updateQueueItemStatus,
     removeQueueItem,
     addTodaysAppointmentsToQueue
-} = require("../services/firebaseService");
+} = require("../services/queueService");
 
 exports.getQueue = async (req, res) => {
   try {
@@ -51,7 +51,13 @@ exports.addQueueItem = async (req, res) => {
     } catch (error) {
         console.error("Error adding queue item:", error);
 
-        if (error.message === "patientName or patientId is required") {
+        if (
+            error.message === "patientName or patientId is required" ||
+            error.message === "Selected time is outside clinic operating hours." ||
+            error.message === "This slot is full." ||
+            error.message === "This time slot is no longer available." ||
+            error.message === "The clinic is fully booked for today."
+        ) {
             return res.status(400).json({
                 success: false,
                 message: error.message

@@ -1,11 +1,11 @@
-const firebaseService = require("../services/firebaseService");
+const queueService = require("../services/queueService");
 const {
     getQueue,
     startConsultation,
     completeConsultation,
 } = require("../Controllers/queueController");
 
-jest.mock("../services/firebaseService");
+jest.mock("../services/queueService");
 
 describe("Queue Controllers", () => {
     let req, res;
@@ -48,11 +48,11 @@ describe("Queue Controllers", () => {
                 MISSED: [],
             };
 
-            firebaseService.getQueue.mockResolvedValue(mockQueue);
+            queueService.getQueue.mockResolvedValue(mockQueue);
 
             await getQueue(req, res);
 
-            expect(firebaseService.getQueue).toHaveBeenCalledWith("clinic1");
+            expect(queueService.getQueue).toHaveBeenCalledWith("clinic1");
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(
                 expect.objectContaining({ queue: mockQueue })
@@ -61,7 +61,7 @@ describe("Queue Controllers", () => {
 
         it("should return 500 when service throws", async () => {
             req.params = { clinicId: "clinic1" };
-            firebaseService.getQueue.mockRejectedValue(new Error("Firestore error"));
+            queueService.getQueue.mockRejectedValue(new Error("Firestore error"));
 
             await getQueue(req, res);
 
@@ -125,11 +125,11 @@ describe("Queue Controllers", () => {
                 assignedStaffId: "staff1",
             };
 
-            firebaseService.startConsultation.mockResolvedValue(mockUpdated);
+            queueService.startConsultation.mockResolvedValue(mockUpdated);
 
             await startConsultation(req, res);
 
-            expect(firebaseService.startConsultation).toHaveBeenCalledWith(
+            expect(queueService.startConsultation).toHaveBeenCalledWith(
                 "clinic1",
                 "q1",
                 "staff1"
@@ -144,7 +144,7 @@ describe("Queue Controllers", () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
 
-            firebaseService.startConsultation.mockRejectedValue(
+            queueService.startConsultation.mockRejectedValue(
                 new Error("Patient is not in WAITING status")
             );
 
@@ -163,7 +163,7 @@ describe("Queue Controllers", () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
 
-            firebaseService.startConsultation.mockRejectedValue(new Error("Firestore error"));
+            queueService.startConsultation.mockRejectedValue(new Error("Firestore error"));
 
             await startConsultation(req, res);
 
@@ -220,7 +220,7 @@ describe("Queue Controllers", () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
 
-            firebaseService.startConsultation.mockRejectedValue(
+            queueService.startConsultation.mockRejectedValue(
                 new Error("Staff member already has a patient IN_CONSULTATION")
             );
 
@@ -244,11 +244,11 @@ describe("Queue Controllers", () => {
                 nextPatient: { queueItemId: "q3", status: "WAITING", queueNumber: 3 },
             };
 
-            firebaseService.completeConsultation.mockResolvedValue(mockResult);
+            queueService.completeConsultation.mockResolvedValue(mockResult);
 
             await completeConsultation(req, res);
 
-            expect(firebaseService.completeConsultation).toHaveBeenCalledWith(
+            expect(queueService.completeConsultation).toHaveBeenCalledWith(
                 "clinic1",
                 "q2",
                 "staff1"
@@ -271,7 +271,7 @@ describe("Queue Controllers", () => {
                 nextPatient: null,
             };
 
-            firebaseService.completeConsultation.mockResolvedValue(mockResult);
+            queueService.completeConsultation.mockResolvedValue(mockResult);
 
             await completeConsultation(req, res);
 
@@ -288,7 +288,7 @@ describe("Queue Controllers", () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q2", staffId: "staff1" };
 
-            firebaseService.completeConsultation.mockRejectedValue(
+            queueService.completeConsultation.mockRejectedValue(
                 new Error("Patient is not IN_CONSULTATION")
             );
 
@@ -307,7 +307,7 @@ describe("Queue Controllers", () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q2", staffId: "staff1" };
 
-            firebaseService.completeConsultation.mockRejectedValue(new Error("Firestore error"));
+            queueService.completeConsultation.mockRejectedValue(new Error("Firestore error"));
 
             await completeConsultation(req, res);
 

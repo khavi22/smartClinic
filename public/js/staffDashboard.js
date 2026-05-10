@@ -245,8 +245,9 @@ async function addPatientToQueue(event) {
             throw new Error(result.message || `Add patient failed with ${response.status}`);
         }
 
+        const assignedTime = result.queueItem?.timeSlot || result.queueItem?.appointmentTime;
         addQueueForm.reset();
-        setActionStatus(`${patientName} was added to the queue.`);
+        setActionStatus(`${patientName} was added to the queue${assignedTime ? ` for ${assignedTime}` : ""}.`);
         await refreshQueue();
     } catch (error) {
         console.error("Error adding patient to queue:", error);
