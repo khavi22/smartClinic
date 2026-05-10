@@ -79,7 +79,7 @@ if (clearFiltersBtn) {
 
     clearFiltersBtn.addEventListener("click", () => {
 
-        document.getElementById("filterFacilityType").value = "";
+        document.getElementById("filterFacilityTypeAll").checked = true;
         document.getElementById("filterProvince").value = "";
         document.getElementById("filterDistrict").value = "";
         document.getElementById("filterRegion").value = "";

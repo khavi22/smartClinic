@@ -895,3 +895,51 @@ footer.modal-actions {
     cursor: not-allowed;
     transform: none;
 }
+
+
+.profile-edit-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    
+}
+#toggleClinicEditBtn{
+    color: #0056b3;
+    border-radius: 1px;
+    border-color: #6c757d;
+}
+.profile-lock-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.toggle-edit-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--blue);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.toggle-edit-btn:hover {
+    background: var(--blue-hover);
+}
+
+.profile-form-locked {
+    opacity: 0.72;
+}
+
+.profile-form-locked input,
+.profile-form-locked select,
+.profile-form-locked textarea {
+    cursor: not-allowed;
+    background: #f3f4f6;
+}
