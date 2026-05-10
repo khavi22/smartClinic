@@ -104,6 +104,275 @@
                         Use My Location
                     </button>
                 </form>
+                <section class="filter-panel" aria-labelledby="filterHeading">
+                    <header class="filter-header">
+                        <button
+                            type="button"
+                            id="filterToggleBtn"
+                            class="filter-toggle-btn"
+                            aria-expanded="false"
+                            aria-controls="filterBody">
+
+                            <span id="filterHeading">Advanced Filters</span>
+
+                            <span
+                                id="filterBadge"
+                                class="filter-badge"
+                                hidden>
+
+                                0
+                            </span>
+                        </button>
+                    </header>
+
+                    <section id="filterBody" class="filter-body" hidden>
+
+                        <!-- FACILITY TYPE -->
+                        <fieldset class="filter-fieldset">
+
+                            <legend>Facility Type</legend>
+
+                            <section class="services-chip-grid">
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        id="filterFacilityTypeAll"
+                                        value=""
+                                        checked>
+                                    <label>Any</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Community Health Centre">
+                                    <label>Community Health Centre</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="District Hospital">
+                                    <label>District Hospital</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Regional Hospital">
+                                    <label>Regional Hospital</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Tertiary Hospital">
+                                    <label>Academic Hospital</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Clinic">
+                                    <label>Clinic</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Private Hospital">
+                                    <label>Private Hospital</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Specialised Hospital">
+                                    <label>Private Clinic</label>
+                                </section>
+
+<!--                               <section class="service-chip">
+                                    <input type="radio" name="facilityTypeFilter"
+                                        value="Gateway Clinic">
+                                    <label>Gateway Clinic</label>
+                                </section>
+ -->
+
+                            </section>
+
+                        </fieldset>
+
+                        <!-- SERVICES -->
+                        <fieldset class="filter-fieldset">
+
+                            <legend>
+                                Services Offered
+                                <small>(select all that apply)</small>
+                            </legend>
+
+                            <section
+                                id="servicesChipList"
+                                class="services-chip-grid">
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="General Outpatient">
+                                    <label>General Outpatient</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Emergency & Casualty">
+                                    <label>Emergency & Casualty</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Maternal & Child Health">
+                                    <label>Maternal & Child Health</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="HIV/AIDS & TB">
+                                    <label>HIV/AIDS & TB</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Mental Health">
+                                    <label>Mental Health</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Chronic Disease Management">
+                                    <label>Chronic Disease Management</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Dental">
+                                    <label>Dental</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Ophthalmology">
+                                    <label>Ophthalmology</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Physiotherapy">
+                                    <label>Physiotherapy</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Pharmacy">
+                                    <label>Pharmacy</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Radiology & Imaging">
+                                    <label>Radiology & Imaging</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Laboratory">
+                                    <label>Laboratory</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Paediatrics">
+                                    <label>Paediatrics</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Surgery">
+                                    <label>Surgery</label>
+                                </section>
+
+                                <section class="service-chip">
+                                    <input type="checkbox"
+                                        value="Nutrition & Dietetics">
+                                    <label>Nutrition & Dietetics</label>
+                                </section>
+
+                            </section>
+
+                        </fieldset>
+
+                        <!-- LOCATION -->
+                        <fieldset class="filter-fieldset">
+
+                            <legend>Location Details</legend>
+
+                            <section class="filter-grid">
+
+                                <section class="filter-field">
+                                    <label for="filterProvince">Province</label>
+
+                                    <select id="filterProvince">
+
+                                        <option value="">Any Province</option>
+                                        <option value="Gauteng">Gauteng</option>
+                                        <option value="Eastern Cape">Eastern Cape</option>
+                                        <option value="Western Cape">Western Cape</option>
+                                        <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                                        <option value="Limpopo">Limpopo</option>
+                                        <option value="Mpumalanga">Mpumalanga</option>
+                                        <option value="North West">North West</option>
+                                        <option value="Free State">Free State</option>
+                                        <option value="Northern Cape">Northern Cape</option>
+
+                                    </select>
+                                </section>
+
+                                <section class="filter-field">
+                                    <label for="filterDistrict">District</label>
+
+                                    <input
+                                        type="text"
+                                        id="filterDistrict"
+                                        placeholder="e.g Tshwane">
+                                </section>
+
+                                <section class="filter-field">
+                                    <label for="filterRegion">Region / Sub-district</label>
+
+                                    <input
+                                        type="text"
+                                        id="filterRegion"
+                                        placeholder="e.g Cullinan">
+                                </section>
+
+                            </section>
+
+                        </fieldset>
+
+                        <!-- ACTIONS -->
+                        <footer class="filter-actions">
+
+                            <button
+                                type="button"
+                                id="clearFiltersBtn"
+                                class="clear-filter-btn">
+
+                                Clear Filters
+                            </button>
+
+                            <button
+                                type="button"
+                                id="applyFiltersBtn"
+                                class="apply-filter-btn">
+
+                                Apply Filters
+                            </button>
+
+                        </footer>
+
+                    </section>
+
+                </section>
             </aside>
 
             <!-- results panel -->

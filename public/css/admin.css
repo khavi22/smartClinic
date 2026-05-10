@@ -732,3 +732,166 @@ footer.modal-actions {
     background: #dc3545;
     color: white;
 }
+/* ── CLINIC PROFILE CARD ── */
+.profile-card {
+    grid-column: 1 / -1;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.profile-fieldset {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px 20px 16px;
+    margin: 0;
+}
+
+.profile-fieldset legend {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1e293b;
+    padding: 0 8px;
+}
+
+.legend-sub {
+    font-weight: 400;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.radio-grid,
+.checkbox-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.radio-chip,
+.check-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: white;
+    color: #475569;
+    user-select: none;
+}
+
+.radio-chip:hover,
+.check-chip:hover {
+    border-color: #007bff;
+    color: #007bff;
+    background: #f0f7ff;
+}
+
+.radio-chip input,
+.check-chip input {
+    accent-color: #007bff;
+    width: 14px;
+    height: 14px;
+}
+
+.radio-chip:has(input:checked),
+.check-chip:has(input:checked) {
+    border-color: #007bff;
+    background: #e8f1ff;
+    color: #007bff;
+    font-weight: 600;
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-field label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    
+}
+
+.premium-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: white;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.18s;
+}
+
+.premium-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.12);
+}
+
+.profile-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 4px;
+}
+
+.save-status {
+    font-size: 0.85rem;
+    color: #059669;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+.save-status.error {
+    color: #dc3545;
+}
+
+.save-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.save-btn:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+}
+
+.save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
