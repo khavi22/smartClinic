@@ -442,6 +442,27 @@ const getPendingStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+const getActiveStaffByClinic = async (clinicId) => {
+    const snapshot = await db.collection("staff")
+        .where("clinicId", "==", clinicId)
+        .where("approvalStatus", "==", "approved")
+        .get();
+
+    const staff = [];
+    snapshot.forEach(doc => {
+        staff.push({ uid: doc.id, ...doc.data() });
+    });
+    return staff;
+};
+
+const removeStaffFromClinic = async (staffUid) => {
+    await db.collection("staff").doc(staffUid).update({
+        approvalStatus: "removed",
+        clinicId: null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -466,16 +487,115 @@ const deleteUserAccount = async (uid) => {
 
 
 // ======================= QUEUE =======================
-const getQueue = async (clinicId) => {
-  const today = new Date().toISOString().split("T")[0];
+const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED"];
+const LOCKED_QUEUE_STATUSES = ["COMPLETE", "MISSED"];
+const MISSED_GRACE_PERIOD_MINUTES = 15;
 
-  const snapshot = await db
+const getQueueItemsRef = (clinicId, date = new Date().toISOString().split("T")[0]) => {
+  return db
     .collection("clinics")
     .doc(clinicId)
     .collection("queues")
-    .doc(today)
-    .collection("queueItems")
-    .get();
+    .doc(date)
+    .collection("queueItems");
+};
+
+const getPatientDisplayName = (patient) => {
+  if (!patient) {
+    return null;
+  }
+
+  return patient.fullName ||
+    patient.patientName ||
+    patient.name ||
+    patient.email ||
+    null;
+};
+
+const getPatientProfile = async (patientId) => {
+  if (!patientId) {
+    return null;
+  }
+
+  const patientDoc = await db.collection("patients").doc(patientId).get();
+  return patientDoc.exists ? patientDoc.data() : null;
+};
+
+const enrichQueueItemWithPatient = async (queueItem) => {
+  if (queueItem.patientName || queueItem.fullName || !queueItem.patientId) {
+    return queueItem;
+  }
+
+  const patientProfile = await getPatientProfile(queueItem.patientId);
+  const patientName = getPatientDisplayName(patientProfile);
+
+  return {
+    ...queueItem,
+    patientName: patientName || queueItem.patientId,
+    patientEmail: patientProfile?.email || queueItem.patientEmail,
+    patientPhone: patientProfile?.phone || queueItem.patientPhone
+  };
+};
+
+const getQueueItemStartTime = (queueItem) => {
+  const date = queueItem.date || new Date().toISOString().split("T")[0];
+  const rawTime = queueItem.appointmentTime || queueItem.timeSlot || queueItem.time || "";
+  const match = String(rawTime).match(/\b([01]\d|2[0-3]):([0-5]\d)\b/);
+
+  if (!match) {
+    return null;
+  }
+
+  return new Date(`${date}T${match[1]}:${match[2]}:00`);
+};
+
+const shouldMarkQueueItemMissed = (queueItem, now = new Date()) => {
+  if (queueItem.status !== "WAITING") {
+    return false;
+  }
+
+  const startTime = getQueueItemStartTime(queueItem);
+
+  if (!startTime || Number.isNaN(startTime.getTime())) {
+    return false;
+  }
+
+  return now.getTime() - startTime.getTime() >= MISSED_GRACE_PERIOD_MINUTES * 60 * 1000;
+};
+
+const markOverdueQueueItemsMissed = async (clinicId) => {
+  const today = new Date().toISOString().split("T")[0];
+  const queueItemsRef = getQueueItemsRef(clinicId, today);
+  const snapshot = await queueItemsRef.where("status", "==", "WAITING").get();
+  const now = new Date();
+  const updates = [];
+
+  snapshot.forEach((doc) => {
+    const queueItem = {
+      queueItemId: doc.id,
+      ...doc.data()
+    };
+
+    if (shouldMarkQueueItemMissed(queueItem, now)) {
+      updates.push(doc.ref.update({
+        status: "MISSED",
+        missedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: "system"
+      }));
+    }
+  });
+
+  await Promise.all(updates);
+  return updates.length;
+};
+
+const getQueue = async (clinicId) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  await markOverdueQueueItemsMissed(clinicId);
+
+  const snapshot = await getQueueItemsRef(clinicId, today).get();
 
   const patients = [];
 
@@ -486,7 +606,9 @@ const getQueue = async (clinicId) => {
     });
   });
 
-  patients.sort((a, b) => {
+  const enrichedPatients = await Promise.all(patients.map(enrichQueueItemWithPatient));
+
+  enrichedPatients.sort((a, b) => {
     if ((a.priority || 0) !== (b.priority || 0)) {
       return (a.priority || 0) - (b.priority || 0);
     }
@@ -505,7 +627,7 @@ const getQueue = async (clinicId) => {
     MISSED: [],
   };
 
-  patients.forEach((patient) => {
+  enrichedPatients.forEach((patient) => {
     if (queue[patient.status]) {
       queue[patient.status].push(patient);
     }
@@ -517,15 +639,10 @@ const getQueue = async (clinicId) => {
 const startConsultation = async (clinicId, queueItemId, staffId) => {
     const today = new Date().toISOString().split("T")[0];
 
-    const patientsRef = db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("queues")
-        .doc(today)
-        .collection("patients");
+    const queueItemsRef = getQueueItemsRef(clinicId, today);
 
     // Check this staff member doesn't already have a patient IN_CONSULTATION
-    const staffActiveSnapshot = await patientsRef
+    const staffActiveSnapshot = await queueItemsRef
         .where("assignedStaffId", "==", staffId)
         .where("status", "==", "IN_CONSULTATION")
         .get();
@@ -535,7 +652,7 @@ const startConsultation = async (clinicId, queueItemId, staffId) => {
     }
 
     // Fetch the target patient
-    const patientRef = patientsRef.doc(queueItemId);
+    const patientRef = queueItemsRef.doc(queueItemId);
     const patientDoc = await patientRef.get();
 
     if (!patientDoc.exists) {
@@ -557,7 +674,135 @@ const startConsultation = async (clinicId, queueItemId, staffId) => {
 
     await patientRef.update(updatedFields);
 
-    return { queueItemId, ...patient, ...updatedFields };
+    return enrichQueueItemWithPatient({ queueItemId, ...patient, ...updatedFields });
+};
+
+const completeConsultation = async (clinicId, queueItemId, staffId) => {
+  const queueItemsRef = getQueueItemsRef(clinicId);
+  const queueItemRef = queueItemsRef.doc(queueItemId);
+  const queueItemDoc = await queueItemRef.get();
+
+  if (!queueItemDoc.exists) {
+    throw new Error("Queue item not found");
+  }
+
+  const patient = queueItemDoc.data();
+
+  if (patient.status !== "IN_CONSULTATION") {
+    throw new Error("Patient is not IN_CONSULTATION");
+  }
+
+  const completedFields = {
+    status: "COMPLETE",
+    completedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: staffId
+  };
+
+  await queueItemRef.update(completedFields);
+
+  const waitingSnapshot = await queueItemsRef
+    .where("status", "==", "WAITING")
+    .get();
+
+  const waitingPatients = [];
+
+  waitingSnapshot.forEach((doc) => {
+    waitingPatients.push({
+      queueItemId: doc.id,
+      ...doc.data()
+    });
+  });
+
+  waitingPatients.sort((a, b) => {
+    if ((a.priority || 0) !== (b.priority || 0)) {
+      return (a.priority || 0) - (b.priority || 0);
+    }
+
+    if ((a.appointmentTime || "") !== (b.appointmentTime || "")) {
+      return (a.appointmentTime || "").localeCompare(b.appointmentTime || "");
+    }
+
+    return (a.queueNumber || 0) - (b.queueNumber || 0);
+  });
+
+  const completed = await enrichQueueItemWithPatient({
+    queueItemId,
+    ...patient,
+    ...completedFields
+  });
+  const nextPatient = waitingPatients[0]
+    ? await enrichQueueItemWithPatient(waitingPatients[0])
+    : null;
+
+  return { completed, nextPatient };
+};
+
+const addQueueItem = async (clinicId, queueData) => {
+  const today = new Date().toISOString().split("T")[0];
+  const patientName = String(queueData.patientName || "").trim();
+
+  if (!patientName && !queueData.patientId) {
+    throw new Error("patientName or patientId is required");
+  }
+
+  const newQueueItem = {
+    patientName: patientName || null,
+    patientId: queueData.patientId || null,
+    clinicId,
+    date: queueData.date || today,
+    timeSlot: queueData.timeSlot || queueData.appointmentTime || "--",
+    appointmentTime: queueData.appointmentTime || queueData.timeSlot || "--",
+    priority: Number(queueData.priority || 0),
+    status: queueData.status || "WAITING",
+    queueNumber: Date.now(),
+    addedBy: queueData.addedBy || null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+
+  const docRef = await getQueueItemsRef(clinicId, today).add(newQueueItem);
+  return { queueItemId: docRef.id, ...newQueueItem };
+};
+
+const updateQueueItemStatus = async (clinicId, queueItemId, status, staffId) => {
+  if (!QUEUE_STATUSES.includes(status)) {
+    throw new Error("Invalid queue status");
+  }
+
+  const queueItemRef = getQueueItemsRef(clinicId).doc(queueItemId);
+  const queueItemDoc = await queueItemRef.get();
+
+  if (!queueItemDoc.exists) {
+    throw new Error("Queue item not found");
+  }
+
+  const queueItem = queueItemDoc.data();
+
+  if (LOCKED_QUEUE_STATUSES.includes(queueItem.status)) {
+    throw new Error("Cannot update a missed or complete queue item");
+  }
+
+  const updatedFields = {
+    status,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: staffId || null
+  };
+
+  await queueItemRef.update(updatedFields);
+  return enrichQueueItemWithPatient({ queueItemId, ...queueItem, ...updatedFields });
+};
+
+const removeQueueItem = async (clinicId, queueItemId) => {
+  const queueItemRef = getQueueItemsRef(clinicId).doc(queueItemId);
+  const queueItemDoc = await queueItemRef.get();
+
+  if (!queueItemDoc.exists) {
+    throw new Error("Queue item not found");
+  }
+
+  await queueItemRef.delete();
+  return { queueItemId, ...queueItemDoc.data() };
 };
 
 const addTodaysAppointmentsToQueue = async (clinicId) => {
@@ -579,13 +824,7 @@ const addTodaysAppointmentsToQueue = async (clinicId) => {
   for (const doc of appointmentsSnapshot.docs) {
     const appointment = doc.data();
 
-    const queueDocRef = db
-      .collection("clinics")
-      .doc(clinicId)
-      .collection("queues")
-      .doc(today)
-      .collection("queueItems")
-      .doc(doc.id);
+    const queueDocRef = getQueueItemsRef(clinicId, today).doc(doc.id);
 
     const existingQueueDoc = await queueDocRef.get();
 
@@ -610,6 +849,15 @@ const addTodaysAppointmentsToQueue = async (clinicId) => {
       createdAt: new Date()
     };
 
+    const patientProfile = await getPatientProfile(appointment.patientId);
+    const patientName = getPatientDisplayName(patientProfile);
+
+    if (patientName) {
+      queueData.patientName = patientName;
+      queueData.patientEmail = patientProfile.email || null;
+      queueData.patientPhone = patientProfile.phone || null;
+    }
+
     await queueDocRef.set(queueData);
 
     addedToQueue.push({
@@ -619,6 +867,76 @@ const addTodaysAppointmentsToQueue = async (clinicId) => {
   }
 
   return addedToQueue;
+};
+
+const getServiceTemplates = async () => {
+  const snapshot = await db.collection("serviceTemplates").get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const getClinicServices = async (clinicId) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const addClinicService = async (clinicId, data) => {
+  const ref = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .add({
+      ...data,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      active: true,
+    });
+
+  return ref.id;
+};
+
+const updateClinicService = async (clinicId, serviceId, data) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .update({
+      ...data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+};
+
+const deleteClinicService = async (clinicId, serviceId) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .delete();
+};
+
+const serviceExists = async (clinicId, name) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .where("name", "==", name)
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
 };
 
 module.exports = {
@@ -645,5 +963,17 @@ module.exports = {
     getPendingStaffByClinic,
     getQueue,
     startConsultation,
-    addTodaysAppointmentsToQueue
+    completeConsultation,
+    addQueueItem,
+    updateQueueItemStatus,
+    removeQueueItem,
+    addTodaysAppointmentsToQueue,
+    getActiveStaffByClinic,
+    removeStaffFromClinic,
+    getServiceTemplates,
+    getClinicServices,
+    addClinicService,
+    updateClinicService,
+    deleteClinicService,
+    serviceExists
 };

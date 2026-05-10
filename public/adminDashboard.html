@@ -187,64 +187,78 @@
                 </form>
             </article>
 
-            <!-- ── STATS SIDEBAR ── -->
-            <aside class="admin-sidebar">
-
-                <article class="admin-card stat-card" aria-label="Clinic status">
-                    <header class="card-header compact">
-                        <span class="card-icon cyan"><i class='bx bx-building-house' aria-hidden="true"></i></span>
-                        <h2>Clinic Status</h2>
-                    </header>
-                    <p class="stat-value" id="clinicStatus">—</p>
-                    <p class="stat-sub">Based on today's hours</p>
-                </article>
-
-                <article class="admin-card stat-card" aria-label="Open days this week">
-                    <header class="card-header compact">
-                        <span class="card-icon"><i class='bx bx-calendar-week' aria-hidden="true"></i></span>
-                        <h2>Open Days</h2>
-                    </header>
-                    <p class="stat-value" id="openDaysCount">—</p>
-                    <p class="stat-sub">Days per week</p>
-                </article>
-
-            </aside>
-
         </section>
         
-        <!-- ── STAFF MANAGEMENT ── -->
-        <section class="admin-grid staff-section" aria-labelledby="staff-heading">
+        <!-- ── SPLIT GRID: STAFF & SERVICES ── -->
+        <section class="admin-grid-split">
             
-            <article class="admin-card staff-card">
+            <!-- STAFF MANAGEMENT (Tabbed) -->
+            <article class="admin-card staff-card" aria-labelledby="staff-heading">
                 <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-user-plus' aria-hidden="true"></i></span>
+                    <span class="card-icon"><i class='bx bx-group' aria-hidden="true"></i></span>
                     <div>
-                        <h2 id="staff-heading">Invite Staff</h2>
-                        <p>Add new staff members to your clinic by email</p>
+                        <h2 id="staff-heading">Staff Management</h2>
+                        <p>Manage your clinic's medical and admin team</p>
                     </div>
                 </header>
+
+                <nav class="staff-tabs" role="tablist">
+                    <button class="tab-btn active" data-tab="active-staff" role="tab" aria-selected="true">
+                        <i class='bx bx-user-check'></i> Active
+                    </button>
+                    <button class="tab-btn" data-tab="pending-approvals" role="tab" aria-selected="false">
+                        <i class='bx bx-time'></i> Pending
+                    </button>
+                    <button class="tab-btn" data-tab="invite-new" role="tab" aria-selected="false">
+                        <i class='bx bx-user-plus'></i> Invite
+                    </button>
+                </nav>
                 
-                <div class="card-body">
+                <!-- Active Staff Tab -->
+                <div id="active-staff" class="tab-content active" role="tabpanel">
+                    <div id="activeStaffList" class="active-staff-list">
+                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">Loading staff members...</p>
+                    </div>
+                </div>
+
+                <!-- Pending Approvals Tab -->
+                <div id="pending-approvals" class="tab-content" role="tabpanel">
+                    <div id="pendingStaffList" class="pending-list">
+                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>
+                    </div>
+                </div>
+
+                <!-- Invite Tab -->
+                <div id="invite-new" class="tab-content" role="tabpanel">
                     <form id="inviteStaffForm" class="invite-form">
                         <input type="email" id="inviteEmail" placeholder="staff@example.com" required>
-                        <button type="submit" class="btn-save" id="inviteBtn">Invite</button>
+                        <button type="submit" class="btn-save" id="inviteBtn">Send Invite</button>
                     </form>
                     <p id="inviteStatus" class="save-status" style="margin-top: 10px;"></p>
                 </div>
             </article>
 
-            <article class="admin-card approvals-card">
+            <!-- MANAGE SERVICES (Quick Access) -->
+            <article class="admin-card services-card" aria-labelledby="services-heading">
                 <header class="card-header">
-                    <span class="card-icon cyan"><i class='bx bx-list-check' aria-hidden="true"></i></span>
+                    <span class="card-icon cyan"><i class='bx bx-injection' aria-hidden="true"></i></span>
                     <div>
-                        <h2>Pending Approvals</h2>
-                        <p>Review staff who signed up via invitation</p>
+                        <h2 id="services-heading">Manage Services</h2>
+                        <p>Configure treatments and durations</p>
                     </div>
                 </header>
                 
                 <div class="card-body">
-                    <div id="pendingStaffList" class="pending-list">
-                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>
+                    <div class="service-promo">
+                        <div class="service-illustration">
+                            <i class='bx bx-list-plus'></i>
+                        </div>
+                        <h3>Service Catalogue</h3>
+                        <p>Keep your service offerings and appointment durations up to date for your patients.</p>
+                        <button class="btn-save" id="manageServicesBtn" type="button" style="width: 100%; justify-content: center;">
+                            <span>Manage Services</span>
+                            <i class='bx bx-right-arrow-alt' aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </article>
