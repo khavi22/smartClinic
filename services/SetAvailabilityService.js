@@ -5,12 +5,11 @@ console.log("DB",db);
 async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Available){
         //StaffCode="STF-330AFB";
         const snaphshot =  await  db.collection("staff")
-                            .where("staffCode" , "==",StaffCode)
+                            .where("uid" , "==",StaffCode)
                             .get();
      
         if(snaphshot.empty){
-                alert("Staff member not found");
-                return;
+               throw new Error("Staff member not found");
             }
         console.log("staff member found")
         //get reference
@@ -36,7 +35,7 @@ async function getAvailability(staffCode){
     
            
              const snapshots= await  db.collection("staff")
-                   .where("staffCode" , "==",staffCode)
+                   .where("uid" , "==",staffCode)
                    .get();
     
              if(snapshots.empty){
@@ -50,7 +49,7 @@ async function getAvailability(staffCode){
 
 async function removeAvailability(staffCode, date){
   const snapshots= await  db.collection("staff")
-                    .where("staffCode" ,"==",staffCode)
+                    .where("uid" ,"==",staffCode)
                     .get();
 
 

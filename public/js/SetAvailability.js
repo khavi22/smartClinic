@@ -5,9 +5,9 @@ let selectedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().p
 let selectedDates = [];
 
 //will work maybe maybe next  month but  the project is due tomorrow
-const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-const daysLeftInMonth = daysInCurrentMonth - currentDate;
-const showNextMonth = daysLeftInMonth <= 5;
+// const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+// const daysLeftInMonth = daysInCurrentMonth - currentDate;
+// const showNextMonth = daysLeftInMonth <= 5;
 
 function renderCalendar() {
     const container = document.getElementById('SetAvailabilitycalendarContainer');
@@ -155,12 +155,21 @@ window.changeMonth = function(delta) {
 //save to firestore
 async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     //const staffCode = "STF-330AFB";
+    // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+    const user = firebase.auth().currentUser;
+    console.log("user:", user);          // check if user is logged in
+    console.log("staffCode:", user ? user.uid : "NO USER"); // check uid
+    console.log("selectedDates:", selectedDates); // check dates
+    console.log("startTime:", startTime);
+    console.log("endTime:", endTime);
+    const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
     // later: localStorage.getItem("staffCode");
 
     const response = await fetch("/api/staff/availability/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+            staffCode: staffCode,
             dates: selectedDates,   
             startTime: startTime,    
             endTime: endTime,        
@@ -182,8 +191,11 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
 
 // get data from firestore
 async function LoadAvailability() {
-    const staffCode = "STF-330AFB";
+    // const staffCode = "STF-330AFB";
+    // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
     // later: localStorage.getItem("staffCode");
+    const user = firebase.auth().currentUser;
+    const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
 
     try {
         const response = await fetch(`/api/staff/availability/${staffCode}`);
@@ -239,7 +251,10 @@ function displayAvailability(availability) {
 
 //Remove from backend
 async function removeAvailabilityFromBackend(date) {
-    const staffCode = "STF-330AFB";
+    // const staffCode = "STF-330AFB";
+    // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+    const user = firebase.auth().currentUser;
+    const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
     // later: localStorage.getItem("staffCode");
 
     try {
@@ -264,7 +279,13 @@ async function removeAvailabilityFromBackend(date) {
 //DOMContentLoaded
 document.addEventListener("DOMContentLoaded", function(){
     renderCalendar();
-    LoadAvailability();
+    // LoadAvailability();
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            LoadAvailability();
+        }
+    });
+
 
 
     // const clinicName = localStorage.getItem("clinicName");
