@@ -32,8 +32,6 @@ async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Availa
 
 async function getAvailability(staffCode){
         //    const staffCode="STF-330AFB";
-    
-           
              const snapshots= await  db.collection("staff")
                    .where("uid" , "==",staffCode)
                    .get();
@@ -51,8 +49,6 @@ async function removeAvailability(staffCode, date){
   const snapshots= await  db.collection("staff")
                     .where("uid" ,"==",staffCode)
                     .get();
-
-
     const StaffClinicsRef= snapshots.docs[0].ref;
 
     await StaffClinicsRef.update({
@@ -60,5 +56,22 @@ async function removeAvailability(staffCode, date){
             });
     return { success: true };
 }
+async function getClinicName(uid) {
+    const staffSnapshot = await db.collection("staff")
+        .where("uid", "==", uid)
+        .get();
 
-module.exports = {SaveAvailability,getAvailability,removeAvailability};
+    if (staffSnapshot.empty) return null;
+
+    const staffData = staffSnapshot.docs[0].data();
+    const clinicId = staffData.clinicId;
+
+    const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+
+    if (!clinicDoc.exists) return null;
+
+    return clinicDoc.data().clinicName;
+}
+
+module.exports = {SaveAvailability, getAvailability, removeAvailability, getClinicName};
+// module.exports = {SaveAvailability,getAvailability,removeAvailability};

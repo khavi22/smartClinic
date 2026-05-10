@@ -1,62 +1,172 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartClinic | Staff Dashboard (Demo)</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/setAvailability.css" />
+    <title>Set Availability</title>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="nav">
+      <span class="nav-brand">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#185FA5"
+          stroke-width="2"
+        >
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+        smartClinic
+      </span>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+      <span class="hero-icon">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </span>
+      <section class="hero-text">
+        <h1>Staff Dashboard</h1>
+        <p>Manage your availability and schedule</p>
+      </section>
+    </header>
+
+    <section class="clinic-info">
+      <p id="clinic-info-text">
+        <span class="clinic-label">Clinic:</span>
+      </p>
+    </section>
+
+    <main class="content">
+      <section class="card">
+        <h2 class="card-title">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#185FA5"
+            stroke-width="2"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          Select Date
+        </h2>
+
+        <section id="SetAvailabilitycalendarContainer"></section>
+
+        <section
+          class="selected-date-display"
+          id="selected-date-display"
+          style="display: none"
+        >
+          <p class="selected-date-label">Selected Date</p>
+          <p class="selected-date-value" id="selected-date-value"></p>
+        </section>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Select Available Times</h2>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="available-check" checked />
+          Available
+        </label>
+
+        <section class="times-row">
+          <section class="time-group">
+            <label class="time-label">Start Time</label>
+            <select id="Startime" class="time-select">
+              <option value="08:00">08:00</option>
+              <option value="09:00">09:00</option>
+              <option value="10:00">10:00</option>
+              <option value="11:00">11:00</option>
+              <option value="12:00">12:00</option>
+              <option value="13:00">13:00</option>
+              <option value="14:00">14:00</option>
+              <option value="15:00">15:00</option>
+              <option value="16:00">16:00</option>
+              <option value="17:00">17:00</option>
+            </select>
+          </section>
+
+          <section class="time-group">
+            <label class="time-label">End Time</label>
+            <select id="Endtime" class="time-select">
+              <option value="08:00">08:00</option>
+              <option value="09:00">09:00</option>
+              <option value="10:00">10:00</option>
+              <option value="11:00">11:00</option>
+              <option value="12:00">12:00</option>
+              <option value="13:00">13:00</option>
+              <option value="14:00">14:00</option>
+              <option value="15:00">15:00</option>
+              <option value="16:00">16:00</option>
+              <option value="17:00">17:00</option>
+            </select>
+          </section>
+        </section>
+
+        <button id="Add_Availability" class="save-btn">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+          >
+            <path
+              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+            />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          Save Availability
+        </button>
+        <p class="save-hint">
+          Select at least one date to save your availability
+        </p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Your Availability Summary</h2>
+        <section id="Availability_content">
+          <p class="empty-msg">
+            No availability set yet. Use the calendar to start scheduling your
+            hours.
+          </p>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2026 smartClinic. All rights reserved.</p>
+    </footer>
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-</head>
-<body>
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <span class="logo">SmartClinic</span>
-                <span class="badge">Staff Demo</span>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="active">Overview</a>
-                <a href="#">Patient List</a>
-                <a href="#">Schedule</a>
-            </nav>
-            <div class="sidebar-footer">
-                <button id="logoutBtn" class="btn-logout">Logout</button>
-            </div>
-        </aside>
 
-        <main class="main-content">
-            <header class="content-header">
-                <h1 id="userGreeting">Loading...</h1>
-                <div class="header-actions">
-                    <span id="clinicNameDisplay" class="clinic-tag">Clinic Access</span>
-                </div>
-            </header>
+    <script src="./js/firebase-config.js"></script>
 
-            <section class="demo-notice">
-                <h2>Welcome to the Staff Portal Demo</h2>
-                <p>This is a placeholder for the SmartClinic Staff experience. Features like real-time queue management and patient check-ins are currently being stylized for a premium feel.</p>
-            </section>
-
-            <div class="dashboard-grid">
-                <div class="card stat-card">
-                    <h3>Today's Load</h3>
-                    <p class="stat-value">12</p>
-                    <p class="stat-desc">Appointments scheduled</p>
-                </div>
-                <div class="card stat-card">
-                    <h3>Avg Wait Time</h3>
-                    <p class="stat-value">15m</p>
-                    <p class="stat-desc">Patient throughput</p>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script src="js/staffDashboard.js"></script>
-</body>
+    <script src="js/SetAvailability.js"></script>
+  </body>
 </html>

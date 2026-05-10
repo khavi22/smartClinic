@@ -163,8 +163,9 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     // console.log("startTime:", startTime);
     console.log("endTime:", endTime);
     const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+    
     // later: localStorage.getItem("staffCode");
-
+    
     const response = await fetch("/api/staff/availability/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -207,7 +208,7 @@ async function LoadAvailability() {
     }
 }
 
-//Display availability cards
+
 function displayAvailability(availability) {
     const display = document.getElementById("Availability_content");
     display.innerHTML = "";
@@ -280,14 +281,25 @@ async function removeAvailabilityFromBackend(date) {
 document.addEventListener("DOMContentLoaded", function(){
     renderCalendar();
     // LoadAvailability();
-    firebase.auth().onAuthStateChanged(function(user) {
+    firebase.auth().onAuthStateChanged( async function(user) {
         if (user) {
-            LoadAvailability();
+
+
+        const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+        
+       
+        const clinicResponse = await fetch(`/api/clinic/${staffCode}`);
+        const clinicData = await clinicResponse.json();
+        document.getElementById("clinic-info-text").innerHTML = `
+            <span class="clinic-label">Clinic:</span>
+            ${clinicData.clinicName}
+        `;
+
+
+
+        LoadAvailability();
         }
     });
-
-
-
     // const clinicName = localStorage.getItem("clinicName");
     // const clinicAddress = localStorage.getItem("clinicAddress");
 

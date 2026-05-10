@@ -1,32 +1,39 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const { onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 
+const SMTP_HOST = defineSecret("SMTP_HOST");
+const SMTP_PORT = defineSecret("SMTP_PORT");
+const SMTP_USER = defineSecret("SMTP_USER");
+const SMTP_PASS = defineSecret("SMTP_PASS");
 /**
  * Service to send emails via Nodemailer.
  * Configure these environment variables in your .env file:
  * SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  */
 
-const BASE_URL = process.env.BASE_URL || "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/";
+const BASE_URL = defineSecret("BASE_URL");
+
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "465"),
-    secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
+    host: SMTP_HOST.value() || "smtp.gmail.com",
+    port: parseInt(SMTP_PORT.value() || "465"),
+    secure: SMTP_PORT.value() === "465", // true for 465, false for other ports
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: SMTP_USER.value(),
+        pass: SMTP_PASS.value(),
     },
 });
 
 const sendEmail = async (to, subject, html, fromName = "SmartClinic", replyTo = null) => {
     try {
         const mailOptions = {
-            from: `"${fromName}" <${process.env.SMTP_USER}>`,
+            from: `"${fromName}" <${SMTP_USER.value()}>`,
             to: to,
             subject: subject,
             html: html,
-            replyTo: replyTo || process.env.SMTP_USER
+            replyTo: replyTo || SMTP_USER.value()
         };
 
         const info = await transporter.sendMail(mailOptions);

@@ -12,7 +12,6 @@ jest.mock("../services/SetAvailabilityService",function() {
     getAvailability: jest.fn(),
     removeAvailability: jest.fn()
     };
-
 });
 
 const {
@@ -23,9 +22,6 @@ const {
 } = require("../services/SetAvailabilityService");
 
 //mock request and response of objects
-
-
-
 describe("Set availability Controller",function(){
     beforeEach(() => {
         jest.spyOn(console, "error").mockImplementation(() => {});
@@ -101,7 +97,6 @@ describe("Set availability Controller",function(){
                     endTime: "17:00"
                 }
             });
-
             const mockReq = {params : {staffCode: "STF-330AFB"}};
             await fetchAvailability(mockReq, mockRes);
             expect(mockRes.json).toHaveBeenCalledWith({
@@ -115,10 +110,10 @@ describe("Set availability Controller",function(){
             });
          });
 
-        it("should return empty object if no availability set for that staffCode number",async function(){
+        it("should return empty object if no availability set for that staff_uid",async function(){
                 getAvailability.mockResolvedValue({});
 
-                const mockReq = {params : {staffCode: "STF-330AFB"}};
+                const mockReq = {params : {staffCode: "J96HrT5YN3VOAAzNGqEhpxj4vUx2"}};
                 await fetchAvailability(mockReq, mockRes);
                 expect(mockRes.json).toHaveBeenCalledWith({
                     availability: {}
@@ -127,7 +122,7 @@ describe("Set availability Controller",function(){
         
        });
         describe("deleteAvailability" , function(){
-            it("should delete availability staff data  if staffNumber exists,for specific date ",async function(){
+            it("should delete availability staff data  if staff_uid exists,for specific date ",async function(){
                 removeAvailability.mockResolvedValue({ success: true });
                   const mockReq = {
                         body : {
@@ -139,7 +134,7 @@ describe("Set availability Controller",function(){
             expect(mockRes.json).toHaveBeenCalledWith({ success: true });
             });
 
-            it("should not delete availability data set for that staffCode number that is not found,shoudl return status 500",async function(){
+            it("should not delete availability data set for that staff_uid number that is not found,shoudl return status 500",async function(){
                      removeAvailability.mockRejectedValue(
                         new Error("Staff member not found")
                      );
@@ -157,9 +152,6 @@ describe("Set availability Controller",function(){
                         
             });
         
-       });
-
-
-       
+       });    
 });
 

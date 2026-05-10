@@ -5,10 +5,14 @@ const { admin, db } = require("../services/config/firebase");
 // ── OPERATING HOURS ─────────────────────────────────────────
 exports.updateClinicHoursController = async (req, res) => {
   try {
+    console.log("Update clinic hours - Request body:", req.body);
+    console.log("Update clinic hours - Auth header:", req.headers.authorization ? "Present" : "Missing");
+    
     const { clinicId, operatingHours } = req.body;
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("Missing or invalid Authorization header");
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
@@ -17,26 +21,32 @@ exports.updateClinicHoursController = async (req, res) => {
 
     try {
       decodedToken = await admin.auth().verifyIdToken(idToken);
+      console.log("Token verified, uid:", decodedToken.uid);
     } catch (authError) {
+      console.log("Token verification failed:", authError.message);
       return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
     }
 
     const uid = decodedToken.uid;
 
     if (!clinicId || !operatingHours) {
+      console.log("Missing clinicId or operatingHours");
       return res.status(400).json({ success: false, message: "Missing clinicId or operatingHours" });
     }
 
     const clinicDoc = await db.collection("clinics").doc(clinicId).get();
     if (!clinicDoc.exists) {
+      console.log("Clinic not found:", clinicId);
       return res.status(404).json({ success: false, message: "Clinic not found" });
     }
 
     if (clinicDoc.data().adminUid !== uid) {
+      console.log("User is not the admin of this clinic");
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
     await updateClinicOperatingHours(clinicId, operatingHours);
+    console.log("Operating hours updated successfully for clinic:", clinicId);
     res.json({ success: true, message: "Operating hours updated successfully" });
 
   } catch (error) {
