@@ -371,6 +371,7 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
         btn.disabled = false;
 
         setTimeout(() => { status.textContent = ""; }, 4000);
+        setClinicFormEditable(false);
     } catch (err) {
         console.error("Save profile error:", err);
         status.textContent = "Failed to save. Please try again.";
@@ -378,4 +379,55 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
         btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
         btn.disabled = false;
     }
+});
+
+
+const profileForm = document.getElementById("profileForm");
+const toggleClinicEditBtn = document.getElementById("toggleClinicEditBtn");
+
+let clinicEditingEnabled = false;
+
+function setClinicFormEditable(enabled) {
+
+    clinicEditingEnabled = enabled;
+
+    const fields = profileForm.querySelectorAll(
+        "input, select, textarea"
+    );
+
+    fields.forEach(field => {
+
+        // keep buttons active
+        if (
+            field.type === "button" ||
+            field.type === "submit"
+        ) return;
+
+        field.disabled = !enabled;
+    });
+
+    // Save button
+    const saveBtn = document.getElementById("saveClinicProfileBtn");
+
+    if (saveBtn) {
+        saveBtn.hidden = !enabled;
+    }
+
+    // Toggle button text
+    toggleClinicEditBtn.textContent =
+        enabled ? "Cancel Editing" : "Enable Editing";
+
+    // Styling state
+    profileForm.classList.toggle(
+        "profile-form-locked",
+        !enabled
+    );
+}
+
+// Default = locked
+setClinicFormEditable(false);
+
+toggleClinicEditBtn.addEventListener("click", () => {
+
+    setClinicFormEditable(!clinicEditingEnabled);
 });
