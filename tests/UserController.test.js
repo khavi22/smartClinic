@@ -2,13 +2,29 @@ const firebaseService = require("../services/firebaseService");
 const { admin } = require("../services/config/firebase");
 
 const mockVerifyIdToken = jest.fn();
-jest.mock("../services/config/firebase", () => ({
-    admin: {
-        auth: () => ({
-            verifyIdToken: mockVerifyIdToken
+
+jest.mock("../services/config/firebase", () => {
+    const mockUpdate = jest.fn().mockResolvedValue({});
+    const mockFirestore = jest.fn().mockReturnValue({
+        collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue({
+                update: mockUpdate
+            })
         })
-    }
-}));
+    });
+    mockFirestore.FieldValue = {
+        serverTimestamp: () => "mock-timestamp"
+    };
+
+    return {
+        admin: {
+            auth: () => ({
+                verifyIdToken: mockVerifyIdToken
+            }),
+            firestore: mockFirestore
+        }
+    };
+});
 
 const {
     checkUserLogin,
@@ -113,7 +129,7 @@ describe("UserController", () => {
 
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 exists: true,
-                redirect: "/staffDashboard.html"
+                redirect: "/SetAvailability.html"
             }));
         });
 
@@ -292,30 +308,30 @@ describe("UserController", () => {
 
         it("should create a staff profile when a valid staff code is provided", async () => {
             req.body.role = "staff";
-            req.body.staffCode = "STF-123";
-            firebaseService.getStaffAssignmentFromCode.mockResolvedValue("clinic-555");
+            req.body.email = "staff@example.com";
+            firebaseService.getInviteByEmail.mockResolvedValue({ clinicId: "clinic-555" });
             firebaseService.createUserProfile.mockResolvedValue();
 
             await registerUser(req, res);
 
             expect(firebaseService.createUserProfile).toHaveBeenCalledWith(
                 expect.objectContaining({ role: "staff" }),
-                { staffCode: "STF-123", clinicId: "clinic-555" }
+                expect.objectContaining({ clinicId: "clinic-555", approvalStatus: "pending" })
             );
             expect(res.status).toHaveBeenCalledWith(201);
         });
 
         it("should return 4-03 when staff code is invalid", async () => {
             req.body.role = "staff";
-            req.body.staffCode = "STF-BAD";
-            firebaseService.getStaffAssignmentFromCode.mockResolvedValue(null);
+            req.body.email = "staff@example.com";
+            firebaseService.getInviteByEmail.mockResolvedValue(null);
 
             await registerUser(req, res);
 
             expect(res.status).toHaveBeenCalledWith(403);
             expect(res.json).toHaveBeenCalledWith({
                 success: false,
-                message: "Invalid staff code"
+                message: "You must be invited by an administrator to sign up as staff."
             });
         });
 
