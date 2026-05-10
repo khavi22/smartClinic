@@ -8,19 +8,32 @@ const results_count_display    = document.getElementById("resultsCountDisplay");
 const filterToggle = document.getElementById("filterToggleBtn");
 const filterBody   = document.getElementById("filterBody");
 
-filterToggle.addEventListener("click", () => {
-    const expanded = filterToggle.getAttribute("aria-expanded") === "true";
-    filterToggle.setAttribute("aria-expanded", String(!expanded));
-    filterBody.hidden = expanded;
-});
+if (filterToggle && filterBody) {
 
-filterToggle.addEventListener("keydown", e => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterToggle.click(); }
-});
+    filterToggle.addEventListener("click", () => {
+        const expanded =
+            filterToggle.getAttribute("aria-expanded") === "true";
+
+        filterToggle.setAttribute(
+            "aria-expanded",
+            String(!expanded)
+        );
+
+        filterBody.hidden = expanded;
+    });
+
+    filterToggle.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            filterToggle.click();
+        }
+    });
+}
 
 // ── Collect active filter values ─────────────────────────────────────────────
 function getFilters() {
-    const facilityType = document.getElementById("filterFacilityType").value.trim();
+    const facilityType =
+    document.querySelector('input[name="facilityTypeFilter"]:checked')?.value || "";
     const province     = document.getElementById("filterProvince").value.trim();
     const district     = document.getElementById("filterDistrict").value.trim().toLowerCase();
     const region       = document.getElementById("filterRegion").value.trim().toLowerCase();
@@ -41,18 +54,44 @@ function updateFilterBadge() {
     badge.hidden = n === 0;
 }
 
-document.querySelectorAll("#filterBody select").forEach(el => el.addEventListener("change", updateFilterBadge));
-document.querySelectorAll("#filterBody input[type=text]").forEach(el => el.addEventListener("input", updateFilterBadge));
+if (filterBody) {
+
+    document.querySelectorAll("#filterBody select")
+        .forEach(el => {
+            el.addEventListener("change", updateFilterBadge);
+        });
+
+    document.querySelectorAll("#filterBody input[type=text]")
+        .forEach(el => {
+            el.addEventListener("input", updateFilterBadge);
+        });
+}
+document.querySelectorAll('input[name="facilityTypeFilter"]').forEach(el => {el.addEventListener("change", updateFilterBadge);});
+
+document.querySelectorAll('#servicesChipList input').forEach(el => {el.addEventListener("change", updateFilterBadge);
+});
 
 // ── Clear filters ─────────────────────────────────────────────────────────────
-document.getElementById("clearFiltersBtn").addEventListener("click", () => {
-    document.getElementById("filterFacilityType").value = "";
-    document.getElementById("filterProvince").value = "";
-    document.getElementById("filterDistrict").value = "";
-    document.getElementById("filterRegion").value = "";
-    document.querySelectorAll("#servicesChipList input").forEach(cb => cb.checked = false);
-    updateFilterBadge();
-});
+const clearFiltersBtn =
+    document.getElementById("clearFiltersBtn");
+
+if (clearFiltersBtn) {
+
+    clearFiltersBtn.addEventListener("click", () => {
+
+        document.getElementById("filterFacilityType").value = "";
+        document.getElementById("filterProvince").value = "";
+        document.getElementById("filterDistrict").value = "";
+        document.getElementById("filterRegion").value = "";
+
+        document.querySelectorAll("#servicesChipList input")
+            .forEach(cb => {
+                cb.checked = false;
+            });
+
+        updateFilterBadge();
+    });
+}
 
 // ── Render active filter tags above results ───────────────────────────────────
 function renderActiveFilterTags(filters) {
@@ -97,7 +136,7 @@ function renderActiveFilterTags(filters) {
 async function searchFirestoreClinics(filters) {
     const db = firebase.firestore();
     let query = db.collection("clinics");
-
+    //query = query.where("isActive", "==", true);
     if (filters.facilityType) {
         query = query.where("facilityType", "==", filters.facilityType);
     }
@@ -227,26 +266,67 @@ function renderPlacesClinics(clinicsArray) {
 }
 
 // ── Apply Filters ─────────────────────────────────────────────────────────────
-document.getElementById("applyFiltersBtn").addEventListener("click", async () => {
-    const filters = getFilters();
-    if (countFilters(filters) === 0) {
-        section_view_clinics.innerHTML = `<article class="empty-state"><p>Select at least one filter and click Apply Filters.</p></article>`;
-        results_count_display.textContent = "No search performed";
-        return;
-    }
+const applyFiltersBtn =
+    document.getElementById("applyFiltersBtn");
 
-    section_view_clinics.innerHTML = `<article class="empty-state"><p>Searching...</p></article>`;
-    results_count_display.textContent = "Searching…";
+if (applyFiltersBtn) {
 
-    try {
-        const clinics = await searchFirestoreClinics(filters);
-        renderActiveFilterTags(filters);
-        renderFirestoreClinics(clinics);
-    } catch (err) {
-        console.error("Filter search error:", err);
-        section_view_clinics.innerHTML = `<article class="empty-state" style="color:#ef4444"><p>Failed to apply filters. Please try again.</p></article>`;
-    }
-});
+    applyFiltersBtn.addEventListener("click", async () => {
+
+        const filters = getFilters();
+
+        if (countFilters(filters) === 0) {
+
+            section_view_clinics.innerHTML = `
+                <article class="empty-state">
+                    <p>
+                        Select at least one filter
+                        and click Apply Filters.
+                    </p>
+                </article>
+            `;
+
+            results_count_display.textContent =
+                "No search performed";
+
+            return;
+        }
+
+        section_view_clinics.innerHTML = `
+            <article class="empty-state">
+                <p>Searching...</p>
+            </article>
+        `;
+
+        results_count_display.textContent = "Searching…";
+
+        try {
+
+            const clinics =
+                await searchFirestoreClinics(filters);
+
+            renderActiveFilterTags(filters);
+
+            renderFirestoreClinics(clinics);
+
+        } catch (err) {
+
+            console.error("Filter search error:", err);
+
+            section_view_clinics.innerHTML = `
+                <article
+                    class="empty-state"
+                    style="color:#ef4444"
+                >
+                    <p>
+                        Failed to apply filters.
+                        Please try again.
+                    </p>
+                </article>
+            `;
+        }
+    });
+}
 
 // ── Search by Name ────────────────────────────────────────────────────────────
 search_button_ByName.addEventListener("click", async function () {
