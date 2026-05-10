@@ -56,5 +56,22 @@ async function removeAvailability(staffCode, date){
             });
     return { success: true };
 }
+async function getClinicName(uid) {
+    const staffSnapshot = await db.collection("staff")
+        .where("uid", "==", uid)
+        .get();
 
-module.exports = {SaveAvailability,getAvailability,removeAvailability};
+    if (staffSnapshot.empty) return null;
+
+    const staffData = staffSnapshot.docs[0].data();
+    const clinicId = staffData.clinicId;
+
+    const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+
+    if (!clinicDoc.exists) return null;
+
+    return clinicDoc.data().clinicName;
+}
+
+module.exports = {SaveAvailability, getAvailability, removeAvailability, getClinicName };
+// module.exports = {SaveAvailability,getAvailability,removeAvailability};

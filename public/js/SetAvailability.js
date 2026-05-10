@@ -163,8 +163,9 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     console.log("startTime:", startTime);
     console.log("endTime:", endTime);
     const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+    
     // later: localStorage.getItem("staffCode");
-
+    getClinicName(staffCode);
     const response = await fetch("/api/staff/availability/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -282,7 +283,21 @@ document.addEventListener("DOMContentLoaded", function(){
     // LoadAvailability();
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
-            LoadAvailability();
+
+
+        const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+        
+       
+        const clinicResponse = await fetch(`/api/staff/clinic/${staffCode}`);
+        const clinicData = await clinicResponse.json();
+        document.getElementById("clinic-info-text").innerHTML = `
+            <span class="clinic-label">Clinic:</span>
+            ${clinicData.clinicName}
+        `;
+
+
+
+        LoadAvailability();
         }
     });
 

@@ -1,7 +1,8 @@
 const { 
     SaveAvailability, 
     getAvailability,
-    removeAvailability 
+    removeAvailability,
+    getClinicName
 }= require("../services/SetAvailabilityService");
 
 
@@ -62,4 +63,23 @@ async function deleteAvailability(req, res) {
     }
 }
 
-module.exports = { setAvailability, fetchAvailability, deleteAvailability };
+async function fetchClinicName(req, res) {
+    try {
+        const staffCode = req.params.uid;
+        const clinicName = await getClinicName(staffCode);
+
+        if (!clinicName) {
+            return res.status(404).json({ error: "Clinic not found" });
+        }
+
+        res.json({ clinicName });
+
+    } catch (error) {
+        console.error("Error fetching clinic name:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { setAvailability, fetchAvailability, deleteAvailability, fetchClinicName };
+
+// module.exports = { setAvailability, fetchAvailability, deleteAvailability };
