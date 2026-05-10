@@ -158,11 +158,15 @@ if (hoursForm) {
                 })
             });
 
+            console.log('Update hours response status:', response.status);
+            const responseData = await response.json();
+            console.log('Update hours response:', responseData);
+
             if (response.ok) {
                 saveStatus.textContent = '✓ Hours saved successfully';
                 saveStatus.style.color = 'var(--success-green)';
             } else {
-                throw new Error("Failed to save");
+                throw new Error(responseData.message || "Failed to save");
             }
         } catch (error) {
             console.error('Save error:', error);
