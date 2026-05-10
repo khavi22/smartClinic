@@ -300,9 +300,6 @@ document.addEventListener("DOMContentLoaded", function(){
         LoadAvailability();
         }
     });
-
-
-
     // const clinicName = localStorage.getItem("clinicName");
     // const clinicAddress = localStorage.getItem("clinicAddress");
 
