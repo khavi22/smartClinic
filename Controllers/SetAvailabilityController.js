@@ -6,7 +6,7 @@ const {
 }= require("../services/SetAvailabilityService");
 
 
-async function setAvailability(req, res) {
+async function setAvailability(req,res) {
     try {
         
         // const staffCode = "STF-330AFB";
@@ -37,7 +37,7 @@ async function fetchAvailability(req, res) {
     try {
         // const staffCode = "STF-330AFB";
         // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
-        const staffCode = req.params.staffCode; 
+        const staffCode = req.params.staffCode;
         const availability = await getAvailability(staffCode);
         res.json({ availability });
 

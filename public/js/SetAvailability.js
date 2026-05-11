@@ -168,10 +168,10 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     
     const response = await fetch("/api/staff/availability/set", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json"},
         body: JSON.stringify({
             staffCode: staffCode,
-            dates: selectedDates,   
+            dates: selectedDates, 
             startTime: startTime,    
             endTime: endTime,        
             available: checkedValue 
