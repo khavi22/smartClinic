@@ -1,39 +1,38 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
-const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
 
-const SMTP_HOST = defineSecret("SMTP_HOST");
-const SMTP_PORT = defineSecret("SMTP_PORT");
-const SMTP_USER = defineSecret("SMTP_USER");
-const SMTP_PASS = defineSecret("SMTP_PASS");
 /**
  * Service to send emails via Nodemailer.
- * Configure these environment variables in your .env file:
+ * Configure these environment variables in your .env file or deployment settings:
  * SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  */
 
-const BASE_URL = "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/signUp.html";
+// Use process.env for Azure/Local compatibility, with hardcoded fallbacks
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = process.env.SMTP_PORT || "465";
+const SMTP_USER = process.env.SMTP_USER || "mahlatseclayton1@gmail.com";
+const SMTP_PASS = process.env.SMTP_PASS || "jaiymuyzkvzxhfyh";
 
+const BASE_URL = "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net";
 
 const transporter = nodemailer.createTransport({
-    host: SMTP_HOST.value() || "smtp.gmail.com",
-    port: parseInt(SMTP_PORT.value() || "465"),
-    secure: SMTP_PORT.value() === "465", // true for 465, false for other ports
+    host: SMTP_HOST,
+    port: parseInt(SMTP_PORT),
+    secure: SMTP_PORT === "465", // true for 465, false for other ports
     auth: {
-        user:"mahlatseclayton1@gmail.com" ,
-        pass:"jaiymuyzkvzxhfyh" ,
+        user: SMTP_USER,
+        pass: SMTP_PASS,
     },
 });
 
 const sendEmail = async (to, subject, html, fromName = "SmartClinic", replyTo = null) => {
     try {
         const mailOptions = {
-            from: `"${fromName}" <${SMTP_USER.value()}>`,
+            from: `"${fromName}" <${SMTP_USER}>`,
             to: to,
             subject: subject,
             html: html,
-            replyTo: replyTo || SMTP_USER.value()
+            replyTo: replyTo || SMTP_USER
         };
 
         const info = await transporter.sendMail(mailOptions);
@@ -57,7 +56,7 @@ const sendStaffInvitation = async (email, clinicName, adminName, adminEmail) => 
                 <p><strong>${adminName}</strong> has invited you to join the staff at <strong>${clinicName}</strong> on the SmartClinic platform.</p>
                 <p>Please register using this email address to get started with your new account.</p>
                 <section style="text-align: center; margin: 32px 0;">
-                    <a href="${BASE_URL}signUp.html" 
+                    <a href="${BASE_URL}/signUp.html" 
                        style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                        Finalize Registration
                     </a>
@@ -84,7 +83,7 @@ const sendStaffApproval = async (email, clinicName, adminName, adminEmail) => {
                 <p>Your staff account for <strong>${clinicName}</strong> has been approved by <strong>${adminName}</strong>.</p>
                 <p>You can now log in and access the Staff Dashboard to manage appointments and clinic settings.</p>
                 <section style="text-align: center; margin: 32px 0;">
-                    <a href="${BASE_URL}login.html" 
+                    <a href="${BASE_URL}/login.html" 
                        style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                        Login to Dashboard
                     </a>
