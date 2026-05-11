@@ -822,3 +822,183 @@ footer.modal-actions {
     box-shadow: 0 4px 14px rgba(220,53,69,0.25);
 }
 
+/* Staff dashboard */
+.staff-dashboard-page {
+    background: rgba(241, 245, 249, 0.6);
+    color: var(--text-dark, #0f172a);
+    padding-top: var(--nav-height, 72px);
+}
+
+.staff-dashboard-page .nav-brand strong {
+    font: inherit;
+}
+
+.staff-dashboard-page .nav-logout-btn svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+}
+
+.staff-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem 60px;
+}
+
+.staff-page-header {
+    background: linear-gradient(135deg, var(--primary-blue, #2563eb) 0%, var(--primary-cyan, #06b6d4) 100%);
+    color: white;
+    margin: 0 -2rem;
+    padding: 34px 2rem 36px;
+}
+
+.staff-header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.staff-header-inner .brand-kicker {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.92);
+    display: inline-flex;
+    margin-bottom: 12px;
+    padding: 5px 12px;
+    width: fit-content;
+}
+
+.staff-header-inner h1 {
+    font-size: clamp(1.8rem, 3vw, 2.45rem);
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    line-height: 1.05;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 14px rgba(15, 23, 42, 0.18);
+}
+
+.staff-header-inner p {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    max-width: 620px;
+}
+
+.staff-grid {
+    display: grid;
+    gap: 32px;
+    margin: 32px 0 0;
+}
+
+.staff-card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+}
+
+.staff-dashboard-page .queue-tools {
+    margin: 0;
+    padding: 0;
+}
+
+.staff-dashboard-page .section-heading-row {
+    margin: 0;
+    padding: 28px 28px 12px;
+}
+
+.staff-dashboard-page .section-heading-row h2 {
+    color: #0f172a;
+    font-size: 1.15rem;
+}
+
+.staff-dashboard-page .queue-form {
+    padding: 8px 28px 28px;
+}
+
+.queue-form .field small {
+    display: block;
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 700;
+    margin-bottom: 7px;
+    text-transform: uppercase;
+}
+
+.staff-dashboard-page .queue-form input,
+.staff-dashboard-page .queue-form select,
+.staff-dashboard-page .queue-status-select {
+    border-color: #e2e8f0;
+    border-radius: 12px;
+    min-height: 42px;
+}
+
+.staff-dashboard-page .queue-primary-btn {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-radius: 10px;
+    box-shadow: 0 8px 16px -8px rgba(37, 99, 235, 0.5);
+}
+
+.staff-dashboard-page .queue-primary-btn:hover {
+    filter: brightness(1.08);
+}
+
+.staff-dashboard-page .stats-grid {
+    margin-bottom: 0;
+}
+
+.staff-dashboard-page .stat-card {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(255, 255, 255, 0.4);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.06);
+}
+
+.staff-dashboard-page .table-wrapper {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    margin-top: 0;
+}
+
+.staff-dashboard-page #queueTable thead {
+    background: #f8fafc;
+}
+
+.staff-dashboard-page #queueTable tbody tr:hover {
+    background: #f8fafc;
+}
+
+.staff-dashboard-page .status-tag {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.staff-dashboard-page .queue-action-btn {
+    border-radius: 10px;
+}
+
+.staff-dashboard-page .reschedule-picker {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+@media (max-width: 900px) {
+    .staff-main {
+        padding: 0 1.25rem 44px;
+    }
+
+    .staff-page-header {
+        margin: 0 -1.25rem;
+        padding: 28px 1.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .staff-dashboard-page .nav-brand strong {
+        display: none;
+    }
+}
+
