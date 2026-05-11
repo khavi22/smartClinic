@@ -163,6 +163,59 @@ body {
     display: block;
 }
 
+.staff-dashboard-page {
+    padding-top: var(--nav-height, 72px);
+}
+
+.staff-main {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 32px 0 52px;
+}
+
+.staff-page-header {
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius: var(--radius);
+    color: var(--white);
+    margin-bottom: 28px;
+    overflow: hidden;
+    padding: 32px;
+    box-shadow: var(--shadow);
+}
+
+.staff-header-inner {
+    max-width: 720px;
+}
+
+.staff-header-inner .brand-kicker {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.staff-header-inner h1 {
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+.staff-header-inner p {
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 0.98rem;
+    line-height: 1.6;
+}
+
+.staff-header-inner .staff-greeting {
+    color: var(--white);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.staff-grid {
+    display: grid;
+    gap: 4px;
+}
+
 .staff-dashboard-page .main-content {
     width: min(1180px, calc(100% - 48px));
     max-width: 1180px;
@@ -296,7 +349,8 @@ figure.user-profile {
     margin: 0;
 }
 
-.queue-form .field span {
+.queue-form .field span,
+.queue-form .field small {
     display: block;
     color: var(--text-muted);
     font-size: 0.74rem;
@@ -763,6 +817,8 @@ footer.modal-actions {
     .logo-details { justify-content: center; padding-bottom: 18px; }
     .main-content { margin-left: 60px; padding: 24px 18px; max-width: calc(100vw - 60px); }
     .staff-dashboard-page .main-content { width: 100%; max-width: none; margin: 0; }
+    .staff-main { width: 100%; padding: 20px 16px 36px; }
+    .staff-page-header { border-radius: 12px; padding: 24px; }
     .top-bar h1 { font-size: 1.2rem; }
     .top-bar, .section-heading-row { align-items: flex-start; flex-direction: column; }
     figure.user-profile { width: 100%; justify-content: space-between; }

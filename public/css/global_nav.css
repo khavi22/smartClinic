@@ -138,6 +138,34 @@
     white-space: nowrap;
 }
 
+.nav-dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border: 1.5px solid var(--nav-border);
+    border-radius: 8px;
+    background: var(--primary-blue);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-dashboard-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.nav-dashboard-btn:hover {
+    background: #1d4ed8;
+    color: white;
+    transform: translateY(-1px);
+}
+
 .nav-logout-btn i { font-size: 1rem; }
 
 .nav-logout-btn:hover {

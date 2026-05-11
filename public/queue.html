@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartClinic | Staff Dashboard</title>
+    <title>SmartClinic | Staff Queue</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
 <body class="staff-dashboard-page">
     <nav class="global-app-bar" aria-label="Main Navigation">
         <section class="nav-container">
-            <a href="staffDashboard.html" class="nav-brand" aria-label="smartClinic staff dashboard">
+            <a href="staffDashboard.html" class="nav-brand" aria-label="smartClinic staff queue">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                 </svg>
@@ -27,6 +27,13 @@
             </a>
 
             <section class="nav-user" aria-label="Staff account">
+                <a class="nav-dashboard-btn" href="staffDashboard.html" aria-label="Back to staff dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M19 12H5"></path>
+                        <path d="M12 19l-7-7 7-7"></path>
+                    </svg>
+                    Staff Dashboard
+                </a>
                 <strong id="clinicNameDisplay" class="role-badge staff">Clinic Access</strong>
                 <button type="button" id="logoutBtn" class="nav-logout-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -41,9 +48,10 @@
 
     <main class="staff-main">
         <header class="staff-page-header">
-            <section class="staff-header-inner" aria-labelledby="userGreeting">
+            <section class="staff-header-inner" aria-labelledby="queuePageTitle">
                 <p class="brand-kicker">SmartClinic Staff</p>
-                <h1 id="userGreeting">Loading...</h1>
+                <h1 id="queuePageTitle">Staff Queue</h1>
+                <p id="userGreeting" class="staff-greeting">Loading staff profile...</p>
                 <p>Manage walk-ins, appointment queues, and consultation progress.</p>
             </section>
         </header>
@@ -127,6 +135,6 @@
         </section>
     </main>
 
-    <script src="js/staffDashboard.js?v=4"></script>
+    <script src="js/queue.js?v=4"></script>
 </body>
 </html>
