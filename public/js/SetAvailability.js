@@ -282,23 +282,39 @@ document.addEventListener("DOMContentLoaded", function(){
     renderCalendar();
     // LoadAvailability();
     firebase.auth().onAuthStateChanged( async function(user) {
-        if (user) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
 
+        try {
+            const idToken = await user.getIdToken();
+            currentIdToken = idToken;
+            currentStaffId = user.uid;
+            const response = await fetch(`/api/user/login/${user.uid}?email=${encodeURIComponent(user.email || "")}`, {
+                headers: { "Authorization": `Bearer ${idToken}` }
+            });
 
-        const staffCode = user ? user.uid : "J96HrT5YN3VOAAzNGqEhpxj4vUx2";
-        
-       
-        const clinicResponse = await fetch(`/api/clinic/${staffCode}`);
-        const clinicData = await clinicResponse.json();
-        document.getElementById("clinic-info-text").innerHTML = `
-            <span class="clinic-label">Clinic:</span>
-            ${clinicData.clinicName}
-        `;
+            if (!response.ok) throw new Error(`Server returned ${response.status}`);
+            const result = await response.json();
 
+            if (!result.exists || !result.profile || result.profile.role !== "staff") {
+                console.warn("Unauthorized or missing staff profile");
+                window.location.href = "dashboard.html";
+                return;
+            }
 
+            const data = result.profile;
+            document.getElementById("clinic-info-text").innerHTML = `
+                <span class="clinic-label">Clinic:</span>
+                ${data.clinicName || "N/A"}<br>
+            `;
+
+        } catch (error) {
+            console.error("Staff Dashboard: Error loading data:", error);
+        }
 
         LoadAvailability();
-        }
     });
     // const clinicName = localStorage.getItem("clinicName");
     // const clinicAddress = localStorage.getItem("clinicAddress");
