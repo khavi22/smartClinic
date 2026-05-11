@@ -38,7 +38,12 @@
     "express": "^5.2.1",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.8.0",
+<<<<<<< HEAD
     "nodemailer": "^8.0.7",
+=======
+    "firebase-functions": "^7.2.5",
+    "nodemailer": "^8.0.6",
+>>>>>>> 5d81a432e0f2396b49a0949e156f107c12fb4b29
     "sqlite3": "^6.0.1"
   },
   "devDependencies": {

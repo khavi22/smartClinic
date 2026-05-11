@@ -1,16 +1,17 @@
 const { 
     SaveAvailability, 
     getAvailability,
-    removeAvailability 
+    removeAvailability,
+    getClinicName
 }= require("../services/SetAvailabilityService");
 
 
 async function setAvailability(req, res) {
     try {
         
-        
-        const staffCode = "STF-330AFB";
-        const {dates, startTime, endTime, available } = req.body;
+        // const staffCode = "STF-330AFB";
+        // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+        const {staffCode,dates, startTime, endTime, available } = req.body;
        
         if(!dates || !startTime || !endTime || available === undefined){
             return res.status(400).json({ error: "Missing required fields" });
@@ -34,8 +35,9 @@ async function setAvailability(req, res) {
 
 async function fetchAvailability(req, res) {
     try {
-        const staffCode = "STF-330AFB";
-        
+        // const staffCode = "STF-330AFB";
+        // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+        const staffCode = req.params.staffCode; 
         const availability = await getAvailability(staffCode);
         res.json({ availability });
 
@@ -47,8 +49,10 @@ async function fetchAvailability(req, res) {
 
 async function deleteAvailability(req, res) {
     try {
-        const staffCode = "STF-330AFB";
-        const { date } = req.body;
+        // const staffCode = "STF-330AFB";
+        // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
+
+       const {staffCode, date } = req.body;
 
         const result = await removeAvailability(staffCode, date);
         res.json(result);
@@ -59,4 +63,23 @@ async function deleteAvailability(req, res) {
     }
 }
 
-module.exports = { setAvailability, fetchAvailability, deleteAvailability };
+async function fetchClinicName(req, res) {
+    try {
+        const staffCode = req.params.uid;
+        const clinicName = await getClinicName(staffCode);
+
+        if (!clinicName) {
+            return res.status(404).json({ error: "Clinic not found" });
+        }
+
+        res.json({ clinicName });
+
+    } catch (error) {
+        console.error("Error fetching clinic name:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { setAvailability, fetchAvailability, deleteAvailability,fetchClinicName};
+
+// module.exports = { setAvailability, fetchAvailability, deleteAvailability };

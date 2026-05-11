@@ -9,7 +9,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         window.location.href = "login.html";
         return;
     }
-    
+
     try {
         console.log("Admin Dashboard: Fetching profile from server...");
         const idToken = await user.getIdToken();
@@ -22,7 +22,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         if (!result.exists || !result.profile || result.profile.role !== "admin") {
             console.warn("Unauthorized or missing admin profile");
-            window.location.href = "dashboard.html";
+            window.location.href = "index.html";
             return;
         }
 
@@ -32,6 +32,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
             await loadActiveStaff(currentClinicId);
+            await loadClinicProfile(currentClinicId);
         }
 
     } catch (error) {
@@ -44,11 +45,11 @@ firebase.auth().onAuthStateChanged(async (user) => {
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const tabId = btn.getAttribute('data-tab');
-        
+
         // Update buttons
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         // Update content
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
@@ -63,37 +64,37 @@ async function loadClinicHours(clinicId) {
         const hours = data.operatingHours;
 
         //show clinic name in header
-        const clinicNameText    = document.getElementById('clinicNameText');
+        const clinicNameText = document.getElementById('clinicNameText');
         const clinicNameDisplay = document.getElementById('clinicNameDisplay');
         if (clinicNameText && data.clinicName) {
             clinicNameText.textContent = data.clinicName;
-            clinicNameDisplay.hidden   = false;
+            clinicNameDisplay.hidden = false;
         }
-        
+
         if (hours) {
             Object.keys(hours).forEach(day => {
                 const dayData = hours[day];
-                const checkbox = document.getElementById(`${day.substring(0,3)}-open`);
-                const startInput = document.getElementById(`${day.substring(0,3)}-start`);
-                const endInput = document.getElementById(`${day.substring(0,3)}-end`);
-                
+                const checkbox = document.getElementById(`${day.substring(0, 3)}-open`);
+                const startInput = document.getElementById(`${day.substring(0, 3)}-start`);
+                const endInput = document.getElementById(`${day.substring(0, 3)}-end`);
+
                 if (checkbox) checkbox.checked = dayData.isOpen;
                 if (startInput) startInput.value = dayData.open || "09:00";
                 if (endInput) endInput.value = dayData.close || "17:00";
-                
-                toggleDay(checkbox, document.getElementById(`${day.substring(0,3)}-fields`), checkbox.closest('.day-row'));
+
+                toggleDay(checkbox, document.getElementById(`${day.substring(0, 3)}-fields`), checkbox.closest('.day-row'));
             });
         }
     }
 }
 
 // ── TOGGLE: disable time fields when day is closed ──────────
-const daysShort = ['mon','tue','wed','thu','fri','sat','sun'];
+const daysShort = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 daysShort.forEach(day => {
     const checkbox = document.getElementById(`${day}-open`);
-    const fields   = document.getElementById(`${day}-fields`);
-    const row      = checkbox.closest('.day-row');
+    const fields = document.getElementById(`${day}-fields`);
+    const row = checkbox.closest('.day-row');
 
     if (checkbox) {
         checkbox.addEventListener('change', () => {
@@ -116,9 +117,9 @@ function toggleDay(checkbox, fields, row) {
 }
 
 // ── FORM SAVE ───────────────────────────────────────────────
-const hoursForm   = document.getElementById('hoursForm');
-const saveStatus  = document.getElementById('hoursSaveStatus');
-const saveBtn     = document.getElementById('hoursSaveBtn');
+const hoursForm = document.getElementById('hoursForm');
+const saveStatus = document.getElementById('hoursSaveStatus');
+const saveBtn = document.getElementById('hoursSaveBtn');
 
 if (hoursForm) {
     hoursForm.addEventListener('submit', async (e) => {
@@ -127,19 +128,19 @@ if (hoursForm) {
 
         saveBtn.disabled = true;
         saveStatus.textContent = 'Saving...';
-        saveStatus.className   = 'save-status';
+        saveStatus.className = 'save-status';
 
         // Build hours object from form
         const hoursData = {};
-        const fullDays = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-        
+        const fullDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
         fullDays.forEach(day => {
             const short = day.substring(0, 3);
             const isOpen = document.getElementById(`${short}-open`).checked;
             hoursData[day] = {
                 isOpen: isOpen,
-                open:  document.getElementById(`${short}-start`).value,
-                close:  document.getElementById(`${short}-end`).value,
+                open: document.getElementById(`${short}-start`).value,
+                close: document.getElementById(`${short}-end`).value,
             };
         });
 
@@ -147,7 +148,7 @@ if (hoursForm) {
             const idToken = await firebase.auth().currentUser.getIdToken();
             const response = await fetch('/api/clinics/update-hours', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${idToken}`
                 },
@@ -157,11 +158,15 @@ if (hoursForm) {
                 })
             });
 
+            console.log('Update hours response status:', response.status);
+            const responseData = await response.json();
+            console.log('Update hours response:', responseData);
+
             if (response.ok) {
                 saveStatus.textContent = '✓ Hours saved successfully';
                 saveStatus.style.color = 'var(--success-green)';
             } else {
-                throw new Error("Failed to save");
+                throw new Error(responseData.message || "Failed to save");
             }
         } catch (error) {
             console.error('Save error:', error);
@@ -239,7 +244,7 @@ async function loadPendingStaff(clinicId) {
 function renderPendingStaff(staff) {
     const container = document.getElementById('pendingStaffList');
     if (!container) return;
-    
+
     if (!staff || staff.length === 0) {
         container.innerHTML = '<p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>';
         return;
@@ -364,10 +369,138 @@ window.fireStaff = async (staffUid, name) => {
     }
 };
 
-// ── MANAGE SERVICES ────────────────────────────────────────
-const manageServicesBtn = document.getElementById("manageServicesBtn");
-if (manageServicesBtn) {
-    manageServicesBtn.addEventListener("click", () => {
-        window.location.href = "manageservices.html";
-    });
+// ── CLINIC PROFILE: load ────────────────────────────────────────────────────
+async function loadClinicProfile(clinicId) {
+    const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    // Facility type
+    if (data.facilityType) {
+        const radio = document.querySelector(`input[name="facilityType"][value="${data.facilityType}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    // Province
+    if (data.province) {
+        const sel = document.getElementById("clinicProvince");
+        if (sel) sel.value = data.province;
+    }
+
+    // District & Region
+    if (data.district) {
+        const el = document.getElementById("clinicDistrict");
+        if (el) el.value = data.district;
+    }
+    if (data.region) {
+        const el = document.getElementById("clinicRegion");
+        if (el) el.value = data.region;
+    }
+
+    // Services
+    if (data.services && Array.isArray(data.services)) {
+        data.services.forEach(svc => {
+            const cb = document.querySelector(`#profileForm input[name="services"][value="${svc}"]`);
+            if (cb) cb.checked = true;
+        });
+    }
 }
+
+// ── CLINIC PROFILE: save ─────────────────────────────────────────────────────
+document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+    if (!currentClinicId) {
+        alert("No clinic associated with your account.");
+        return;
+    }
+
+    const btn = document.getElementById("saveProfileBtn");
+    const status = document.getElementById("profileSaveStatus");
+
+    const facilityTypeEl = document.querySelector('input[name="facilityType"]:checked');
+    const facilityType = facilityTypeEl ? facilityTypeEl.value : "";
+    const province = document.getElementById("clinicProvince").value;
+    const district = document.getElementById("clinicDistrict").value.trim();
+    const region = document.getElementById("clinicRegion").value.trim();
+    const services = [...document.querySelectorAll('#profileForm input[name="services"]:checked')]
+        .map(cb => cb.value);
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving…`;
+    status.textContent = "";
+    status.className = "save-status";
+
+    try {
+        await firebase.firestore().collection("clinics").doc(currentClinicId).set({
+            facilityType,
+            province,
+            district,
+            region,
+            services
+        }, { merge: true });
+
+        status.textContent = "✓ Profile saved successfully";
+        status.className = "save-status";
+        btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
+        btn.disabled = false;
+
+        setTimeout(() => { status.textContent = ""; }, 4000);
+        setClinicFormEditable(false);
+    } catch (err) {
+        console.error("Save profile error:", err);
+        status.textContent = "Failed to save. Please try again.";
+        status.className = "save-status error";
+        btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
+        btn.disabled = false;
+    }
+});
+
+
+const profileForm = document.getElementById("profileForm");
+const toggleClinicEditBtn = document.getElementById("toggleClinicEditBtn");
+
+let clinicEditingEnabled = false;
+
+function setClinicFormEditable(enabled) {
+
+    clinicEditingEnabled = enabled;
+
+    const fields = profileForm.querySelectorAll(
+        "input, select, textarea"
+    );
+
+    fields.forEach(field => {
+
+        // keep buttons active
+        if (
+            field.type === "button" ||
+            field.type === "submit"
+        ) return;
+
+        field.disabled = !enabled;
+    });
+
+    // Save button
+    const saveBtn = document.getElementById("saveClinicProfileBtn");
+
+    if (saveBtn) {
+        saveBtn.hidden = !enabled;
+    }
+
+    // Toggle button text
+    toggleClinicEditBtn.textContent =
+        enabled ? "Cancel Editing" : "Enable Editing";
+
+    // Styling state
+    profileForm.classList.toggle(
+        "profile-form-locked",
+        !enabled
+    );
+}
+
+// Default = locked
+setClinicFormEditable(false);
+
+toggleClinicEditBtn.addEventListener("click", () => {
+
+    setClinicFormEditable(!clinicEditingEnabled);
+});

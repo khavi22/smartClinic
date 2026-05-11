@@ -93,7 +93,6 @@ async function redirectBasedOnUser(user) {
 }
 
 
-
 const googleBtn = document.getElementById("googleLogin");
 
 if (googleBtn) {
