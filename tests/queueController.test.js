@@ -3,6 +3,11 @@ const {
     getQueue,
     startConsultation,
     completeConsultation,
+    addQueueItem,
+    getAvailableQueueSlots,
+    rescheduleQueueItem,
+    updateQueueItemStatus,
+    removeQueueItem,
 } = require("../Controllers/queueController");
 
 jest.mock("../services/queueService");
@@ -11,7 +16,7 @@ describe("Queue Controllers", () => {
     let req, res;
 
     beforeEach(() => {
-        req = { params: {}, body: {} };
+        req = { params: {}, body: {}, query: {} };
         res = {
             status: jest.fn().mockReturnThis(),
             json: jest.fn(),
@@ -318,6 +323,263 @@ describe("Queue Controllers", () => {
                     error: "Firestore error",
                 })
             );
+        });
+    });
+
+    describe("addQueueItem", () => {
+        it("should return 400 if clinicId is missing", async () => {
+            await addQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "clinicId is required" }));
+        });
+
+        it("should return 201 when queue item is added", async () => {
+            req.params = { clinicId: "clinic1" };
+            req.body = { patientName: "Alice" };
+            queueService.addQueueItem.mockResolvedValue({ queueItemId: "q1" });
+
+            await addQueueItem(req, res);
+
+            expect(queueService.addQueueItem).toHaveBeenCalledWith("clinic1", req.body);
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                queueItem: { queueItemId: "q1" }
+            }));
+        });
+
+        it("should return 400 for known validation errors", async () => {
+            req.params = { clinicId: "clinic1" };
+            queueService.addQueueItem.mockRejectedValue(new Error("This slot is full."));
+
+            await addQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "This slot is full." }));
+        });
+
+        it("should return 500 for unexpected add errors", async () => {
+            req.params = { clinicId: "clinic1" };
+            queueService.addQueueItem.mockRejectedValue(new Error("Firestore error"));
+
+            await addQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                message: "Failed to add patient to queue",
+                error: "Firestore error"
+            }));
+        });
+    });
+
+    describe("getAvailableQueueSlots", () => {
+        it("should return 400 if clinicId is missing", async () => {
+            await getAvailableQueueSlots(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "clinicId is required" }));
+        });
+
+        it("should return slots from the service", async () => {
+            req.params = { clinicId: "clinic1" };
+            req.query = { date: "2026-05-11", queueItemId: "q1" };
+            queueService.getAvailableQueueSlots.mockResolvedValue([{ time: "09:00 - 10:00" }]);
+
+            await getAvailableQueueSlots(req, res);
+
+            expect(queueService.getAvailableQueueSlots).toHaveBeenCalledWith("clinic1", "2026-05-11", "q1");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                slots: [{ time: "09:00 - 10:00" }]
+            }));
+        });
+
+        it("should return 500 if slot lookup fails", async () => {
+            req.params = { clinicId: "clinic1" };
+            queueService.getAvailableQueueSlots.mockRejectedValue(new Error("Firestore error"));
+
+            await getAvailableQueueSlots(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                message: "Failed to fetch available queue slots",
+                error: "Firestore error"
+            }));
+        });
+    });
+
+    describe("rescheduleQueueItem", () => {
+        it("should validate required request values", async () => {
+            await rescheduleQueueItem(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "clinicId is required" }));
+
+            jest.clearAllMocks();
+            req.params = { clinicId: "clinic1" };
+            await rescheduleQueueItem(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "queueItemId is required" }));
+
+            jest.clearAllMocks();
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = {};
+            await rescheduleQueueItem(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "timeSlot is required" }));
+        });
+
+        it("should return the rescheduled queue item", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { timeSlot: "10:00 - 11:00", staffId: "staff1" };
+            queueService.rescheduleQueueItem.mockResolvedValue({ queueItemId: "q1", timeSlot: "10:00 - 11:00" });
+
+            await rescheduleQueueItem(req, res);
+
+            expect(queueService.rescheduleQueueItem).toHaveBeenCalledWith("clinic1", "q1", "10:00 - 11:00", "staff1");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                queueItem: { queueItemId: "q1", timeSlot: "10:00 - 11:00" }
+            }));
+        });
+
+        it("should return 400 for known reschedule errors", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { timeSlot: "10:00 - 11:00" };
+            queueService.rescheduleQueueItem.mockRejectedValue(new Error("Queue item not found"));
+
+            await rescheduleQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Queue item not found" }));
+        });
+
+        it("should return 500 for unexpected reschedule errors", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { timeSlot: "10:00 - 11:00" };
+            queueService.rescheduleQueueItem.mockRejectedValue(new Error("Firestore error"));
+
+            await rescheduleQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                message: "Failed to reschedule queue item",
+                error: "Firestore error"
+            }));
+        });
+    });
+
+    describe("updateQueueItemStatus", () => {
+        it("should validate required request values", async () => {
+            await updateQueueItemStatus(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "clinicId is required" }));
+
+            jest.clearAllMocks();
+            req.params = { clinicId: "clinic1" };
+            await updateQueueItemStatus(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "queueItemId is required" }));
+
+            jest.clearAllMocks();
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = {};
+            await updateQueueItemStatus(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "status is required" }));
+        });
+
+        it("should return the updated queue item", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { status: "MISSED", updatedBy: "staff1" };
+            queueService.updateQueueItemStatus.mockResolvedValue({ queueItemId: "q1", status: "MISSED" });
+
+            await updateQueueItemStatus(req, res);
+
+            expect(queueService.updateQueueItemStatus).toHaveBeenCalledWith("clinic1", "q1", "MISSED", "staff1");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                queueItem: { queueItemId: "q1", status: "MISSED" }
+            }));
+        });
+
+        it("should return 400 for known status errors", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { status: "UNKNOWN" };
+            queueService.updateQueueItemStatus.mockRejectedValue(new Error("Invalid queue status"));
+
+            await updateQueueItemStatus(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Invalid queue status" }));
+        });
+
+        it("should return 500 for unexpected status errors", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { status: "WAITING" };
+            queueService.updateQueueItemStatus.mockRejectedValue(new Error("Firestore error"));
+
+            await updateQueueItemStatus(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                message: "Failed to update queue item status",
+                error: "Firestore error"
+            }));
+        });
+    });
+
+    describe("removeQueueItem", () => {
+        it("should validate required request values", async () => {
+            await removeQueueItem(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "clinicId is required" }));
+
+            jest.clearAllMocks();
+            req.params = { clinicId: "clinic1" };
+            await removeQueueItem(req, res);
+            expect(res.status).toHaveBeenLastCalledWith(400);
+            expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "queueItemId is required" }));
+        });
+
+        it("should remove a queue item", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            queueService.removeQueueItem.mockResolvedValue({ queueItemId: "q1" });
+
+            await removeQueueItem(req, res);
+
+            expect(queueService.removeQueueItem).toHaveBeenCalledWith("clinic1", "q1");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                queueItem: { queueItemId: "q1" }
+            }));
+        });
+
+        it("should return 404 for missing queue items", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            queueService.removeQueueItem.mockRejectedValue(new Error("Queue item not found"));
+
+            await removeQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Queue item not found" }));
+        });
+
+        it("should return 500 for unexpected remove errors", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            queueService.removeQueueItem.mockRejectedValue(new Error("Firestore error"));
+
+            await removeQueueItem(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                message: "Failed to remove queue item",
+                error: "Firestore error"
+            }));
         });
     });
 });
