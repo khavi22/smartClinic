@@ -13,7 +13,7 @@ const SMTP_PASS = defineSecret("SMTP_PASS");
  * SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  */
 
-const BASE_URL = defineSecret("BASE_URL");
+const BASE_URL = "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/signUp.html";
 
 
 const transporter = nodemailer.createTransport({
@@ -21,8 +21,8 @@ const transporter = nodemailer.createTransport({
     port: parseInt(SMTP_PORT.value() || "465"),
     secure: SMTP_PORT.value() === "465", // true for 465, false for other ports
     auth: {
-        user: SMTP_USER.value(),
-        pass: SMTP_PASS.value(),
+        user:"mahlatseclayton1@gmail.com" ,
+        pass:"jaiymuyzkvzxhfyh" ,
     },
 });
 
