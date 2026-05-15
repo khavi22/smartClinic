@@ -153,7 +153,8 @@ exports.getSmartSuggestion = async (req, res) => {
         const dayEnd = String(endDateObj.getDate()).padStart(2, '0');
         const endDateStr = `${yEnd}-${mEnd}-${dayEnd}`;
 
-        const mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}`);
+        const clinicId = req.query.clinicId || '';
+        const mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}&clinicId=${clinicId}`);
         if (!mlRes.ok) throw new Error("ML service unreachable");
 
         const mlData = await mlRes.json();

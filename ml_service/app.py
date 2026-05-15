@@ -140,6 +140,7 @@ def predict_range_endpoint():
         
     start_date_str = request.args.get('startDate')
     end_date_str = request.args.get('endDate')
+    clinic_id = request.args.get('clinicId')
     
     if not start_date_str or not end_date_str:
         return jsonify({"error": "Missing startDate or endDate parameter"}), 400

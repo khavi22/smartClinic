@@ -91,8 +91,7 @@ async function loadUserProfile(user) {
         const logoutBtn = document.getElementById("logoutBtn");
         if (logoutBtn) logoutBtn.hidden = false;
 
-        // Load AI Suggestion
-        loadSmartSuggestion();
+
 
     } catch (err) {
         console.error("Error loading profile:", err);
@@ -184,59 +183,4 @@ if (modalConfirm) {
     });
 }
 
-async function loadSmartSuggestion() {
-    const bubble = document.getElementById("smartAISuggestion");
-    const textEl = document.getElementById("aiSuggestionText");
-    if (!bubble || !textEl) return;
 
-    try {
-        const response = await fetch("/api/smart-suggestion");
-        if (!response.ok) throw new Error("Suggestion failed");
-        const data = await response.json();
-        
-        if (data.hasPrediction) {
-            let html = `<section class="ai-best-time-container">`;
-            
-            if (data.today) {
-                html += `
-                    <section class="ai-suggestion-box">
-                        <span class="ai-suggestion-title">Today's Best</span>
-                        <section class="ai-date-row">
-                            <span class="ai-day">${data.today.day}</span>
-                        </section>
-                        <strong class="ai-time-row">${data.today.time}</strong>
-                    </section>
-                `;
-            }
-            if (data.future) {
-                 html += `
-                    <section class="ai-suggestion-box">
-                        <span class="ai-suggestion-title">Upcoming Best</span>
-                        <section class="ai-date-row">
-                            <span class="ai-day">${data.future.day}</span>
-                            <span class="ai-date">${data.future.date}</span>
-                        </section>
-                        <strong class="ai-time-row">${data.future.time}</strong>
-                    </section>
-                `;
-            }
-            
-            html += `</section><p class="ai-hint-text">${data.hint}</p>`;
-            textEl.innerHTML = html;
-            setTimeout(() => {
-                bubble.style.display = 'block';
-                bubble.hidden = false;
-            }, 500);
-        } else {
-            textEl.style.display = "block";
-            textEl.innerHTML = data.suggestion;
-            setTimeout(() => {
-                bubble.style.display = 'block';
-                bubble.hidden = false;
-            }, 500);
-        }
-    } catch (error) {
-        console.warn("Could not load AI suggestion:", error);
-        bubble.style.display = 'none';
-    }
-}

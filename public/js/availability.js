@@ -211,40 +211,56 @@ window.handleDateSelection = async function (dateStr) {
 
     renderCalendar();
     renderSlots();
-
     // AI Bubble Logic for specific clinic
     const bubble = document.getElementById("smartAISuggestion");
     const textEl = document.getElementById("aiSuggestionText");
     if (bubble && textEl) {
-        const recommended = cachedSlots.filter(s => s.isRecommended);
-        if (recommended.length > 0) {
-            const best = recommended[0].time;
-            const dateParts = selectedDate.split('-');
-            const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-            const dayNum = dateObj.getDate();
-            const monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
-            
-            textEl.innerHTML = `
-                <section class="ai-best-time-container">
-                    <section class="ai-suggestion-box">
-                        <span class="ai-suggestion-title">Recommended Time</span>
-                        <section class="ai-date-row">
-                            <span class="ai-day">${dayName}</span>
-                            <span class="ai-date">${dayNum} ${monthName}</span>
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const clinicId = urlParams.get('clinicId') || '';
+            const response = await fetch(`/api/smart-suggestion?clinicId=${clinicId}`);
+            const data = await response.json();
+
+            if (data.hasPrediction) {
+                let html = `<section class="ai-best-time-container">`;
+                
+                if (data.today) {
+                    html += `
+                        <section class="ai-suggestion-box">
+                            <span class="ai-suggestion-title">Today's Best</span>
+                            <section class="ai-date-row">
+                                <span class="ai-day">${data.today.day}</span>
+                            </section>
+                            <strong class="ai-time-row">${data.today.time}</strong>
                         </section>
-                        <strong class="ai-time-row">${best}</strong>
-                    </section>
-                </section>
-                <p class="ai-hint-text">Optimal window for minimal wait time.</p>
-            `;
-            setTimeout(() => { 
-                bubble.style.display = 'block';
-                bubble.hidden = false; 
-            }, 500);
-        } else {
+                    `;
+                }
+                if (data.future) {
+                     html += `
+                        <section class="ai-suggestion-box">
+                            <span class="ai-suggestion-title">Upcoming Best</span>
+                            <section class="ai-date-row">
+                                <span class="ai-day">${data.future.day}</span>
+                                <span class="ai-date">${data.future.date}</span>
+                            </section>
+                            <strong class="ai-time-row">${data.future.time}</strong>
+                        </section>
+                    `;
+                }
+                
+                html += `</section><p class="ai-hint-text">${data.hint}</p>`;
+                textEl.innerHTML = html;
+                setTimeout(() => {
+                    bubble.style.display = 'block';
+                    bubble.hidden = false;
+                }, 500);
+            } else {
+                bubble.style.display = 'none';
+                bubble.hidden = true;
+            }
+        } catch (error) {
+            console.warn("Could not load AI suggestion for clinic:", error);
             bubble.style.display = 'none';
-            bubble.hidden = true;
         }
     }
 };
