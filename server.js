@@ -18,42 +18,42 @@ try {
   clinicsRoutes = require("./routes/clinics");
   console.log("✓ Clinics routes loaded");
 } catch (err) {
-  console.error("✗ Error loading clinics routes:", err.message);
+  console.error("✗ Error loading clinics routes:", err);
 }
 
 try {
   appointmentRoutes = require("./routes/appointments");
   console.log("✓ Appointments routes loaded");
 } catch (err) {
-  console.error("✗ Error loading appointments routes:", err.message);
+  console.error("✗ Error loading appointments routes:", err);
 }
 
 try {
   userRoutes = require("./routes/user");
   console.log("✓ User routes loaded");
 } catch (err) {
-  console.error("✗ Error loading user routes:", err.message);
+  console.error("✗ Error loading user routes:", err);
 }
 
 try {
   staffAvailabilityRoutes = require("./routes/StaffAvailability");
   console.log("✓ Staff availability routes loaded");
 } catch (err) {
-  console.error("✗ Error loading staff availability routes:", err.message);
+  console.error("✗ Error loading staff availability routes:", err);
 }
 
 try {
   adminRoutes = require("./routes/admin");
   console.log("✓ Admin routes loaded");
 } catch (err) {
-  console.error("✗ Error loading admin routes:", err.message);
+  console.error("✗ Error loading admin routes:", err);
 }
 
 try {
   queueRoutes = require("./routes/Queue");
   console.log("✓ Queue routes loaded");
 } catch (err) {
-  console.error("✗ Error loading queue routes:", err.message);
+  console.error("✗ Error loading queue routes:", err);
 }
 
 if (clinicsRoutes) app.use("/api/clinics", clinicsRoutes);
