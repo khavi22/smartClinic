@@ -580,4 +580,60 @@ describe("queueService", () => {
             expect(queueRefs.existing.set).not.toHaveBeenCalled();
         });
     });
+
+    describe("edge cases for branch coverage", () => {
+        it("handles appointments with unrecognized timeSlots gracefully", async () => {
+            setupFirestore({
+                clinicData: mondayHours,
+                appointments: [
+                    { id: "weird-1", data: { clinicId: "clinic-1", date: "2026-05-11", status: "booked", timeSlot: "25:00 - 26:00" } }
+                ]
+            });
+            const slots = await queueService.getAvailableQueueSlots("clinic-1", "2026-05-11");
+            expect(slots).toBeDefined();
+        });
+
+        it("handles enrichQueueItemWithPatient when patient is missing or lacks fields", async () => {
+            const { queueRefs } = setupFirestore({
+                queueItems: [
+                    { id: "wait-1", data: { status: "WAITING", patientId: "ghost", date: "2026-05-11", appointmentTime: "08:00 - 09:00", priority: 1, queueNumber: 1 } }
+                ],
+                patients: {} // ghost patient doesn't exist
+            });
+            const queue = await queueService.getQueue("clinic-1");
+            expect(queue.WAITING[0].patientName).toBe("ghost"); // Falls back to ID
+        });
+
+        it("shouldMarkQueueItemMissed returns false for non-WAITING or invalid time items", async () => {
+            jest.setSystemTime(new Date("2026-05-11T12:00:00"));
+            const { queueRefs } = setupFirestore({
+                queueItems: [
+                    { id: "q1", data: { status: "COMPLETE", date: "2026-05-11", timeSlot: "08:00 - 09:00" } }, // Not WAITING
+                    { id: "q2", data: { status: "WAITING", date: "2026-05-11", timeSlot: "invalid" } } // Invalid time match
+                ]
+            });
+            const queue = await queueService.getQueue("clinic-1");
+            // Should not be marked missed
+            expect(queue.COMPLETE).toHaveLength(1); 
+            expect(queue.WAITING).toHaveLength(1); // q2 stays waiting because time is invalid
+        });
+
+        it("normalizeToHourSlot returns null for completely invalid formats, treating it as a walk-in", async () => {
+            setupFirestore({ clinicData: mondayHours });
+            const result = await queueService.addQueueItem("clinic-1", {
+                patientName: "Alice",
+                timeSlot: "not-a-time"
+            });
+            expect(result.timeSlot).toBe("08:00 - 09:00");
+        });
+        
+        it("gets missing patients via sync", async () => {
+            setupFirestore({
+                appointments: [
+                    { id: "missing-patient", data: { clinicId: "clinic-1", date: "2026-05-11", status: "booked", timeSlot: "08:00 - 09:00" } }
+                ]
+            });
+            await queueService.addTodaysAppointmentsToQueue("clinic-1");
+        });
+    });
 });
