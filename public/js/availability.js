@@ -219,7 +219,22 @@ window.handleDateSelection = async function (dateStr) {
         const recommended = cachedSlots.filter(s => s.isRecommended);
         if (recommended.length > 0) {
             const best = recommended[0].time;
-            textEl.innerHTML = `💡 AI Suggestion: **${best}** is the optimal time for a shorter wait at this clinic today.`;
+            const dateParts = selectedDate.split('-');
+            const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+            const dayNum = dateObj.getDate();
+            const monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
+            
+            textEl.innerHTML = `
+                <div class="ai-best-time-container">
+                    <div class="ai-date-row">
+                        <span class="ai-day">${dayName}</span>
+                        <span class="ai-date">${dayNum} ${monthName}</span>
+                    </div>
+                    <div class="ai-time-row">${best}</div>
+                    <p class="ai-hint-text">Optimal time for a shorter wait.</p>
+                </div>
+            `;
             setTimeout(() => { bubble.hidden = false; }, 800);
         } else {
             bubble.hidden = true;

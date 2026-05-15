@@ -509,10 +509,38 @@
         }
 
         .bubble-content p {
-            font-size: 0.85rem;
+            display: none; /* replaced by custom container */
+        }
+
+        .ai-best-time-container {
+            margin-top: 4px;
+        }
+
+        .ai-date-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-time-row {
+            font-size: 1.4rem;
+            font-weight: 800;
             color: #1e293b;
-            line-height: 1.4;
-            margin: 0;
+            margin: 4px 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .ai-hint-text {
+            display: block !important;
+            font-size: 0.75rem !important;
+            color: #2563eb !important;
+            font-weight: 600;
+            margin-top: 8px !important;
         }
 
         .bubble-close {

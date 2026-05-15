@@ -194,7 +194,21 @@ async function loadSmartSuggestion() {
         if (!response.ok) throw new Error("Suggestion failed");
         const data = await response.json();
         
-        textEl.innerHTML = data.suggestion;
+        if (data.hasPrediction) {
+            textEl.innerHTML = `
+                <div class="ai-best-time-container">
+                    <div class="ai-date-row">
+                        <span class="ai-day">${data.day}</span>
+                        <span class="ai-date">${data.date}</span>
+                    </div>
+                    <div class="ai-time-row">${data.time}</div>
+                    <p class="ai-hint-text">${data.hint}</p>
+                </div>
+            `;
+        } else {
+            textEl.style.display = "block";
+            textEl.innerHTML = data.suggestion;
+        }
         
         // Show after a short delay for effect
         setTimeout(() => {

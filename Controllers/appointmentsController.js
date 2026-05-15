@@ -136,13 +136,18 @@ exports.getSmartSuggestion = async (req, res) => {
         const recommendations = (mlData.predictions || []).filter(p => p.recommended);
 
         if (recommendations.length > 0) {
-            // Pick the earliest recommended slot
             const bestSlot = recommendations[0].timeSlot;
+            const dateObj = new Date(today);
             res.json({
-                suggestion: `💡 AI Suggestion: Today is looking busy! The best time to visit for a shorter wait is around **${bestSlot}**.`
+                hasPrediction: true,
+                day: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
+                date: dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long' }),
+                time: bestSlot,
+                hint: "Optimal time for a shorter wait."
             });
         } else {
             res.json({
+                hasPrediction: false,
                 suggestion: "💡 AI Tip: Clinic traffic is normal today. You should be able to find a comfortable slot in the afternoon."
             });
         }
