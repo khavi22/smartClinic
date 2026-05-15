@@ -9,7 +9,29 @@ exports.getAvailability = async (req, res) => {
             return res.status(400).json({ error: "Missing date parameter" });
         }
 
-        const slots = await getAvailabilityForDate(clinicId, dateObj);
+        let slots = await getAvailabilityForDate(clinicId, dateObj);
+        
+        // Fetch ML recommendations
+        try {
+            const mlBaseUrl = process.env.ML_SERVICE_URL || "http://127.0.0.1:5001";
+            const mlRes = await fetch(`${mlBaseUrl}/predict?date=${dateObj}`);
+            if (mlRes.ok) {
+                const mlData = await mlRes.json();
+                const predictions = mlData.predictions || [];
+                
+                // Merge recommendations into slots
+                slots = slots.map(slot => {
+                    const prediction = predictions.find(p => p.timeSlot === slot.time);
+                    if (prediction && prediction.recommended) {
+                        return { ...slot, isRecommended: true };
+                    }
+                    return slot;
+                });
+            }
+        } catch (mlError) {
+            console.log("ML service unavailable, proceeding without recommendations");
+        }
+
         res.json({ date: dateObj, slots });
     } catch (error) {
         console.error("Failed to get availability:", error);

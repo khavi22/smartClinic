@@ -152,6 +152,8 @@ function renderSlots() {
             } else {
                 capacityLabel = "Currently Unavailable";
             }
+            
+            const mlBadge = slot.isRecommended && !isPast && slot.status !== 'full' ? '<mark class="slot-badge recommended" style="background-color: var(--success); color: white; margin-left: 5px;">★ Recommended</mark>' : '';
 
             return `
                         <button type="button" class="slot-card ${selectedSlotId === slot.id ? 'selected' : ''} ${cssClass}" 
@@ -159,6 +161,7 @@ function renderSlots() {
                             <hgroup class="slot-top">
                                 <time class="slot-time">${slot.time}</time>
                                 <mark class="slot-badge ${displayStatus}">${displayStatus}</mark>
+                                ${mlBadge}
                             </hgroup>
                             <output class="slot-capacity">${capacityLabel}</output>
                         </button>
