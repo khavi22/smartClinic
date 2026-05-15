@@ -72,7 +72,7 @@ exports.getClinics = async (req, res) => {
       {
         headers: {
           "Content-Type": "application/json",
-          "X-Goog-Api-Key": "AIzaSyAKqDTfRFmKVJw2W3PQDGyIgcm_BVpeWBk",
+          "X-Goog-Api-Key": process.env.GOOGLE_MAPS_API_KEY,
           "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.id"
         }
       }

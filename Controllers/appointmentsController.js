@@ -13,7 +13,10 @@ exports.getAvailability = async (req, res) => {
         
         // Fetch ML recommendations
         try {
-            const mlBaseUrl = process.env.ML_SERVICE_URL || "http://127.0.0.1:5001";
+            const mlBaseUrl = process.env.ML_SERVICE_URL;
+            if (!mlBaseUrl) {
+                throw new Error("ML_SERVICE_URL is not defined");
+            }
             const mlRes = await fetch(`${mlBaseUrl}/predict?date=${dateObj}`);
             if (mlRes.ok) {
                 const mlData = await mlRes.json();

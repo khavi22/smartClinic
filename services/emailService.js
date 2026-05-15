@@ -7,13 +7,16 @@ require("dotenv").config();
  * SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  */
 
-// Use process.env for Azure/Local compatibility, with hardcoded fallbacks
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = process.env.SMTP_PORT || "465";
-const SMTP_USER = process.env.SMTP_USER || "mahlatseclayton1@gmail.com";
-const SMTP_PASS = process.env.SMTP_PASS || "jaiymuyzkvzxhfyh";
+// Environment variables should be used for SMTP configuration
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const BASE_URL = process.env.BASE_URL;
 
-const BASE_URL = "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net";
+if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !BASE_URL) {
+    console.warn("⚠️ Warning: Email service is missing some configuration variables (SMTP_* or BASE_URL).");
+}
 
 const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
