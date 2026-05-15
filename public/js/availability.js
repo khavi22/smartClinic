@@ -226,17 +226,24 @@ window.handleDateSelection = async function (dateStr) {
             const monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
             
             textEl.innerHTML = `
-                <div class="ai-best-time-container">
-                    <div class="ai-date-row">
-                        <span class="ai-day">${dayName}</span>
-                        <span class="ai-date">${dayNum} ${monthName}</span>
-                    </div>
-                    <div class="ai-time-row">${best}</div>
-                    <p class="ai-hint-text">Optimal time for a shorter wait.</p>
-                </div>
+                <section class="ai-best-time-container">
+                    <section class="ai-suggestion-box">
+                        <span class="ai-suggestion-title">Recommended Time</span>
+                        <section class="ai-date-row">
+                            <span class="ai-day">${dayName}</span>
+                            <span class="ai-date">${dayNum} ${monthName}</span>
+                        </section>
+                        <strong class="ai-time-row">${best}</strong>
+                    </section>
+                </section>
+                <p class="ai-hint-text">Optimal window for minimal wait time.</p>
             `;
-            setTimeout(() => { bubble.hidden = false; }, 800);
+            setTimeout(() => { 
+                bubble.style.display = 'block';
+                bubble.hidden = false; 
+            }, 500);
         } else {
+            bubble.style.display = 'none';
             bubble.hidden = true;
         }
     }

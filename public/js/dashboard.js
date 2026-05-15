@@ -195,26 +195,48 @@ async function loadSmartSuggestion() {
         const data = await response.json();
         
         if (data.hasPrediction) {
-            textEl.innerHTML = `
-                <div class="ai-best-time-container">
-                    <div class="ai-date-row">
-                        <span class="ai-day">${data.day}</span>
-                        <span class="ai-date">${data.date}</span>
-                    </div>
-                    <div class="ai-time-row">${data.time}</div>
-                    <p class="ai-hint-text">${data.hint}</p>
-                </div>
-            `;
+            let html = `<section class="ai-best-time-container">`;
+            
+            if (data.today) {
+                html += `
+                    <section class="ai-suggestion-box">
+                        <span class="ai-suggestion-title">Today's Best</span>
+                        <section class="ai-date-row">
+                            <span class="ai-day">${data.today.day}</span>
+                        </section>
+                        <strong class="ai-time-row">${data.today.time}</strong>
+                    </section>
+                `;
+            }
+            if (data.future) {
+                 html += `
+                    <section class="ai-suggestion-box">
+                        <span class="ai-suggestion-title">Upcoming Best</span>
+                        <section class="ai-date-row">
+                            <span class="ai-day">${data.future.day}</span>
+                            <span class="ai-date">${data.future.date}</span>
+                        </section>
+                        <strong class="ai-time-row">${data.future.time}</strong>
+                    </section>
+                `;
+            }
+            
+            html += `</section><p class="ai-hint-text">${data.hint}</p>`;
+            textEl.innerHTML = html;
+            setTimeout(() => {
+                bubble.style.display = 'block';
+                bubble.hidden = false;
+            }, 500);
         } else {
             textEl.style.display = "block";
             textEl.innerHTML = data.suggestion;
+            setTimeout(() => {
+                bubble.style.display = 'block';
+                bubble.hidden = false;
+            }, 500);
         }
-        
-        // Show after a short delay for effect
-        setTimeout(() => {
-            bubble.hidden = false;
-        }, 1500);
     } catch (error) {
         console.warn("Could not load AI suggestion:", error);
+        bubble.style.display = 'none';
     }
 }

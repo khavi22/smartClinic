@@ -22,10 +22,22 @@ exports.getAvailability = async (req, res) => {
                 const mlData = await mlRes.json();
                 const predictions = mlData.predictions || [];
                 
+                const localDate = new Date();
+                const year = localDate.getFullYear();
+                const month = String(localDate.getMonth() + 1).padStart(2, '0');
+                const day = String(localDate.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+
+                const isToday = dateObj === todayStr;
+                const currentHour = localDate.getHours();
+
                 // Merge recommendations into slots
                 slots = slots.map(slot => {
                     const prediction = predictions.find(p => p.timeSlot === slot.time);
-                    if (prediction && prediction.recommended) {
+                    const slotHour = parseInt(slot.time);
+                    const isFuture = !isToday || slotHour > currentHour;
+
+                    if (prediction && prediction.recommended && isFuture) {
                         return { ...slot, isRecommended: true };
                     }
                     return slot;
@@ -120,41 +132,85 @@ exports.cancelAppointmentController = async (req, res) => {
 
 exports.getSmartSuggestion = async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const localDate = new Date();
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, '0');
+        const day = String(localDate.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
         const mlBaseUrl = process.env.ML_SERVICE_URL;
 
         if (!mlBaseUrl) {
             return res.json({ 
-                suggestion: "💡 Tip: Mid-week mornings are usually the quietest time to visit your local clinic." 
+                suggestion: "💡 AI Tip: Mid-week mornings are usually the quietest time to visit your local clinic." 
             });
         }
 
-        const mlRes = await fetch(`${mlBaseUrl}/predict?date=${today}`);
+        const endDateObj = new Date(localDate);
+        endDateObj.setDate(endDateObj.getDate() + 6);
+        const yEnd = endDateObj.getFullYear();
+        const mEnd = String(endDateObj.getMonth() + 1).padStart(2, '0');
+        const dayEnd = String(endDateObj.getDate()).padStart(2, '0');
+        const endDateStr = `${yEnd}-${mEnd}-${dayEnd}`;
+
+        const mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}`);
         if (!mlRes.ok) throw new Error("ML service unreachable");
 
         const mlData = await mlRes.json();
-        const recommendations = (mlData.predictions || []).filter(p => p.recommended);
+        const predictionsByDate = mlData.predictionsByDate || {};
+        
+        let bestToday = null;
+        let bestFuture = null;
+        const currentHour = localDate.getHours();
 
-        if (recommendations.length > 0) {
-            const bestSlot = recommendations[0].timeSlot;
-            const dateObj = new Date(today);
+        // Object.keys gives keys in insertion order in python 3.7+ which is by date usually, 
+        // but let's sort to be safe
+        const sortedDates = Object.keys(predictionsByDate).sort();
+
+        for (let i = 0; i < sortedDates.length; i++) {
+            const dateKey = sortedDates[i];
+            const recommendations = (predictionsByDate[dateKey] || []).filter(p => p.recommended);
+            
+            // Reconstruct a Date object from the string "YYYY-MM-DD"
+            const [y, m, d] = dateKey.split('-').map(Number);
+            const iterDate = new Date(y, m - 1, d);
+            
+            if (dateKey === todayStr) { // Today
+                const validToday = recommendations.filter(p => parseInt(p.timeSlot) > currentHour);
+                if (validToday.length > 0) {
+                    bestToday = {
+                        day: iterDate.toLocaleDateString('en-US', { weekday: 'long' }),
+                        date: iterDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+                        time: validToday[0].timeSlot
+                    };
+                }
+            } else if (!bestFuture && recommendations.length > 0) {
+                bestFuture = {
+                    day: iterDate.toLocaleDateString('en-US', { weekday: 'long' }),
+                    date: iterDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+                    time: recommendations[0].timeSlot
+                };
+            }
+        }
+
+        if (bestToday || bestFuture) {
             res.json({
                 hasPrediction: true,
-                day: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
-                date: dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long' }),
-                time: bestSlot,
-                hint: "Optimal time for a shorter wait."
+                today: bestToday,
+                future: bestFuture,
+                hint: "Optimal windows for minimal wait time."
             });
         } else {
             res.json({
                 hasPrediction: false,
-                suggestion: "💡 AI Tip: Clinic traffic is normal today. You should be able to find a comfortable slot in the afternoon."
+                suggestion: "💡 AI Assistant: Traffic models suggest normal volume this week. Please select a time that fits your schedule."
             });
         }
     } catch (error) {
         console.error("Smart Suggestion Error:", error);
         res.json({ 
-            suggestion: "💡 Tip: Remember to book at least 24 hours in advance for the best availability." 
+            hasPrediction: false,
+            suggestion: "💡 AI Tip: For the fastest service, try to book your appointments at least 48 hours in advance." 
         });
     }
 };

@@ -104,15 +104,15 @@
                 <!-- ── SMART AI INSIGHT ── -->
                 <aside id="smartAISuggestion" class="ai-insight-card" hidden>
                     <header class="insight-header">
-                        <div class="insight-label">
-                            <i class='bx bxs-magic-wand'></i>
+                        <section class="insight-label">
+                            <i class='bx bxs-magic-wand' aria-hidden="true"></i>
                             <strong>AI Recommendation</strong>
-                        </div>
-                        <button type="button" class="insight-close" onclick="this.parentElement.parentElement.hidden = true">&times;</button>
+                        </section>
+                        <button type="button" class="insight-close" onclick="this.closest('.ai-insight-card').style.display = 'none'" aria-label="Dismiss recommendation">&times;</button>
                     </header>
-                    <div id="aiSuggestionText" class="insight-body">
-                        Analyzing slots...
-                    </div>
+                    <section id="aiSuggestionText" class="insight-body">
+                        <p>Analyzing slots...</p>
+                    </section>
                 </aside>
 
                 <!-- Slots Grid -where users will click ana available slot-->
@@ -139,80 +139,6 @@
 
     <script src="js/notifications.js"></script>
     <script src="js/availability.js?v=2"></script>
-
-        .ai-insight-card {
-            margin: 16px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .insight-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .insight-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #2563eb;
-            font-size: 0.85rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .insight-label i {
-            font-size: 1.1rem;
-            color: #f59e0b;
-        }
-
-        .insight-close {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            color: #94a3b8;
-            cursor: pointer;
-        }
-
-        .insight-body {
-            color: #334155;
-        }
-
-        .ai-best-time-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .ai-date-row {
-            display: flex;
-            gap: 12px;
-            font-size: 0.8rem;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .ai-time-row {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: #1e293b;
-        }
-
-        .ai-hint-text {
-            font-size: 0.85rem;
-            color: #2563eb;
-            font-weight: 500;
-            margin-top: 4px;
-        }
-    </style>
 </body>
 
 </html>

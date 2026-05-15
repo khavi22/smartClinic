@@ -133,6 +133,64 @@ def predict_endpoint():
         "predictions": slots
     })
 
+@app.route('/predict-range', methods=['GET'])
+def predict_range_endpoint():
+    if model is None:
+        return jsonify({"error": "Model not trained yet"}), 500
+        
+    start_date_str = request.args.get('startDate')
+    end_date_str = request.args.get('endDate')
+    
+    if not start_date_str or not end_date_str:
+        return jsonify({"error": "Missing startDate or endDate parameter"}), 400
+        
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+        
+    delta = (end_date - start_date).days
+    if delta < 0 or delta > 30:
+        return jsonify({"error": "Invalid date range (max 30 days)"}), 400
+        
+    results = {}
+    hours = list(range(9, 18))
+    
+    for i in range(delta + 1):
+        # We can just use standard timedelta
+        from datetime import timedelta
+        curr_date = start_date + timedelta(days=i)
+        day_of_week = curr_date.weekday()
+        curr_date_str = curr_date.strftime("%Y-%m-%d")
+        
+        X_pred = pd.DataFrame({
+            'day_of_week': [day_of_week] * len(hours),
+            'hour': hours
+        })
+        
+        predictions = model.predict(X_pred)
+        
+        slots = []
+        for j, hour in enumerate(hours):
+            slot_str = f"{hour:02}:00"
+            slots.append({
+                "timeSlot": slot_str,
+                "predicted_load": float(predictions[j])
+            })
+            
+        slots.sort(key=lambda x: x['predicted_load'])
+        for j, slot in enumerate(slots):
+            slot['recommended'] = j < 3
+            
+        results[curr_date_str] = slots
+        
+    return jsonify({
+        "startDate": start_date_str,
+        "endDate": end_date_str,
+        "predictionsByDate": results
+    })
+
 if __name__ == '__main__':
     # Run on port 5001 so it doesn't conflict with Node on 3000
     app.run(port=5001, debug=True)
