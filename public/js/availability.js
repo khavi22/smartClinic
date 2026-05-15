@@ -343,9 +343,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (res.ok) {
                         dialog.close();
                         if (oldAppointmentId) {
-                            alert(`Your appointment has been successfully rescheduled to ${selectedDate} at ${slot.time}!`);
+                            showToast(`Your appointment has been successfully rescheduled to ${selectedDate} at ${slot.time}!`, "success");
                         } else {
-                            alert(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`);
+                            showToast(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`, "success");
                         }
                         selectedSlotId = null;
                         await window.handleDateSelection(selectedDate);
@@ -355,11 +355,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                            setTimeout(() => { window.location.href = 'apointments.html'; }, 1500);
                         }
                     } else {
-                        alert(`Booking failed: ${data.error}`);
+                        showToast(`Booking failed: ${data.error}`, "error");
                     }
                 } catch (error) {
                     console.error("Booking err:", error);
-                    alert("Error contacting the server.");
+                    showToast("Error contacting the server.", "error");
                 } finally {
                     confirmBtn.disabled = false;
                     cancelBtn.disabled = false;

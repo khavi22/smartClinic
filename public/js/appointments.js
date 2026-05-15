@@ -278,14 +278,15 @@ document.getElementById("cancel-confirm").addEventListener("click", async () => 
         if (appointment) {
             appointment.status = "cancelled";
         }
+        showToast("Appointment cancelled successfully.", "success");
         renderAppointments();
       } else {
         const err = await response.json();
-        alert(`Failed to cancel: ${err.error}`);
+        showToast(`Failed to cancel: ${err.error}`, "error");
       }
     } catch (error) {
     console.error("Cancellation error:", error);
-    alert("Error connecting to server for cancellation.");
+    showToast("Error connecting to server for cancellation.", "error");
     }
   })
 

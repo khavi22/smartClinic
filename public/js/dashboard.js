@@ -93,8 +93,7 @@ async function loadUserProfile(user) {
 
     } catch (err) {
         console.error("Error loading profile:", err);
-        // If we can't load any profile or everything is denied, the session might be truly invalid
-        alert("Session verification failed. Redirecting to login.");
+        showToast("Session verification failed. Redirecting to login.", "error");
         await auth.signOut();
         window.location.href = "login.html";
     }
@@ -175,7 +174,7 @@ if (modalConfirm) {
             window.location.href = "index.html";
         } catch (err) {
             console.error("Delete account error:", err);
-            alert("Could not delete account: " + err.message);
+            showToast("Could not delete account: " + err.message, "error");
             modalConfirm.disabled = false;
             if (confirmText) confirmText.textContent = "Yes, Delete";
         }

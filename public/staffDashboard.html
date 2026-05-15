@@ -1,190 +1,173 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="css/setAvailability.css" />
-    <title>Set Availability</title>
-  </head>
-  <body>
-    <!-- Navbar -->
-    <nav class="nav">
-      <span class="nav-brand">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#185FA5"
-          stroke-width="2"
-        >
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-        smartClinic
-      </span>
-      <a class="nav-action-btn" href="queue.html" aria-label="Open staff queue">
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path d="M8 6h13" />
-          <path d="M8 12h13" />
-          <path d="M8 18h13" />
-          <path d="M3 6h.01" />
-          <path d="M3 12h.01" />
-          <path d="M3 18h.01" />
-        </svg>
-        Queue
-      </a>
-    </nav>
-
-    <!-- Hero -->
-    <header class="hero">
-      <span class="hero-icon">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          stroke-width="2"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </span>
-      <section class="hero-text">
-        <h1>Staff Dashboard</h1>
-        <p>Manage your availability and schedule</p>
-      </section>
-    </header>
-
-    <!-- <section class="clinic-info">
-      <p id="clinic-info-text">
-        <span class="clinic-label">Clinic:</span>
-      </p>
-    </section> -->
-
-    <main class="content">
-      <section class="card">
-        <h2 class="card-title">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#185FA5"
-            stroke-width="2"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          Select Date
-        </h2>
-
-        <section id="SetAvailabilitycalendarContainer"></section>
-
-        <section
-          class="selected-date-display"
-          id="selected-date-display"
-          style="display: none"
-        >
-          <p class="selected-date-label">Selected Date</p>
-          <p class="selected-date-value" id="selected-date-value"></p>
-        </section>
-      </section>
-
-      <section class="card">
-        <h2 class="card-title">Select Available Times</h2>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="available-check" checked />
-          Available
-        </label>
-
-        <section class="times-row">
-          <section class="time-group">
-            <label class="time-label">Start Time</label>
-            <select id="Startime" class="time-select">
-              <option value="08:00">08:00</option>
-              <option value="09:00">09:00</option>
-              <option value="10:00">10:00</option>
-              <option value="11:00">11:00</option>
-              <option value="12:00">12:00</option>
-              <option value="13:00">13:00</option>
-              <option value="14:00">14:00</option>
-              <option value="15:00">15:00</option>
-              <option value="16:00">16:00</option>
-              <option value="17:00">17:00</option>
-            </select>
-          </section>
-
-          <section class="time-group">
-            <label class="time-label">End Time</label>
-            <select id="Endtime" class="time-select">
-              <option value="08:00">08:00</option>
-              <option value="09:00">09:00</option>
-              <option value="10:00">10:00</option>
-              <option value="11:00">11:00</option>
-              <option value="12:00">12:00</option>
-              <option value="13:00">13:00</option>
-              <option value="14:00">14:00</option>
-              <option value="15:00">15:00</option>
-              <option value="16:00">16:00</option>
-              <option value="17:00">17:00</option>
-            </select>
-          </section>
-        </section>
-
-        <button id="Add_Availability" class="save-btn">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            stroke-width="2"
-          >
-            <path
-              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-            />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
-          </svg>
-          Save Availability
-        </button>
-        <p class="save-hint">
-          Select at least one date to save your availability
-        </p>
-      </section>
-
-      <section class="card">
-        <h2 class="card-title">Your Availability Summary</h2>
-        <section id="Availability_content">
-          <p class="empty-msg">
-            No availability set yet. Use the calendar to start scheduling your
-            hours.
-          </p>
-        </section>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <p>© 2026 smartClinic. All rights reserved.</p>
-    </footer>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard — smartClinic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/global_nav.css">
+    <link rel="stylesheet" href="css/setAvailability.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+</head>
+<body class="staff-dashboard-page">
 
-    <script src="./js/firebase-config.js"></script>
+    <!-- ── NAV ── -->
+    <nav class="global-app-bar" aria-label="Main Navigation">
+        <section class="nav-container">
+            <a href="staffDashboard.html" class="nav-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>smartClinic</span>
+            </a>
+            <section class="nav-user" aria-label="Account">
+                <a href="queue.html" class="nav-queue-link">
+                    <i class='bx bx-list-ol'></i>
+                    <span>Live Queue</span>
+                </a>
+                <img id="userAvatar" class="nav-avatar" src="" alt="Profile" hidden>
+                <span id="userGreeting" class="nav-greeting" hidden></span>
+                <button id="logoutBtn" class="nav-logout-btn" type="button" hidden>
+                    <i class='bx bx-log-out'></i>
+                    Logout
+                </button>
+            </section>
+        </section>
+    </nav>
 
+    <!-- ── PAGE ── -->
+    <main class="staff-main">
+
+        <!-- Page header -->
+        <header class="staff-page-header">
+            <section class="staff-header-inner">
+                <p class="brand-kicker">Staff Portal</p>
+                <h1>Duty Schedule</h1>
+                <p>Manage your availability and upcoming shifts</p>
+            </section>
+        </header>
+
+        <!-- Content grid -->
+        <section class="staff-grid">
+            
+            <div class="schedule-config-row">
+                <!-- ── DATE PICKER CARD ── -->
+                <article class="staff-card calendar-card">
+                    <header class="card-header">
+                        <span class="card-icon"><i class='bx bx-calendar'></i></span>
+                        <div>
+                            <h2>Select Date</h2>
+                            <p>Pick a day to set your hours</p>
+                        </div>
+                    </header>
+                    
+                    <section id="SetAvailabilitycalendarContainer" class="premium-calendar"></section>
+
+                    <section class="selected-date-display" id="selected-date-display" style="display: none">
+                        <p class="selected-date-label">Schedule for</p>
+                        <p class="selected-date-value" id="selected-date-value"></p>
+                    </section>
+                </article>
+
+                <!-- ── TIME CONFIG CARD ── -->
+                <article class="staff-card time-card">
+                    <header class="card-header">
+                        <span class="card-icon"><i class='bx bx-time-five'></i></span>
+                        <div>
+                            <h2>Set Working Hours</h2>
+                            <p>Define your availability window</p>
+                        </div>
+                    </header>
+
+                    <div class="availability-toggle">
+                        <label class="premium-checkbox-label">
+                            <input type="checkbox" id="available-check" checked>
+                            <span class="checkbox-custom"></span>
+                            <span class="label-text">Available for consultations</span>
+                        </label>
+                    </div>
+
+                    <section class="times-config-grid">
+                        <div class="time-field-group">
+                            <label class="field-label">Start Shift</label>
+                            <div class="select-wrapper">
+                                <select id="Startime" class="premium-time-select">
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00" selected>09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="17:00">05:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="time-field-group">
+                            <label class="field-label">End Shift</label>
+                            <div class="select-wrapper">
+                                <select id="Endtime" class="premium-time-select">
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="17:00" selected>05:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <button id="Add_Availability" class="premium-save-btn">
+                        <i class='bx bx-save'></i>
+                        Update Schedule
+                    </button>
+                    <p class="save-hint-text">Select at least one date on the calendar to save</p>
+                </article>
+            </div>
+
+            <!-- ── SUMMARY CARD ── -->
+            <article class="staff-card summary-card">
+                <header class="card-header">
+                    <span class="card-icon"><i class='bx bx-list-ul'></i></span>
+                    <div>
+                        <h2>Upcoming Shifts</h2>
+                        <p>Your confirmed availability overview</p>
+                    </div>
+                </header>
+                <section id="Availability_content" class="availability-list-container">
+                    <div class="empty-state-placeholder">
+                        <i class='bx bx-calendar-x'></i>
+                        <p>No availability set yet. Use the calendar above to schedule your hours.</p>
+                    </div>
+                </section>
+            </article>
+
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 smartClinic &bull; Professional Healthcare Management</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/notifications.js"></script>
+    <script src="js/dashboard.js"></script>
     <script src="js/SetAvailability.js"></script>
-  </body>
+</body>
 </html>

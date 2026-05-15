@@ -263,5 +263,5 @@ document.getElementById("searchInput").addEventListener("input", function () {
 
 // ── ERROR HELPER ────────────────────────────────────────────
 function showError(message) {
-  alert(message);
+  showToast(message, "error");
 }

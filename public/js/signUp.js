@@ -54,7 +54,7 @@ signupForm.addEventListener("submit", async (e) => {
     const user = auth.currentUser;
 
     if (!user) {
-        alert("Session expired. Please log in again.");
+        showToast("Session expired. Please log in again.", "error");
         window.location.href = "login.html";
         return;
     }
@@ -63,7 +63,7 @@ signupForm.addEventListener("submit", async (e) => {
     const roleCode = roleCodeInput.value.trim();
 
     if (role === "admin" && !roleCode) {
-        alert("Please enter your admin verification code.");
+        showToast("Please enter your admin verification code.", "error");
         return;
     }
 
@@ -104,7 +104,7 @@ signupForm.addEventListener("submit", async (e) => {
 
     } catch (error) {
         console.error("Error during registration:", error);
-        alert("Error: " + error.message);
+        showToast("Error: " + error.message, "error");
         submitBtn.disabled = false;
         submitBtn.textContent = "Finalize Account";
     }

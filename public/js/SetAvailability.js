@@ -181,12 +181,12 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     const data = await response.json();
 
     if(response.ok){
-        alert("Availability saved successfully!");
+        showToast("Availability saved successfully!", "success");
         selectedDates = [];
         renderCalendar();
         LoadAvailability();
     } else {
-        alert("Error: " + data.error);
+        showToast("Error: " + data.error, "error");
     }
 }
 
@@ -268,9 +268,10 @@ async function removeAvailabilityFromBackend(date) {
         const data = await response.json();
 
         if(response.ok){
+            showToast("Availability removed.", "info");
             LoadAvailability();
         } else {
-            alert("Error: " + data.error);
+            showToast("Error: " + data.error, "error");
         }
     } catch(error) {
         console.error("Error removing:", error);
@@ -305,10 +306,13 @@ document.addEventListener("DOMContentLoaded", function(){
             }
 
             const data = result.profile;
-            document.getElementById("clinic-info-text").innerHTML = `
-                <span class="clinic-label">Clinic:</span>
-                ${data.clinicName || "N/A"}<br>
-            `;
+            const clinicInfo = document.getElementById("clinic-info-text");
+            if (clinicInfo) {
+                clinicInfo.innerHTML = `
+                    <span class="clinic-label">Clinic:</span>
+                    ${data.clinicName || "N/A"}<br>
+                `;
+            }
 
         } catch (error) {
             console.error("Staff Dashboard: Error loading data:", error);
@@ -335,12 +339,11 @@ document.addEventListener("DOMContentLoaded", function(){
             const Checked_value = Available_bool.checked ? "true" : "false";
 
             if(selectedDates.length === 0){
-                alert("Please select at least one date");
+                showToast("Please select at least one date on the calendar.", "error");
                 return;
             }
-
             if(StartTime >= EndTime){
-                alert("End time must be after start time");
+                showToast("End time must be after start time.", "error");
                 return;
             }
 
