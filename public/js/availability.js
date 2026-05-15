@@ -211,6 +211,20 @@ window.handleDateSelection = async function (dateStr) {
 
     renderCalendar();
     renderSlots();
+
+    // AI Bubble Logic for specific clinic
+    const bubble = document.getElementById("smartAISuggestion");
+    const textEl = document.getElementById("aiSuggestionText");
+    if (bubble && textEl) {
+        const recommended = cachedSlots.filter(s => s.isRecommended);
+        if (recommended.length > 0) {
+            const best = recommended[0].time;
+            textEl.innerHTML = `💡 AI Suggestion: **${best}** is the optimal time for a shorter wait at this clinic today.`;
+            setTimeout(() => { bubble.hidden = false; }, 800);
+        } else {
+            bubble.hidden = true;
+        }
+    }
 };
 
 window.changeMonth = function (delta) {

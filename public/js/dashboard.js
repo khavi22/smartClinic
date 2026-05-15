@@ -91,6 +91,9 @@ async function loadUserProfile(user) {
         const logoutBtn = document.getElementById("logoutBtn");
         if (logoutBtn) logoutBtn.hidden = false;
 
+        // Load AI Suggestion
+        loadSmartSuggestion();
+
     } catch (err) {
         console.error("Error loading profile:", err);
         showToast("Session verification failed. Redirecting to login.", "error");
@@ -179,4 +182,25 @@ if (modalConfirm) {
             if (confirmText) confirmText.textContent = "Yes, Delete";
         }
     });
+}
+
+async function loadSmartSuggestion() {
+    const bubble = document.getElementById("smartAISuggestion");
+    const textEl = document.getElementById("aiSuggestionText");
+    if (!bubble || !textEl) return;
+
+    try {
+        const response = await fetch("/api/smart-suggestion");
+        if (!response.ok) throw new Error("Suggestion failed");
+        const data = await response.json();
+        
+        textEl.innerHTML = data.suggestion;
+        
+        // Show after a short delay for effect
+        setTimeout(() => {
+            bubble.hidden = false;
+        }, 1500);
+    } catch (error) {
+        console.warn("Could not load AI suggestion:", error);
+    }
 }

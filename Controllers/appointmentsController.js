@@ -117,3 +117,39 @@ exports.cancelAppointmentController = async (req, res) => {
         });
     }
 };
+
+exports.getSmartSuggestion = async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const mlBaseUrl = process.env.ML_SERVICE_URL;
+
+        if (!mlBaseUrl) {
+            return res.json({ 
+                suggestion: "💡 Tip: Mid-week mornings are usually the quietest time to visit your local clinic." 
+            });
+        }
+
+        const mlRes = await fetch(`${mlBaseUrl}/predict?date=${today}`);
+        if (!mlRes.ok) throw new Error("ML service unreachable");
+
+        const mlData = await mlRes.json();
+        const recommendations = (mlData.predictions || []).filter(p => p.recommended);
+
+        if (recommendations.length > 0) {
+            // Pick the earliest recommended slot
+            const bestSlot = recommendations[0].timeSlot;
+            res.json({
+                suggestion: `💡 AI Suggestion: Today is looking busy! The best time to visit for a shorter wait is around **${bestSlot}**.`
+            });
+        } else {
+            res.json({
+                suggestion: "💡 AI Tip: Clinic traffic is normal today. You should be able to find a comfortable slot in the afternoon."
+            });
+        }
+    } catch (error) {
+        console.error("Smart Suggestion Error:", error);
+        res.json({ 
+            suggestion: "💡 Tip: Remember to book at least 24 hours in advance for the best availability." 
+        });
+    }
+};

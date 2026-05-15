@@ -28,11 +28,7 @@ function setQueueMessage(message) {
     queueTableBody.appendChild(row);
 }
 
-function setActionStatus(message, isError = false) {
-    if (!queueActionStatus) return;
-    queueActionStatus.textContent = message;
-    queueActionStatus.classList.toggle("error", isError);
-}
+
 
 function normalizeQueue(queue) {
     if (Array.isArray(queue)) {
@@ -120,39 +116,31 @@ function renderQueue(queue) {
         const patientStatus = patient.status || "WAITING";
         const statusLocked = isLockedStatus(patientStatus);
         const row = document.createElement("tr");
-        const values = [
-            getQueueNumber(patient, index),
-            getPatientName(patient),
-            getAppointmentTime(patient),
-            formatPriority(patient.priority)
-        ];
+        
+        const priorityVal = formatPriority(patient.priority);
+        const priorityClass = priorityVal.toLowerCase();
 
-        values.forEach((value) => {
-            const cell = document.createElement("td");
-            cell.textContent = String(value);
-            row.appendChild(cell);
-        });
+        row.innerHTML = `
+            <td class="col-num">${getQueueNumber(patient, index)}</td>
+            <td class="col-name"><strong>${getPatientName(patient)}</strong></td>
+            <td class="col-time">${getAppointmentTime(patient)}</td>
+            <td class="col-priority"><span class="priority-badge ${priorityClass}">${priorityVal}</span></td>
+            <td class="col-status"><span class="status-tag ${patientStatus.toLowerCase()}">${formatStatus(patient.status)}</span></td>
+            <td class="col-actions text-right"></td>
+        `;
 
-        const statusCell = document.createElement("td");
-        const statusTag = document.createElement("mark");
-        statusTag.className = "status-tag";
-        statusTag.textContent = formatStatus(patient.status);
-        statusCell.appendChild(statusTag);
-        row.appendChild(statusCell);
-
-        const actionsCell = document.createElement("td");
-        actionsCell.className = "queue-actions";
+        const actionsCell = row.querySelector(".col-actions");
 
         const startButton = document.createElement("button");
         startButton.type = "button";
-        startButton.className = "queue-action-btn start";
-        startButton.textContent = "Start";
+        startButton.className = "action-icon-btn start";
+        startButton.title = "Start Consultation";
+        startButton.innerHTML = "<i class='bx bx-play'></i>";
         startButton.disabled = patientStatus !== "WAITING";
         startButton.addEventListener("click", () => startPatientConsultation(patient));
 
         const statusSelect = document.createElement("select");
-        statusSelect.className = "queue-status-select";
-        statusSelect.setAttribute("aria-label", `Update ${getPatientName(patient)} status`);
+        statusSelect.className = "mini-status-select";
         statusSelect.disabled = statusLocked;
 
         QUEUE_STATUSES.forEach((status) => {
@@ -165,21 +153,21 @@ function renderQueue(queue) {
 
         const updateButton = document.createElement("button");
         updateButton.type = "button";
-        updateButton.className = "queue-action-btn";
-        updateButton.textContent = "Update";
+        updateButton.className = "action-icon-btn update";
+        updateButton.title = "Update Status";
+        updateButton.innerHTML = "<i class='bx bx-check'></i>";
         updateButton.disabled = statusLocked;
         updateButton.addEventListener("click", () => updatePatientStatus(patient, statusSelect.value));
 
         const rescheduleButton = document.createElement("button");
         rescheduleButton.type = "button";
-        rescheduleButton.className = "queue-action-btn";
-        rescheduleButton.textContent = "Reschedule";
+        rescheduleButton.className = "action-icon-btn reschedule";
+        rescheduleButton.title = "Reschedule Slot";
+        rescheduleButton.innerHTML = "<i class='bx bx-redo'></i>";
         rescheduleButton.disabled = patientStatus !== "WAITING";
         rescheduleButton.addEventListener("click", () => showReschedulePicker(patient, actionsCell));
 
         actionsCell.append(startButton, rescheduleButton, statusSelect, updateButton);
-        row.appendChild(actionsCell);
-
         queueTableBody.appendChild(row);
     });
 }
@@ -258,7 +246,7 @@ async function loadAddQueueSlots(selectedSlot = "", showError = true) {
         appointmentTimeInput.disabled = true;
 
         if (showError) {
-            setActionStatus(error.message || "Failed to load available slots.", true);
+            showToast(error.message || "Failed to load available slots.", "error");
         }
     }
 }
@@ -267,25 +255,25 @@ async function addPatientToQueue(event) {
     event.preventDefault();
 
     if (!currentClinicId || !currentIdToken) {
-        setActionStatus("No clinic is linked to this staff profile.", true);
+        showToast("No clinic is linked to this staff profile.", "error");
         return;
     }
 
     const patientName = patientNameInput.value.trim();
     if (!patientName) {
-        setActionStatus("Enter a patient name before adding to the queue.", true);
+        showToast("Enter a patient name before adding to the queue.", "error");
         return;
     }
 
     const appointmentTime = appointmentTimeInput.value;
     if (!appointmentTime) {
-        setActionStatus("Choose an available one-hour time slot.", true);
+        showToast("Choose an available one-hour time slot.", "error");
         return;
     }
 
     const submitButton = addQueueForm.querySelector("button[type='submit']");
     submitButton.disabled = true;
-    setActionStatus("Adding patient...");
+    showToast("Adding patient...", "info");
 
     try {
         const priority = Number(priorityInput.value || 0);
@@ -315,12 +303,12 @@ async function addPatientToQueue(event) {
 
         const assignedTime = result.queueItem?.timeSlot || result.queueItem?.appointmentTime;
         addQueueForm.reset();
-        setActionStatus(`${patientName} was added to the queue${assignedTime ? ` for ${assignedTime}` : ""}.`);
+        showToast(`${patientName} was added to the queue${assignedTime ? ` for ${assignedTime}` : ""}.`, "success");
         await refreshQueue();
         await loadAddQueueSlots("", false);
     } catch (error) {
         console.error("Error adding patient to queue:", error);
-        setActionStatus(error.message || "Failed to add patient.", true);
+        showToast(error.message || "Failed to add patient.", "error");
     } finally {
         submitButton.disabled = false;
     }
@@ -352,21 +340,21 @@ async function fetchAvailableSlots(patient) {
 
 async function showReschedulePicker(patient, actionsCell) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
-        setActionStatus("This queue item cannot be rescheduled.", true);
+        showToast("This queue item cannot be rescheduled.", "error");
         return;
     }
 
     if ((patient.status || "WAITING") !== "WAITING") {
-        setActionStatus("Only waiting patients can be rescheduled.", true);
+        showToast("Only waiting patients can be rescheduled.", "error");
         return;
     }
 
     try {
-        setActionStatus(`Loading slots for ${getPatientName(patient)}...`);
+        showToast(`Loading slots for ${getPatientName(patient)}...`, "info");
         const slots = await fetchAvailableSlots(patient);
 
         if (slots.length === 0) {
-            setActionStatus("No available slots left for this day.", true);
+            showToast("No available slots left for this day.", "error");
             return;
         }
 
@@ -402,21 +390,21 @@ async function showReschedulePicker(patient, actionsCell) {
 
         picker.append(pickerLegend, slotSelect, saveButton, cancelButton);
         actionsCell.replaceChildren(picker);
-        setActionStatus(`Choose a new slot for ${getPatientName(patient)}.`);
+        showToast(`Choose a new slot for ${getPatientName(patient)}.`, "info");
     } catch (error) {
         console.error("Error loading reschedule slots:", error);
-        setActionStatus(error.message || "Failed to load available slots.", true);
+        showToast(error.message || "Failed to load available slots.", "error");
     }
 }
 
 async function reschedulePatient(patient, timeSlot) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
-        setActionStatus("This queue item cannot be rescheduled.", true);
+        showToast("This queue item cannot be rescheduled.", "error");
         return;
     }
 
     try {
-        setActionStatus(`Rescheduling ${getPatientName(patient)}...`);
+        showToast(`Rescheduling ${getPatientName(patient)}...`, "info");
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/${encodeURIComponent(patient.queueItemId)}/reschedule`, {
             method: "PATCH",
             headers: {
@@ -436,22 +424,22 @@ async function reschedulePatient(patient, timeSlot) {
         }
 
         const assignedTime = result.queueItem?.timeSlot || timeSlot;
-        setActionStatus(`${getPatientName(patient)} was rescheduled for ${assignedTime}.`);
+        showToast(`${getPatientName(patient)} was rescheduled for ${assignedTime}.`, "success");
         await refreshQueue();
     } catch (error) {
         console.error("Error rescheduling patient:", error);
-        setActionStatus(error.message || "Failed to reschedule patient.", true);
+        showToast(error.message || "Failed to reschedule patient.", "error");
     }
 }
 
 async function startPatientConsultation(patient) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
-        setActionStatus("This queue item cannot be started.", true);
+        showToast("This queue item cannot be started.", "error");
         return;
     }
 
     try {
-        setActionStatus(`Starting consultation for ${getPatientName(patient)}...`);
+        showToast(`Starting consultation for ${getPatientName(patient)}...`, "info");
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/start-consultation`, {
             method: "POST",
             headers: {
@@ -470,27 +458,27 @@ async function startPatientConsultation(patient) {
             throw new Error(result.message || `Start consultation failed with ${response.status}`);
         }
 
-        setActionStatus(`${getPatientName(patient)} is now in consultation.`);
+        showToast(`${getPatientName(patient)} is now in consultation.`, "success");
         await refreshQueue();
     } catch (error) {
         console.error("Error starting consultation:", error);
-        setActionStatus(error.message || "Failed to start consultation.", true);
+        showToast(error.message || "Failed to start consultation.", "error");
     }
 }
 
 async function updatePatientStatus(patient, status) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
-        setActionStatus("This queue item cannot be updated.", true);
+        showToast("This queue item cannot be updated.", "error");
         return;
     }
 
     if (isLockedStatus(patient.status)) {
-        setActionStatus("Missed and complete patients cannot be changed.", true);
+        showToast("Missed and complete patients cannot be changed.", "error");
         return;
     }
 
     try {
-        setActionStatus(`Updating ${getPatientName(patient)}...`);
+        showToast(`Updating ${getPatientName(patient)}...`, "info");
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/${encodeURIComponent(patient.queueItemId)}`, {
             method: "PATCH",
             headers: {
@@ -509,11 +497,11 @@ async function updatePatientStatus(patient, status) {
             throw new Error(result.message || `Update status failed with ${response.status}`);
         }
 
-        setActionStatus(`${getPatientName(patient)} is now ${formatStatus(status)}.`);
+        showToast(`${getPatientName(patient)} is now ${formatStatus(status)}.`, "info");
         await refreshQueue();
     } catch (error) {
         console.error("Error updating patient status:", error);
-        setActionStatus(error.message || "Failed to update status.", true);
+        showToast(error.message || "Failed to update status.", "error");
     }
 }
 
