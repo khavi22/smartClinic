@@ -6,13 +6,20 @@ if (!admin.apps.length) {
 
     if (credentialsJson) {
         try {
-            const serviceAccount = JSON.parse(credentialsJson);
+            // Check if the string was pasted with extra quotes
+            let cleanedJson = credentialsJson.trim();
+            if (cleanedJson.startsWith('"') && cleanedJson.endsWith('"')) {
+                cleanedJson = cleanedJson.substring(1, cleanedJson.length - 1).replace(/\\"/g, '"');
+            }
+            
+            const serviceAccount = JSON.parse(cleanedJson);
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount)
             });
-            console.log("✓ Firebase Admin initialized from environment variable.");
+            console.log("✅ BACKEND: Firebase Admin initialized successfully.");
         } catch (err) {
-            console.error("❌ ERROR: Failed to parse FIREBASE_CREDENTIALS_JSON:", err.message);
+            console.error("❌ BACKEND ERROR: Failed to parse FIREBASE_CREDENTIALS_JSON. Make sure it is valid JSON.");
+            console.error("Error details:", err.message);
             throw err;
         }
     } else if (process.env.NODE_ENV === 'test') {
