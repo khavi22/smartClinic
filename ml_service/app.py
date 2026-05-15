@@ -32,11 +32,12 @@ except ValueError:
 
 db = firestore.client()
 
-# Global model variable
+# Global variables for model and clinic mapping
 model = None
+clinic_mapping = {}
 
 def fetch_data_and_train():
-    global model
+    global model, clinic_mapping
     print("Fetching data from Firebase...")
     docs = db.collection('appointments').limit(10000).stream()
     
@@ -62,23 +63,40 @@ def fetch_data_and_train():
         
     df = pd.DataFrame(data)
     
-    # We want to predict "busyness" (number of appointments in a slot)
-    # Group by day_of_week and hour to get the count
-    busyness_df = df.groupby(['day_of_week', 'hour']).size().reset_index(name='appointment_count')
+    # Map clinicId to integers for the model
+    df['clinic_code'], unique_clinics = pd.factorize(df['clinicId'])
+    clinic_mapping = {name: i for i, name in enumerate(unique_clinics)}
     
-    # Features: day_of_week, hour
-    X = busyness_df[['day_of_week', 'hour']]
+    # We want to predict "busyness" (number of appointments in a slot)
+    # Group by clinic, day_of_week and hour to get the count
+    busyness_df = df.groupby(['clinic_code', 'day_of_week', 'hour']).size().reset_index(name='appointment_count')
+    
+    # Features: clinic_code, day_of_week, hour
+    X = busyness_df[['clinic_code', 'day_of_week', 'hour']]
     y = busyness_df['appointment_count']
     
     # Train model
-    print("Training Random Forest Regressor...")
+    print("Training Random Forest Regressor with Clinic support...")
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     model.fit(X, y)
     print("Model trained successfully!")
     return True
 
+def continuous_learning():
+    while True:
+        time.sleep(3600) # Wait 1 hour
+        try:
+            print("Running scheduled background retraining...")
+            fetch_data_and_train()
+        except Exception as e:
+            print(f"Background training failed: {e}")
+
 # Train the model on startup
 fetch_data_and_train()
+
+# Start background retraining thread
+thread = threading.Thread(target=continuous_learning, daemon=True)
+thread.start()
 
 @app.route('/train', methods=['POST'])
 def train_endpoint():
@@ -103,9 +121,13 @@ def predict_endpoint():
     except ValueError:
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
         
+    clinic_id = request.args.get('clinicId', 'default')
+    clinic_code = clinic_mapping.get(clinic_id, 0) # Fallback to first clinic if unknown
+    
     # Generate predictions for all possible hours (9 to 17)
     hours = list(range(9, 18))
     X_pred = pd.DataFrame({
+        'clinic_code': [clinic_code] * len(hours),
         'day_of_week': [day_of_week] * len(hours),
         'hour': hours
     })
@@ -155,6 +177,8 @@ def predict_range_endpoint():
     if delta < 0 or delta > 30:
         return jsonify({"error": "Invalid date range (max 30 days)"}), 400
         
+    clinic_code = clinic_mapping.get(clinic_id, 0)
+    
     results = {}
     hours = list(range(9, 18))
     
@@ -166,6 +190,7 @@ def predict_range_endpoint():
         curr_date_str = curr_date.strftime("%Y-%m-%d")
         
         X_pred = pd.DataFrame({
+            'clinic_code': [clinic_code] * len(hours),
             'day_of_week': [day_of_week] * len(hours),
             'hour': hours
         })
