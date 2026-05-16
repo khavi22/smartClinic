@@ -15,9 +15,9 @@ async function getPatientQueueInfo(patientId){
 
         const queueItemsSnapshot = await db
             .collection("clinics")
-            .doc(clinicId)
+            .doc(clinic_ID)
             .collection("queues")
-            .doc(today)
+            .doc(today_date)
             .collection("queueItems")
             .where("patientId", "==", patientId)
             .get();
@@ -28,18 +28,19 @@ async function getPatientQueueInfo(patientId){
 
             const Get_AllQueue_Items= await db
                 .collection("clinics")
-                .doc(clinicId)
+                .doc(clinic_ID)
                 .collection("queues")
-                .doc(today)
+                .doc(today_date)
                 .collection("queueItems")
                 .orderBy("createdAt")
                 .get();
 
-
+            //fetching all queue of patients from firestore and conveting them to a natural array
             const all_patients= Get_AllQueue_Items.docs.map(doc => doc.data());
+            //then findindex goes to the array and find a position of that specific patient
             const position_in_the_queue=all_patients.findIndex(p =>p.patientId == patientId)
-
-            const patients_ahead=position_in_the_queue-1;
+           //number of people ahead of the patient
+            const patients_ahead=position_in_the_queue;
             const estimated_wait_time=patients_ahead*15
 
             return{

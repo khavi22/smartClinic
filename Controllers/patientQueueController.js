@@ -2,7 +2,7 @@ const { error } = require("joi/lib/types/alternatives");
 const { getPatientQueueInfo } = require("../services/patientQueueService");
 
 
-async function fetchPatientQueueInfo(res,req){
+async function fetchPatientQueueInfo(req,res){
     try{
         const patient_ID = req.params.patientId;
 

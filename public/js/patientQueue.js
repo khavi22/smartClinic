@@ -1,13 +1,15 @@
 firebase.auth().onAuthStateChanged(async function(user) {
     if (user) {
-        const patientId = user.uid;
+
+        // const patientId = user.uid;
+        const patientId =  "30FNnDM7W6MPuB7SjfZNUhBSqcH2";
         await loadQueueInfo(patientId);
         // aim to refresh the page every 30 seconds to  get  real time updates
         setInterval(async function() {
             await loadQueueInfo(patientId);
         }, 30000);
     } else {
-        window.location.href = "/index.html";
+        //window.location.href = "/patientQueue.html";
     }
 });
 
