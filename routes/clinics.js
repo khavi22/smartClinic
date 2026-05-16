@@ -9,10 +9,12 @@ const {
     getServices, 
     addService, 
     updateService, 
-    deleteService 
+    deleteService,
+    updateSlotCapacity
 } = require("../Controllers/ClinicsController");
 const { authMiddleware, requireAdmin } = require("../middlewares/auth");
 
+router.patch("/:clinicId/slot-capacity", authMiddleware, requireAdmin, updateSlotCapacity);
 router.get("/", getClinics); // GET /api/clinics
 router.post("/update-hours", updateClinicHoursController); // POST /api/clinics/update-hours
 router.post("/ensure-exists", ensureClinicExistsController); // POST /api/clinics/ensure-exists
@@ -24,6 +26,7 @@ router.post("/templates/seed", authMiddleware, requireAdmin, seedServiceTemplate
 router.get("/services", authMiddleware, getServices);
 router.post("/services", authMiddleware, addService);
 router.put("/services/:serviceId", authMiddleware, updateService);
+
 router.delete("/services/:serviceId", authMiddleware, deleteService);
 
 module.exports = router;

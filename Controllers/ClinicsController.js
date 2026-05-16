@@ -54,7 +54,37 @@ exports.updateClinicHoursController = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+// ── Slots CLINICS ─────────────────────────────────────────────
+exports.updateSlotCapacity = async (req, res) => {
+    try {
+        const { clinicId } = req.params;
+        const { slotCapacity } = req.body;
 
+        if (!slotCapacity) {
+            return res.status(400).json({ error: "Slot capacity is required." });
+        }
+
+        const result = await updateClinicSlotCapacity(clinicId, slotCapacity);
+
+        return res.status(200).json({
+            message: "Slot capacity updated successfully.",
+            data: result
+        });
+    } catch (error) {
+        if (error.message === "Clinic not found.") {
+            return res.status(404).json({ error: error.message });
+        }
+
+        if (
+            error.message === "Invalid clinic ID." ||
+            error.message === "Slot capacity must be a positive integer."
+        ) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        return res.status(500).json({ error: "Internal server error." });
+    }
+};
 // ── GET CLINICS ─────────────────────────────────────────────
 exports.getClinics = async (req, res) => {
   const searchName = req.query.search;

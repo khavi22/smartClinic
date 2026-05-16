@@ -169,7 +169,98 @@
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* ── SLOT CAPACITY ── */
+.capacity-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 8px 24px 16px 24px;
+}
 
+.capacity-display {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+.capacity-card .card-footer {
+    padding: 0 24px 24px 24px;
+}
+
+.capacity-display #capacityValue {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--primary, #2563eb);
+}
+
+.capacity-unit {
+    font-size: 0.95rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.capacity-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.slider-track-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-bound {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted, #6b7280);
+    min-width: 20px;
+    text-align: center;
+}
+
+#slotCapacitySlider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border, #e5e7eb);
+    outline: none;
+    cursor: pointer;
+}
+
+#slotCapacitySlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary, #2563eb);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+#slotCapacitySlider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+#slotCapacitySlider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary, #2563eb);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    cursor: pointer;
+}
+
+#slotCapacitySlider:focus-visible {
+    outline: 2px solid var(--primary, #2563eb);
+    outline-offset: 4px;
+    border-radius: 999px;
+}
 /* ── SERVICE CARD SPECIFIC ── */
 .service-promo {
     display: flex;

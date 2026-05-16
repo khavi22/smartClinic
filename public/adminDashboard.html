@@ -351,6 +351,53 @@
         </section>
         </form>
 
+        <!-- ── SLOT CAPACITY CARD ── -->
+        <article class="admin-card capacity-card" aria-labelledby="capacity-heading">
+            <header class="card-header">
+                <span class="card-icon"><i class='bx bx-group' aria-hidden="true"></i></span>
+                <div>
+                    <h2 id="capacity-heading">Slot Capacity</h2>
+                    <p>Set the maximum number of patients per time slot</p>
+                </div>
+            </header>
+
+            <div class="capacity-body">
+                <div class="capacity-display" aria-live="polite">
+                    <span id="capacityValue">10</span>
+                    <span class="capacity-unit">patients / slot</span>
+                </div>
+
+                <fieldset class="capacity-fieldset">
+                    <legend class="visually-hidden">Slot capacity slider</legend>
+                    <div class="slider-track-wrap">
+                        <span class="slider-bound" aria-hidden="true">5</span>
+                        <input
+                            type="range"
+                            id="slotCapacitySlider"
+                            name="slotCapacity"
+                            min="5"
+                            max="50"
+                            step="1"
+                            value="10"
+                            aria-label="Patients per slot"
+                            aria-valuemin="5"
+                            aria-valuemax="50"
+                            aria-valuenow="10"
+                        >
+                        <span class="slider-bound" aria-hidden="true">50</span>
+                    </div>
+                </fieldset>
+            </div>
+
+            <footer class="card-footer">
+                <p id="capacitySaveStatus" class="save-status" role="status" aria-live="polite"></p>
+                <button type="button" class="btn-save" id="capacitySaveBtn">
+                    <i class='bx bx-save' aria-hidden="true"></i>
+                    <span>Save Capacity</span>
+                </button>
+            </footer>
+        </article>
+
         <!-- ── DANGER ZONE ── -->
         <section class="danger-zone" aria-labelledby="danger-heading">
             <h2 id="danger-heading"><i class='bx bx-error-circle' aria-hidden="true"></i> Danger Zone</h2>
