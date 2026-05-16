@@ -121,7 +121,7 @@ window.changeMonth = function(delta) {
     //     const targetMonth = newMonth;
     //     const targetYear = newYear;
         
-    //     // block if trying to go beyond next month
+    //     // block the staff member if they are trying to go to a month after december as they should loop back to januatry
     //     if (targetYear > currentYear || (targetYear === currentYear && targetMonth > currentMonth + 1)) {
     //         alert("Cannot view months beyond next month");
     //         return;
@@ -152,7 +152,7 @@ window.changeMonth = function(delta) {
 
 };
 
-//save to firestore
+//save to firestore the avalability data 
 async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     //const staffCode = "STF-330AFB";
     // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
