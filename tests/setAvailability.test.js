@@ -1,11 +1,11 @@
-
 const {
    setAvailability,
    fetchAvailability,
-   deleteAvailability
+   deleteAvailability,
+   fetchClinicName
 } = require("../Controllers/SetAvailabilityController");
 
-//mocking the services of set availability
+//mocking the services of set availability data
 jest.mock("../services/SetAvailabilityService",function() {
     return {  
     SaveAvailability : jest.fn(),
@@ -121,6 +121,9 @@ describe("Set availability Controller",function(){
         });
         
        });
+
+
+       
         describe("deleteAvailability" , function(){
             it("should delete availability staff data  if staff_uid exists,for specific date ",async function(){
                 removeAvailability.mockResolvedValue({ success: true });
@@ -151,7 +154,9 @@ describe("Set availability Controller",function(){
                         });
                         
             });
+
+            
         
-       });    
+       });
 });
 
