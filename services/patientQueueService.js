@@ -38,10 +38,15 @@ async function getPatientQueueInfo(patientId){
 
             //fetching all queue of patients from firestore and conveting them to a natural array
             const all_patients= Get_AllQueue_Items.docs.map(doc => doc.data());
+            
+            console.log("all patients:", all_patients.map(p => p.patientId)); // add this
+            console.log("looking for:", patientId); // add this
             //then findindex goes to the array and find a position of that specific patient
-            const position_in_the_queue=all_patients.findIndex(p =>p.patientId == patientId)
+            const index=all_patients.findIndex(p =>p.patientId == patientId)
+            console.log("index found:", index);
            //number of people ahead of the patient
-            const patients_ahead=position_in_the_queue;
+            const position_in_the_queue=index+1;
+            const patients_ahead=index;
             const estimated_wait_time=patients_ahead*15
 
             return{

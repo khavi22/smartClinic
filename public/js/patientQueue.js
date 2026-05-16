@@ -3,6 +3,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
 
         // const patientId = user.uid;
         const patientId =  "30FNnDM7W6MPuB7SjfZNUhBSqcH2";
+        //const patientId ="U335gHj1eGanLfv3H1fuazDpUN13";
         await loadQueueInfo(patientId);
         // aim to refresh the page every 30 seconds to  get  real time updates
         setInterval(async function() {
