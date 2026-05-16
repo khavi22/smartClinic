@@ -282,15 +282,16 @@ window.processApproval = async (staffUid, status) => {
         });
 
         if (response.ok) {
+            showToast(`Staff member ${status} successfully.`, "success");
             await loadPendingStaff(currentClinicId);
             await loadActiveStaff(currentClinicId);
         } else {
             const result = await response.json();
-            alert('Error: ' + (result.message || 'Failed to process approval'));
+            showToast('Error: ' + (result.message || 'Failed to process approval'), "error");
         }
     } catch (error) {
         console.error('Approval exception:', error);
-        alert('An unexpected network error occurred.');
+        showToast('An unexpected network error occurred.', "error");
     }
 };
 
@@ -358,14 +359,15 @@ window.fireStaff = async (staffUid, name) => {
         });
 
         if (response.ok) {
+            showToast("Staff member removed successfully.", "success");
             await loadActiveStaff(currentClinicId);
         } else {
             const result = await response.json();
-            alert('Error: ' + (result.message || 'Failed to remove staff'));
+            showToast('Error: ' + (result.message || 'Failed to remove staff'), "error");
         }
     } catch (error) {
         console.error('Fire staff error:', error);
-        alert('An unexpected network error occurred.');
+        showToast('An unexpected network error occurred.', "error");
     }
 };
 
@@ -409,7 +411,7 @@ async function loadClinicProfile(clinicId) {
 // ── CLINIC PROFILE: save ─────────────────────────────────────────────────────
 document.getElementById("saveProfileBtn").addEventListener("click", async () => {
     if (!currentClinicId) {
-        alert("No clinic associated with your account.");
+        showToast("No clinic associated with your account.", "error");
         return;
     }
 

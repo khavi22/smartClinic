@@ -152,6 +152,8 @@ function renderSlots() {
             } else {
                 capacityLabel = "Currently Unavailable";
             }
+            
+            const mlBadge = slot.isRecommended && !isPast && slot.status !== 'full' ? '<mark class="slot-badge recommended" style="background-color: var(--success); color: white; margin-left: 5px;">★ Recommended</mark>' : '';
 
             return `
                         <button type="button" class="slot-card ${selectedSlotId === slot.id ? 'selected' : ''} ${cssClass}" 
@@ -159,6 +161,7 @@ function renderSlots() {
                             <hgroup class="slot-top">
                                 <time class="slot-time">${slot.time}</time>
                                 <mark class="slot-badge ${displayStatus}">${displayStatus}</mark>
+                                ${mlBadge}
                             </hgroup>
                             <output class="slot-capacity">${capacityLabel}</output>
                         </button>
@@ -208,6 +211,58 @@ window.handleDateSelection = async function (dateStr) {
 
     renderCalendar();
     renderSlots();
+    // AI Bubble Logic for specific clinic
+    const bubble = document.getElementById("smartAISuggestion");
+    const textEl = document.getElementById("aiSuggestionText");
+    if (bubble && textEl) {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const clinicId = urlParams.get('clinicId') || '';
+            const response = await fetch(`/api/smart-suggestion?clinicId=${clinicId}`);
+            const data = await response.json();
+
+            if (data.hasPrediction) {
+                let html = `<section class="ai-best-time-container">`;
+                
+                if (data.today) {
+                    html += `
+                        <section class="ai-suggestion-box">
+                            <span class="ai-suggestion-title">Today's Best</span>
+                            <section class="ai-date-row">
+                                <span class="ai-day">${data.today.day}</span>
+                            </section>
+                            <strong class="ai-time-row">${data.today.time}</strong>
+                        </section>
+                    `;
+                }
+                if (data.future) {
+                     html += `
+                        <section class="ai-suggestion-box">
+                            <span class="ai-suggestion-title">Upcoming Best</span>
+                            <section class="ai-date-row">
+                                <span class="ai-day">${data.future.day}</span>
+                                <span class="ai-date">${data.future.date}</span>
+                            </section>
+                            <strong class="ai-time-row">${data.future.time}</strong>
+                        </section>
+                    `;
+                }
+                
+                html += `</section><p class="ai-hint-text">${data.hint}</p>`;
+                textEl.innerHTML = html;
+                setTimeout(() => {
+                    bubble.style.display = 'block';
+                    bubble.hidden = false;
+                }, 500);
+            } else {
+                bubble.style.display = 'none';
+                bubble.hidden = true;
+            }
+        } catch (error) {
+            console.warn("Could not load AI suggestion for clinic:", error);
+            bubble.style.display = 'none';
+        }
+    }
 };
 
 window.changeMonth = function (delta) {
@@ -340,9 +395,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (res.ok) {
                         dialog.close();
                         if (oldAppointmentId) {
-                            alert(`Your appointment has been successfully rescheduled to ${selectedDate} at ${slot.time}!`);
+                            showToast(`Your appointment has been successfully rescheduled to ${selectedDate} at ${slot.time}!`, "success");
                         } else {
-                            alert(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`);
+                            showToast(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`, "success");
                         }
                         selectedSlotId = null;
                         await window.handleDateSelection(selectedDate);
@@ -352,11 +407,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                            setTimeout(() => { window.location.href = 'apointments.html'; }, 1500);
                         }
                     } else {
-                        alert(`Booking failed: ${data.error}`);
+                        showToast(`Booking failed: ${data.error}`, "error");
                     }
                 } catch (error) {
                     console.error("Booking err:", error);
-                    alert("Error contacting the server.");
+                    showToast("Error contacting the server.", "error");
                 } finally {
                     confirmBtn.disabled = false;
                     cancelBtn.disabled = false;

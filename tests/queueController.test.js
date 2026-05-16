@@ -14,6 +14,7 @@ jest.mock("../services/queueService");
 
 describe("Queue Controllers", () => {
     let req, res;
+    let consoleErrorSpy;
 
     beforeEach(() => {
         req = { params: {}, body: {}, query: {} };
@@ -22,6 +23,12 @@ describe("Queue Controllers", () => {
             json: jest.fn(),
         };
         jest.clearAllMocks();
+        // Spy on console to keep test output clean during error tests
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
     });
 
     // ─────────────────────────────────────────────

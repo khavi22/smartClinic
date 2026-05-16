@@ -46,12 +46,12 @@ async function redirectBasedOnUser(user) {
 
         if (response.ok && data.exists) {
             if (data.pending) {
-                alert(data.message || "Your account is awaiting admin approval.");
+                showToast(data.message || "Your account is awaiting admin approval.", "info");
                 await auth.signOut();
                 return;
             }
             if (data.rejected) {
-                alert(data.message || "Your staff application was declined.");
+                showToast(data.message || "Your staff application was declined.", "error");
                 await auth.signOut();
                 return;
             }
@@ -83,9 +83,9 @@ async function redirectBasedOnUser(user) {
         console.error("User check failed:", error);
         
         if (error.code === 'auth/network-request-failed') {
-            alert("Network error: Please check your internet connection or ensure localhost:3000 is whitelisted in Firebase Console.");
+            showToast("Network error: Please check your internet connection.", "error");
         } else {
-            alert("Session validation failed. Signing out to retry.");
+            showToast("Session validation failed. Signing out to retry.", "error");
         }
         
         await auth.signOut();
@@ -113,7 +113,7 @@ if (googleBtn) {
             console.error("Login failed:", error);
 
             if (error.code !== "auth/popup-closed-by-user") {
-                alert("Sign-in failed: " + error.message);
+                showToast("Sign-in failed: " + error.message, "error");
             }
 
             signingIn = false;

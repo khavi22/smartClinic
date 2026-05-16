@@ -6,5 +6,6 @@ router.get("/appointments/:patientId", appointmentsController.getAppointmentsByP
 router.get("/availability", appointmentsController.getAvailability);
 router.post("/appointments", appointmentsController.postAppointment);
 router.patch("/appointments/:id", appointmentsController.cancelAppointmentController);
+router.get("/smart-suggestion", appointmentsController.getSmartSuggestion);
 
 module.exports = router;

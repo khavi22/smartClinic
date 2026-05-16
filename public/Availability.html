@@ -11,6 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/availability_styles.css?v=2">
     <link rel="stylesheet" href="css/global_nav.css?v=1">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="css/ai_insights.css">
 </head>
 
 <body>
@@ -100,6 +102,20 @@
                     </aside>
                 </header>
 
+                <!-- ── SMART AI INSIGHT ── -->
+                <aside id="smartAISuggestion" class="ai-insight-card" hidden>
+                    <header class="insight-header">
+                        <section class="insight-label">
+                            <i class='bx bxs-magic-wand' aria-hidden="true"></i>
+                            <strong>AI Recommendation</strong>
+                        </section>
+                        <button type="button" class="insight-close" onclick="this.closest('.ai-insight-card').style.display = 'none'" aria-label="Dismiss recommendation">&times;</button>
+                    </header>
+                    <section id="aiSuggestionText" class="insight-body">
+                        <p>Analyzing slots...</p>
+                    </section>
+                </aside>
+
                 <!-- Slots Grid -where users will click ana available slot-->
                 <menu id="slotsGrid" class="slots-grid">
                     <!-- filled by JS -->
@@ -122,6 +138,7 @@
         </article>
     </dialog>
 
+    <script src="js/notifications.js"></script>
     <script src="js/availability.js?v=2"></script>
 </body>
 
