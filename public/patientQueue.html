@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Queue Position</title>
+    <link rel="stylesheet" href="css/patientQueue.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <span class="nav-brand">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#185FA5"
+          stroke-width="2"
+        >
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+        smartClinic
+      </span>
+    </nav>
+
+    <main class="content">
+      <section class="card" id="queue-card">
+        <h2 class="card-title">Your Queue Status</h2>
+        <p id="loading-msg">Loading your queue position...</p>
+
+        <section id="queue-info" style="display: none">
+          <p class="clinic-name" id="clinic-name"></p>
+          <p class="clinic-address" id="clinic-address"></p>
+          <p class="appointment-time" id="appointment-time"></p>
+
+          <section class="position-box">
+            <h1 id="queue-position"></h1>
+            <p id="queue-total"></p>
+          </section>
+
+          <section class="wait-box">
+            <p id="estimated-wait"></p>
+          </section>
+        </section>
+
+        <section id="not-in-queue" style="display: none">
+          <p>You are not in any queue today.</p>
+        </section>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/patientQueue.js"></script>
+  </body>
+</html>

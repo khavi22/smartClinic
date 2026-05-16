@@ -11,8 +11,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+
+
+
 // Routes
-let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes;
+
+
+
+let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes , patientQueueRoutes;
 
 try {
   clinicsRoutes = require("./routes/clinics");
@@ -20,6 +26,15 @@ try {
 } catch (err) {
   console.error("✗ Error loading clinics routes:", err);
 }
+
+try{
+  patientQueueRoutes = require("./routes/patientQueueRoutes");
+  console.log("✓ Patients Queue  routes loaded");
+}
+catch (err) {
+  console.error("✗ Error loading Patients Queue  routes:", err);
+}
+
 
 try {
   appointmentRoutes = require("./routes/appointments");
@@ -62,6 +77,7 @@ if (userRoutes) app.use("/api/user", userRoutes);
 if (staffAvailabilityRoutes) app.use("/api/staff/availability", staffAvailabilityRoutes);
 if (adminRoutes) app.use("/api/admin", adminRoutes);
 if (queueRoutes) app.use("/api/queue", queueRoutes);
+if (patientQueueRoutes)  app.use("/api/patient/queue", patientQueueRoutes); 
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
