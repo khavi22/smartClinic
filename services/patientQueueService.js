@@ -1,17 +1,13 @@
-const { doc } = require("firebase/firestore/lite");
 const { db, admin } = require("./config/firebase");
 
-async function getPatientQueueInfo(patientId){
-    // const today_date = new Date().toISOString().split("T")[0]
-    const today_date="2026-05-11";
+async function getPatientQueueInfo(patientId) {
 
+    const today_date = "2026-05-17";
 
     const clinicSnapshot = await db.collection("clinics").get();
-    const clinics_array = clinicSnapshot.docs;
 
+    for (const clinic of clinicSnapshot.docs) {
 
-
-    for (const clinic of clinics_array){
         const clinic_ID = clinic.id;
 
         const queueItemsSnapshot = await db
@@ -23,11 +19,11 @@ async function getPatientQueueInfo(patientId){
             .where("patientId", "==", patientId)
             .get();
 
+        if (!queueItemsSnapshot.empty) {
 
-        if(!queueItemsSnapshot.empty){
             const patient_Queue_Item = queueItemsSnapshot.docs[0].data();
 
-            const Get_AllQueue_Items= await db
+            const allQueueSnapshot = await db
                 .collection("clinics")
                 .doc(clinic_ID)
                 .collection("queues")
@@ -36,33 +32,43 @@ async function getPatientQueueInfo(patientId){
                 .orderBy("createdAt")
                 .get();
 
-            //fetching all queue of patients from firestore and conveting them to a natural array
-            const all_patients= Get_AllQueue_Items.docs.map(doc => doc.data());
-            
-            console.log("all patients:", all_patients.map(p => p.patientId)); // add this
-            console.log("looking for:", patientId); // add this
-            //then findindex goes to the array and find a position of that specific patient
-            const index=all_patients.findIndex(p =>p.patientId == patientId)
-            console.log("index found:", index);
-           //number of people ahead of the patient
-            const position_in_the_queue=index+1;
-            const patients_ahead=index;
-            const estimated_wait_time=patients_ahead*15
+            const all_patients = allQueueSnapshot.docs.map(doc => doc.data());
 
-            return{
+            const index = all_patients.findIndex(
+                p => p.patientId === patientId
+            );
+
+            const position = index + 1;
+
+            const patientsAheadList = all_patients.slice(0, index);
+
+            const waitBeforeYou = patientsAheadList.reduce((total, patient) => {
+                return total + (patient.serviceDuration || 0);
+            }, 0);
+
+            const yourDuration =
+                patient_Queue_Item.serviceDuration || 0;
+
+            const estimatedWaitTime =
+                waitBeforeYou + yourDuration;
+
+            return {
                 patientName: patient_Queue_Item.patientName,
-                clinicName:   patient_Queue_Item.clinicName,
-                clinicAddress:   patient_Queue_Item.clinicAddress,
-                appointmentTime:  patient_Queue_Item.appointmentTime,
-                position: position_in_the_queue,
-                totalInQueue: all_patients.length,
-                estimatedWaitTime: estimated_wait_time
-            };
+                clinicName: patient_Queue_Item.clinicName,
+                clinicAddress: patient_Queue_Item.clinicAddress,
+                appointmentTime: patient_Queue_Item.appointmentTime,
 
+                position,
+                totalInQueue: all_patients.length,
+
+                waitBeforeYou,
+                yourDuration,
+                estimatedWaitTime
+            };
         }
     }
 
     return null;
 }
 
-module.exports = {getPatientQueueInfo};
+module.exports = { getPatientQueueInfo };

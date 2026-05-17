@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { fetchPatientQueueInfo } = require("../Controllers/patientQueueController");
+const { getMyNextQueue } = require("../Controllers/patientQueueController");
 
 
-router.get("/:patientId", fetchPatientQueueInfo);
+router.get("/:patientId", getMyNextQueue);
 
 module.exports = router;

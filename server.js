@@ -77,7 +77,7 @@ if (userRoutes) app.use("/api/user", userRoutes);
 if (staffAvailabilityRoutes) app.use("/api/staff/availability", staffAvailabilityRoutes);
 if (adminRoutes) app.use("/api/admin", adminRoutes);
 if (queueRoutes) app.use("/api/queue", queueRoutes);
-if (patientQueueRoutes)  app.use("/api/patient/queue", patientQueueRoutes); 
+if (patientQueueRoutes) app.use("/api/patient/queue", patientQueueRoutes);
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));

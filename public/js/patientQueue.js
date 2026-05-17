@@ -1,48 +1,41 @@
-firebase.auth().onAuthStateChanged(async function(user) {
-    if (user) {
+async function loadNextQueue() {
+    const loading = document.getElementById("loading");
+    const content = document.getElementById("content");
+    const noData = document.getElementById("noData");
+    const patientId = localStorage.getItem("patientId");
 
-        // const patientId = user.uid;
-        const patientId =  "30FNnDM7W6MPuB7SjfZNUhBSqcH2";
-        //const patientId ="U335gHj1eGanLfv3H1fuazDpUN13";
-        await loadQueueInfo(patientId);
-        // aim to refresh the page every 30 seconds to  get  real time updates
-        setInterval(async function() {
-            await loadQueueInfo(patientId);
-        }, 30000);
-    } else {
-        //window.location.href = "/patientQueue.html";
-    }
-});
+    try {
+        const res = await fetch(`/api/patient/queue/${patientId}`, {
+            method: "GET",
+            credentials: "include" // if using cookies auth
+        });
 
+        const data = await res.json();
+        console.log("Fetched queue data:", data);
+        loading.style.display = "none";
 
-
-async function  loadQueueInfo(patientId){
-    try{
-        const response = await fetch(`/api/patient/queue/${patientId}`);
-        const data = await response.json();
-
-        if (response.ok){
-            displayQueueInfo(data.queueInfo)
+        if (!data) {
+            noData.classList.remove("hidden");
+            return;
         }
 
-        else {
-            document.getElementById("loading-msg").style.display = "none";
-            document.getElementById("not-in-queue").style.display = "block";
-        }
-    }
-    catch (error) {
-        console.error("Error loading queue info:", error);
+        const q = data.queue;
+
+        document.getElementById("clinicName").innerText = q.clinicName;
+
+        document.getElementById("wait").innerText =q.estimatedWaitTime + " mins";
+
+        document.getElementById("date").innerText = q.appointmentTime;
+
+        const date = new Date(q.appointmentDate);
+        document.getElementById("date").innerText = date.toLocaleString();
+
+        content.classList.remove("hidden");
+
+    } catch (error) {
+        console.error("Error loading queue:", error);
+        loading.innerText = "Failed to load appointment.";
     }
 }
 
-function displayQueueInfo(queueInfo) {
-    document.getElementById("loading-msg").style.display = "none";
-    document.getElementById("queue-info").style.display = "block";
-
-    document.getElementById("clinic-name").textContent = queueInfo.clinicName;
-    document.getElementById("clinic-address").textContent = queueInfo.clinicAddress;
-    document.getElementById("appointment-time").textContent = "Appointment Time: " + queueInfo.appointmentTime;
-    document.getElementById("queue-position").textContent = "You are number " + queueInfo.position + " in the queue";
-    document.getElementById("queue-total").textContent = queueInfo.totalInQueue + " patients in queue today";
-    document.getElementById("estimated-wait").textContent = "Estimated wait time: " + queueInfo.estimatedWaitTime + " minutes";
-}
+loadNextQueue();

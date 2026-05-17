@@ -546,12 +546,23 @@ const getServiceTemplates = async () => {
 };
 
 const getClinicServices = async (clinicId) => {
-  const snapshot = await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .get();
+    const snapshot = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .get();
 
+    if (snapshot.empty) {
+        let service = {
+            active: true,
+            createdAt: new Date(),
+            description: "Standard consultation for general health issues",
+            duration: 30,
+            name: "General Outpatient Consultation",
+            updatedAt: new Date()
+        };
+        return [service];
+    }
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),

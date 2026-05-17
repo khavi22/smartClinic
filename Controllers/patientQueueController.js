@@ -1,26 +1,36 @@
-const { error } = require("joi/lib/types/alternatives");
-const { getPatientQueueInfo } = require("../services/patientQueueService");
 
+const {
+    getPatientQueueInfo
+} = require("../services/patientQueueService");
 
-async function fetchPatientQueueInfo(req,res){
-    try{
-        const patient_ID = req.params.patientId;
+async function getMyNextQueue(req, res) {
+    try {
+        const patientId = req.params.patientId;
 
-        if(!patient_ID){
-            return res.status(400).json({error :"Patient ID is required"});
+        if (!patientId) {
+            return res.status(400).json({
+                success: false,
+                message: "patientId is required",
+            });
         }
 
-        const queueInfo = await getPatientQueueInfo(patient_ID);
+        const queue = await getPatientQueueInfo(patientId);
+        console.log("Controller - Next Queue:", queue);
+        res.status(200).json({
+            success: true,
+            queue,
+        });
 
-        if(!queueInfo){
-            return res.status(404).json({ error: "Patient not found in today's queue" });
-        }
-        res.json({ queueInfo });
-       }
-       catch (error) {
-            console.error("Error fetching patient queue info:", error.message);
-            res.status(500).json({ error: error.message });
+    } catch (error) {
+        console.error("Controller error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
 }
 
-module.exports = { fetchPatientQueueInfo };
+module.exports = {
+    getMyNextQueue
+};
