@@ -460,6 +460,9 @@ const addQueueItem = async (clinicId, queueData) => {
     status: queueData.status || "WAITING",
     queueNumber: Date.now(),
     addedBy: queueData.addedBy || null,
+    serviceId: queueData.serviceId || null,
+    serviceName: queueData.serviceName || null,
+    serviceDuration: queueData.serviceDuration || null,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   };
@@ -584,6 +587,9 @@ const addTodaysAppointmentsToQueue = async (clinicId) => {
       priority: 0,
       appointmentTime: appointment.timeSlot,
       queueNumber: Date.now(),
+      serviceId: appointment.serviceId || null,
+      serviceName: appointment.serviceName || null,
+      serviceDuration: appointment.serviceDuration || null,
       createdAt: new Date()
     };
 

@@ -281,6 +281,30 @@ describe("queueService", () => {
             ).rejects.toThrow("patientName or patientId is required");
         });
 
+        it("includes service metadata when provided", async () => {
+            const { queueItemsRef } = setupFirestore({ clinicData: mondayHours });
+
+            const result = await queueService.addQueueItem("clinic-1", {
+                patientName: "Alice",
+                timeSlot: "09:35",
+                serviceId: "service-1",
+                serviceName: "General Consultation",
+                serviceDuration: 30
+            });
+
+            expect(result).toEqual(expect.objectContaining({
+                queueItemId: "queue-added",
+                serviceId: "service-1",
+                serviceName: "General Consultation",
+                serviceDuration: 30
+            }));
+            expect(queueItemsRef.add).toHaveBeenCalledWith(expect.objectContaining({
+                serviceId: "service-1",
+                serviceName: "General Consultation",
+                serviceDuration: 30
+            }));
+        });
+
         it("rejects requested slots outside operating hours", async () => {
             setupFirestore({ clinicData: mondayHours });
 
@@ -553,7 +577,7 @@ describe("queueService", () => {
             const { queueRefs } = setupFirestore({
                 appointments: [
                     { id: "existing", data: { clinicId: "clinic-1", clinicName: "Clinic", clinicAddress: "Road", date: "2026-05-11", status: "booked", patientId: "patient-existing", timeSlot: "08:00 - 09:00" } },
-                    { id: "new", data: { clinicId: "clinic-1", clinicName: "Clinic", clinicAddress: "Road", date: "2026-05-11", status: "booked", patientId: "patient-new", timeSlot: "09:00 - 10:00" } }
+                    { id: "new", data: { clinicId: "clinic-1", clinicName: "Clinic", clinicAddress: "Road", date: "2026-05-11", status: "booked", patientId: "patient-new", timeSlot: "09:00 - 10:00", serviceId: "service-1", serviceName: "General Consultation", serviceDuration: 45 } }
                 ],
                 queueItems: [
                     { id: "existing", data: { status: "WAITING", patientName: "Already queued" } }
@@ -570,12 +594,18 @@ describe("queueService", () => {
                 queueItemId: "new",
                 patientName: "New Patient",
                 patientEmail: "new@example.com",
-                patientPhone: "555"
+                patientPhone: "555",
+                serviceId: "service-1",
+                serviceName: "General Consultation",
+                serviceDuration: 45
             }));
             expect(queueRefs.new.set).toHaveBeenCalledWith(expect.objectContaining({
                 appointmentId: "new",
                 status: "WAITING",
-                appointmentTime: "09:00 - 10:00"
+                appointmentTime: "09:00 - 10:00",
+                serviceId: "service-1",
+                serviceName: "General Consultation",
+                serviceDuration: 45
             }));
             expect(queueRefs.existing.set).not.toHaveBeenCalled();
         });

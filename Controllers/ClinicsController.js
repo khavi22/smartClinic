@@ -128,12 +128,14 @@ exports.seedServiceTemplates = async (req, res) => {
 // ── CLINIC SERVICES ─────────────────────────────────────────
 exports.getServices = async (req, res) => {
   try {
-    console.log("req.user:", req.user);
-    const clinicId = req.user.clinicId;
-    console.log("clinicId:", clinicId);
+    // Allow both query param (for public booking UI) and user token (for admin)
+    let clinicId = req.query.clinicId || (req.user && req.user.clinicId);
+    console.log("clinicId from query:", req.query.clinicId, "from user:", req.user?.clinicId);
+    
     if (!clinicId) {
-      return res.status(400).json({ error: "No clinicId found on user token. Set custom claims first." });
+      return res.status(400).json({ error: "clinicId is required as query parameter or from user token" });
     }
+    
     const services = await getClinicServices(clinicId);
     res.json(services);
   } catch (err) {

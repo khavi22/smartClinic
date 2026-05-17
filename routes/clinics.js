@@ -21,7 +21,7 @@ router.get("/templates", getServiceTemplates);
 router.post("/templates/seed", authMiddleware, requireAdmin, seedServiceTemplates); // seeding protected
 
 // services 
-router.get("/services", authMiddleware, getServices);
+router.get("/services", getServices);  // Allow public access for booking UI
 router.post("/services", authMiddleware, addService);
 router.put("/services/:serviceId", authMiddleware, updateService);
 router.delete("/services/:serviceId", authMiddleware, deleteService);

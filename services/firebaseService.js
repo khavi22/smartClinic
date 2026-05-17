@@ -99,7 +99,10 @@ const createAppointment = async (
     patientId,
     clinicName,
     clinicAddress,
-    isReschedule = false
+    isReschedule = false,
+    serviceId = null,
+    serviceName = null,
+    serviceDuration = null
 ) => {
     try {
         const appointmentsRef = db.collection("appointments");
@@ -138,6 +141,9 @@ const createAppointment = async (
             date: dateStr,
             timeSlot,
             patientId,
+            serviceId: serviceId || null,
+            serviceName: serviceName || null,
+            serviceDuration: serviceDuration || null,
             status: "booked",
             createdAt: new Date().toISOString()
         };

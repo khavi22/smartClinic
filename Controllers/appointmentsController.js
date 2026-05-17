@@ -56,10 +56,14 @@ exports.getAvailability = async (req, res) => {
 
 exports.postAppointment = async (req, res) => {
     try {
-        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, oldAppointmentId } = req.body;
+        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
 
         if (!date || !timeSlot) {
             return res.status(400).json({ error: "Missing date or timeSlot" });
+        }
+
+        if (!serviceId || !serviceName || !serviceDuration) {
+            return res.status(400).json({ error: "Service information is required" });
         }
 
         // If this is a reschedule, cancel the old appointment first
@@ -68,7 +72,7 @@ exports.postAppointment = async (req, res) => {
             await cancelAppointment(oldAppointmentId);
         }
 
-        const newAppointment = await createAppointment(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId);
+        const newAppointment = await createAppointment(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId, serviceId, serviceName, serviceDuration);
         res.json({ success: true, appointment: newAppointment });
     } catch (error) {
         console.error("Failed to create appointment:", error);

@@ -131,6 +131,15 @@
                 <h2>Confirm Appointment</h2>
             </header>
             <p id="dialogBookingDetails">You are booking an appointment.</p>
+            
+            <!-- Service Selection -->
+            <fieldset class="service-selector" id="serviceFieldset">
+                <legend class="service-legend">Select Service Type *</legend>
+                <div id="servicesContainer" class="services-list">
+                    <div class="service-loading">Loading services...</div>
+                </div>
+            </fieldset>
+            
             <menu class="dialog-actions">
                 <button type="button" id="cancelBookingBtn" class="cancel-btn">Cancel</button>
                 <button type="button" id="modalConfirmBtn" class="confirm-btn active">Confirm Booking</button>
