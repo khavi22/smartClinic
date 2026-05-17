@@ -55,7 +55,6 @@ exports.getAvailability = async (req, res) => {
     }
 };
 
-const firebaseService = require('../services/firebaseService');
 const emailService    = require('../services/emailService');
 
 exports.postAppointment = async (req, res) => {
