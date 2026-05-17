@@ -14,7 +14,7 @@ const {
 } = require("../Controllers/ClinicsController");
 const { authMiddleware, requireAdmin } = require("../middlewares/auth");
 
-router.patch("/:clinicId/slot-capacity", authMiddleware, requireAdmin, updateSlotCapacity);
+router.patch("/:clinicId/slot-capacity", updateSlotCapacity);
 router.get("/", getClinics); // GET /api/clinics
 router.post("/update-hours", updateClinicHoursController); // POST /api/clinics/update-hours
 router.post("/ensure-exists", ensureClinicExistsController); // POST /api/clinics/ensure-exists

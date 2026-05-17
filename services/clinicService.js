@@ -1,6 +1,9 @@
 const axios = require('axios');
 const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
+const { db, admin } = require("./config/firebase");
+const { v4: uuidv4 } = require("uuid");
+
 
 const GOOGLE_API_KEY = defineSecret("GOOGLE_API_KEY");
 
