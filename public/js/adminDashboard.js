@@ -28,11 +28,12 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         const data = result.profile;
         currentClinicId = data.clinicId;
+        window.authToken = idToken;
         if (currentClinicId) {
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
             await loadActiveStaff(currentClinicId);
-            await loadClinicProfile(currentClinicId);
+            
         }
 
     } catch (error) {
@@ -420,9 +421,6 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
 
     const facilityTypeEl = document.querySelector('input[name="facilityType"]:checked');
     const facilityType = facilityTypeEl ? facilityTypeEl.value : "";
-    const province = document.getElementById("clinicProvince").value;
-    const district = document.getElementById("clinicDistrict").value.trim();
-    const region = document.getElementById("clinicRegion").value.trim();
     const services = [...document.querySelectorAll('#profileForm input[name="services"]:checked')]
         .map(cb => cb.value);
 
@@ -432,11 +430,9 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
     status.className = "save-status";
 
     try {
+        // Exclude province, district, region from the update payload to prevent updates
         await firebase.firestore().collection("clinics").doc(currentClinicId).set({
             facilityType,
-            province,
-            district,
-            region,
             services
         }, { merge: true });
 
@@ -457,52 +453,3 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
 });
 
 
-const profileForm = document.getElementById("profileForm");
-const toggleClinicEditBtn = document.getElementById("toggleClinicEditBtn");
-
-let clinicEditingEnabled = false;
-
-function setClinicFormEditable(enabled) {
-
-    clinicEditingEnabled = enabled;
-
-    const fields = profileForm.querySelectorAll(
-        "input, select, textarea"
-    );
-
-    fields.forEach(field => {
-
-        // keep buttons active
-        if (
-            field.type === "button" ||
-            field.type === "submit"
-        ) return;
-
-        field.disabled = !enabled;
-    });
-
-    // Save button
-    const saveBtn = document.getElementById("saveClinicProfileBtn");
-
-    if (saveBtn) {
-        saveBtn.hidden = !enabled;
-    }
-
-    // Toggle button text
-    toggleClinicEditBtn.textContent =
-        enabled ? "Cancel Editing" : "Enable Editing";
-
-    // Styling state
-    profileForm.classList.toggle(
-        "profile-form-locked",
-        !enabled
-    );
-}
-
-// Default = locked
-setClinicFormEditable(false);
-
-toggleClinicEditBtn.addEventListener("click", () => {
-
-    setClinicFormEditable(!clinicEditingEnabled);
-});

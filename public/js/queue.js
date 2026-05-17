@@ -172,6 +172,36 @@ function renderQueue(queue) {
     });
 }
 
+async function fetchAndRenderWaitTime(clinicId, idToken) {
+    const predictedWaitTimeEl = document.getElementById("predictedWaitTime");
+    const predictedWaitRangeEl = document.getElementById("predictedWaitRange");
+
+    if (!predictedWaitTimeEl || !predictedWaitRangeEl) return;
+
+    try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const res = await fetch(`/api/queue/${encodeURIComponent(clinicId)}/predict-waittime?date=${todayStr}`, {
+            headers: {
+                "Authorization": `Bearer ${idToken}`
+            }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+                predictedWaitTimeEl.textContent = `${data.estimatedWaitTime} mins`;
+                predictedWaitRangeEl.textContent = `Range: ${data.waitTimeRange}`;
+                return;
+            }
+        }
+    } catch (err) {
+        console.warn("Failed to fetch predicted wait time:", err);
+    }
+    
+    predictedWaitTimeEl.textContent = "-- mins";
+    predictedWaitRangeEl.textContent = "Unavailable";
+}
+
 async function loadQueue(clinicId, idToken) {
     if (!clinicId) {
         setQueueMessage("No clinic is linked to this staff profile.");
@@ -193,6 +223,7 @@ async function loadQueue(clinicId, idToken) {
     }
 
     renderQueue(result.queue);
+    await fetchAndRenderWaitTime(clinicId, idToken);
 }
 
 async function refreshQueue() {
@@ -251,6 +282,43 @@ async function loadAddQueueSlots(selectedSlot = "", showError = true) {
     }
 }
 
+async function loadClinicServices(clinicId, idToken) {
+    const serviceSelect = document.getElementById("serviceSelectInput");
+    if (!serviceSelect) return;
+    
+    serviceSelect.disabled = true;
+    serviceSelect.innerHTML = '<option value="">Loading services...</option>';
+    
+    try {
+        const res = await fetch(`/api/clinics/services?clinicId=${encodeURIComponent(clinicId)}`, {
+            headers: { "Authorization": `Bearer ${idToken}` }
+        });
+        if (!res.ok) throw new Error("Failed to fetch services");
+        const services = await res.json();
+        
+        serviceSelect.innerHTML = '<option value="">Select a service type</option>';
+        if (services.length === 0) {
+            serviceSelect.innerHTML = '<option value="">No services defined</option>';
+            return;
+        }
+        
+        services.forEach(service => {
+            const option = document.createElement("option");
+            option.value = service.id;
+            option.dataset.name = service.name;
+            option.dataset.duration = service.duration;
+            option.textContent = `${service.name} (${service.duration} min)`;
+            serviceSelect.appendChild(option);
+        });
+        
+        serviceSelect.disabled = false;
+    } catch (error) {
+        console.error("Error loading services for manual check-in:", error);
+        serviceSelect.innerHTML = '<option value="">Services unavailable</option>';
+        serviceSelect.disabled = true;
+    }
+}
+
 async function addPatientToQueue(event) {
     event.preventDefault();
 
@@ -270,6 +338,16 @@ async function addPatientToQueue(event) {
         showToast("Choose an available one-hour time slot.", "error");
         return;
     }
+
+    const serviceSelect = document.getElementById("serviceSelectInput");
+    const serviceId = serviceSelect?.value;
+    if (!serviceId) {
+        showToast("Choose a service type.", "error");
+        return;
+    }
+    const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+    const serviceName = selectedOption.dataset.name;
+    const serviceDuration = parseInt(selectedOption.dataset.duration);
 
     const submitButton = addQueueForm.querySelector("button[type='submit']");
     submitButton.disabled = true;
@@ -291,7 +369,10 @@ async function addPatientToQueue(event) {
                 priority,
                 status: "WAITING",
                 date: getTodayKey(),
-                addedBy: currentStaffId
+                addedBy: currentStaffId,
+                serviceId,
+                serviceName,
+                serviceDuration
             })
         });
 
@@ -305,6 +386,7 @@ async function addPatientToQueue(event) {
         addQueueForm.reset();
         showToast(`${patientName} was added to the queue${assignedTime ? ` for ${assignedTime}` : ""}.`, "success");
         await refreshQueue();
+        await loadClinicServices(currentClinicId, currentIdToken);
         await loadAddQueueSlots("", false);
     } catch (error) {
         console.error("Error adding patient to queue:", error);
@@ -540,6 +622,7 @@ auth.onAuthStateChanged(async (user) => {
         }
 
         await loadQueue(currentClinicId, idToken);
+        await loadClinicServices(currentClinicId, idToken);
         await loadAddQueueSlots();
 
     } catch (error) {

@@ -374,6 +374,7 @@ const startConsultation = async (clinicId, queueItemId, staffId) => {
   const updatedFields = {
     status: "IN_CONSULTATION",
     assignedStaffId: staffId,
+    consultationStartedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedBy: staffId,
   };
@@ -398,8 +399,21 @@ const completeConsultation = async (clinicId, queueItemId, staffId) => {
     throw new Error("Patient is not IN_CONSULTATION");
   }
 
+  const endMillis = Date.now();
+  let actualDuration = null;
+  if (patient.consultationStartedAt) {
+    const startMillis = patient.consultationStartedAt.toDate 
+      ? patient.consultationStartedAt.toDate().getTime()
+      : new Date(patient.consultationStartedAt).getTime();
+    actualDuration = Math.max(1, Math.round((endMillis - startMillis) / (60 * 1000)));
+  } else {
+    actualDuration = patient.serviceDuration || 15;
+  }
+
   const completedFields = {
     status: "COMPLETE",
+    consultationCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    actualDuration,
     completedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedBy: staffId
@@ -460,6 +474,9 @@ const addQueueItem = async (clinicId, queueData) => {
     status: queueData.status || "WAITING",
     queueNumber: Date.now(),
     addedBy: queueData.addedBy || null,
+    serviceId: queueData.serviceId || null,
+    serviceName: queueData.serviceName || null,
+    serviceDuration: queueData.serviceDuration || null,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   };
@@ -491,6 +508,24 @@ const updateQueueItemStatus = async (clinicId, queueItemId, status, staffId) => 
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedBy: staffId || null
   };
+
+  if (status === "IN_CONSULTATION") {
+    updatedFields.consultationStartedAt = admin.firestore.FieldValue.serverTimestamp();
+  } else if (status === "COMPLETE") {
+    updatedFields.consultationCompletedAt = admin.firestore.FieldValue.serverTimestamp();
+    updatedFields.completedAt = admin.firestore.FieldValue.serverTimestamp();
+    const endMillis = Date.now();
+    let actualDuration = null;
+    if (queueItem.consultationStartedAt) {
+      const startMillis = queueItem.consultationStartedAt.toDate 
+        ? queueItem.consultationStartedAt.toDate().getTime()
+        : new Date(queueItem.consultationStartedAt).getTime();
+      actualDuration = Math.max(1, Math.round((endMillis - startMillis) / (60 * 1000)));
+    } else {
+      actualDuration = queueItem.serviceDuration || 15;
+    }
+    updatedFields.actualDuration = actualDuration;
+  }
 
   await queueItemRef.update(updatedFields);
   return enrichQueueItemWithPatient({ queueItemId, ...queueItem, ...updatedFields });
@@ -584,6 +619,9 @@ const addTodaysAppointmentsToQueue = async (clinicId) => {
       priority: 0,
       appointmentTime: appointment.timeSlot,
       queueNumber: Date.now(),
+      serviceId: appointment.serviceId || null,
+      serviceName: appointment.serviceName || null,
+      serviceDuration: appointment.serviceDuration || null,
       createdAt: new Date()
     };
 

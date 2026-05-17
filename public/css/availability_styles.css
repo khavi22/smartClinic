@@ -665,6 +665,81 @@ body {
     height: 16px;
 }
 
+/* Service Selector Styles */
+.service-selector {
+    border: none;
+    padding: 16px;
+    margin: 12px 0;
+    background: var(--primary-blue-light);
+    border-radius: 12px;
+}
+
+.service-legend {
+    display: block;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.service-option {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    gap: 10px;
+}
+
+.service-option:hover {
+    border-color: var(--primary-blue);
+    background: var(--primary-blue-light);
+}
+
+.service-option input[type="radio"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+.service-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    flex: 1;
+}
+
+.service-duration {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.service-loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 16px;
+    font-size: 0.9rem;
+}
+
+.service-error {
+    text-align: center;
+    color: #dc2626;
+    padding: 16px;
+    font-size: 0.9rem;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
     .card-body {

@@ -241,115 +241,23 @@
 
         </section>
 
-
-        <section class="profile-edit-bar">
-
-            <p class="profile-lock-text">
-                Clinic profile is locked to prevent accidental changes.
-            </p>
-
-            <button
-                type="button"
-                id="toggleClinicEditBtn"
-                class="toggle-edit-btn">
-
-                Enable Editing
-            </button>
-
-        </section>
-
-        <form id="profileForm">
-        <!-- ── CLINIC PROFILE CARD ── -->
-        <section class="admin-grid" aria-labelledby="profile-heading">
-            <article class="admin-card profile-card" aria-labelledby="profile-heading">
-                <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-building-house' aria-hidden="true"></i></span>
-                    <div>
-                        <h2 id="profile-heading">Clinic Profile &amp; Searchability</h2>
-                        <p>Set facility type, services, and location so patients can find your clinic</p>
+        <!-- ── MANAGE CLINIC & SERVICES BUTTON ── -->
+        <section class="admin-grid" style="margin-top: 32px; margin-bottom: 32px;">
+            <article class="admin-card">
+                <header class="card-header" style="display: flex; justify-content: space-between; align-items: center; border: none; padding-bottom: 0;">
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <span class="card-icon"><i class='bx bx-clinic' aria-hidden="true"></i></span>
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.25rem;">Clinic Settings &amp; Services</h2>
+                            <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Update facility details and manage bookable services</p>
+                        </div>
                     </div>
+                    <a href="manageservices.html" class="btn-save" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; font-weight: 600; padding: 10px 20px;">
+                        <i class='bx bx-cog'></i> Manage Services
+                    </a>
                 </header>
-
-                <form class="profile-form" id="profileForm">
-
-                    <!-- Facility Type -->
-                    <fieldset class="profile-fieldset">
-                        <legend>Facility Type</legend>
-                        <div class="radio-grid">
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Community Health Centre"> Community Health Centre</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="District Hospital"> District Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Regional Hospital"> Regional Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Tertiary Hospital"> Tertiary Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Clinic"> Clinic</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Private Hospital"> Private Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Specialised Hospital"> Specialised Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Gateway Clinic"> Gateway Clinic</label>
-                        </div>
-                    </fieldset>
-
-                    <!-- Services -->
-                    <fieldset class="profile-fieldset">
-                        <legend>Services Offered <span class="legend-sub">(select all that apply)</span></legend>
-                        <div class="checkbox-grid">
-                            <label class="check-chip"><input type="checkbox" name="services" value="General Outpatient"> General Outpatient</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Emergency &amp; Casualty"> Emergency &amp; Casualty</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Maternal &amp; Child Health"> Maternal &amp; Child Health</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="HIV/AIDS &amp; TB"> HIV/AIDS &amp; TB</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Mental Health"> Mental Health</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Chronic Disease Management"> Chronic Disease Management</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Dental"> Dental</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Ophthalmology"> Ophthalmology</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Physiotherapy"> Physiotherapy</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Pharmacy"> Pharmacy</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Radiology &amp; Imaging"> Radiology &amp; Imaging</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Laboratory"> Laboratory</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Paediatrics"> Paediatrics</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Surgery"> Surgery</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Nutrition &amp; Dietetics"> Nutrition &amp; Dietetics</label>
-                        </div>
-                    </fieldset>
-
-                    <!-- Location -->
-                    <fieldset class="profile-fieldset">
-                        <legend>Location Details</legend>
-                        <div class="location-grid">
-                            <div class="form-field">
-                                <label for="clinicProvince">Province</label>
-                                <select id="clinicProvince" name="province" class="premium-select">
-                                    <option value="">— Select Province —</option>
-                                    <option>Eastern Cape</option>
-                                    <option>Free State</option>
-                                    <option>Gauteng</option>
-                                    <option>KwaZulu-Natal</option>
-                                    <option>Limpopo</option>
-                                    <option>Mpumalanga</option>
-                                    <option>Northern Cape</option>
-                                    <option>North West</option>
-                                    <option>Western Cape</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
-                                <label for="clinicDistrict">District</label>
-                                <input type="text" id="clinicDistrict" name="district" class="premium-input" placeholder="e.g. City of Cape Town">
-                            </div>
-                            <div class="form-field">
-                                <label for="clinicRegion">Region / Sub-district</label>
-                                <input type="text" id="clinicRegion" name="region" class="premium-input" placeholder="e.g. Tygerberg">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <footer class="profile-form-footer">
-                        <span id="profileSaveStatus" class="save-status" aria-live="polite"></span>
-                        <button type="button" id="saveProfileBtn" class="save-btn">
-                            <i class='bx bx-save' aria-hidden="true"></i>
-                            Save Profile
-                        </button>
-                    </footer>
-                </form>
             </article>
         </section>
-        </form>
 
         <!-- ── DANGER ZONE ── -->
         <section class="danger-zone" aria-labelledby="danger-heading">
@@ -377,6 +285,7 @@
             </footer>
         </article>
     </dialog>
+
 
     <script src="js/notifications.js"></script>
     <script src="js/dashboard.js?v=3"></script>

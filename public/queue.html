@@ -89,6 +89,16 @@
                         </div>
 
                         <div class="field-group">
+                            <label for="serviceSelectInput">Service Type</label>
+                            <div class="select-wrapper">
+                                <i class='bx bx-briefcase-alt-2'></i>
+                                <select id="serviceSelectInput" required>
+                                    <option value="">Loading services...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
                             <label for="priorityInput">Priority Level</label>
                             <div class="select-wrapper">
                                 <i class='bx bx-error-alt'></i>
@@ -132,6 +142,14 @@
                         <h3>In Consultation</h3>
                         <p id="consultationQueueCount" class="stat-value">--</p>
                         <p class="stat-sub">Currently with doctor</p>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-icon"><i class='bx bx-brain'></i></div>
+                    <div class="stat-content">
+                        <h3>AI Predicted Wait</h3>
+                        <p id="predictedWaitTime" class="stat-value">-- mins</p>
+                        <p id="predictedWaitRange" class="stat-sub">Calculating...</p>
                     </div>
                 </div>
             </section>

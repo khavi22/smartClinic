@@ -1,4 +1,6 @@
 let cachedSlots = [];
+let cachedServices = [];
+let selectedService = null;
 
 const __now = new Date();
 let today = __now;
@@ -277,6 +279,98 @@ window.changeMonth = function (delta) {
     renderCalendar();
 };
 
+async function fetchAndRenderServices(clinicId) {
+    const servicesContainer = document.getElementById('servicesContainer');
+    if (!servicesContainer) return;
+
+    try {
+        servicesContainer.innerHTML = '<div class="service-loading">Loading services...</div>';
+        
+        const res = await fetch(`/api/clinics/services?clinicId=${encodeURIComponent(clinicId)}`);
+        if (!res.ok) throw new Error('Failed to fetch services');
+        
+        cachedServices = await res.json();
+        
+        if (!cachedServices || cachedServices.length === 0) {
+            servicesContainer.innerHTML = '<div class="service-error">No services available</div>';
+            return;
+        }
+        
+        // Reset selected service when loading new ones
+        selectedService = null;
+        
+        let html = '';
+        cachedServices.forEach(service => {
+            const isSelected = selectedService && selectedService.id === service.id ? 'checked' : '';
+            html += `
+                <label class="service-option">
+                    <input type="radio" name="service" value="${service.id}" data-name="${service.name}" data-duration="${service.duration}" ${isSelected}>
+                    <span class="service-name">${service.name}</span>
+                    <span class="service-duration">${service.duration} min</span>
+                </label>
+            `;
+        });
+        
+        servicesContainer.innerHTML = html;
+        
+        // Add change listeners
+        servicesContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                selectedService = {
+                    id: e.target.value,
+                    name: e.target.dataset.name,
+                    duration: parseInt(e.target.dataset.duration)
+                };
+                updatePredictedWaitTime();
+            });
+        });
+    } catch (error) {
+        console.error('Error loading services:', error);
+        servicesContainer.innerHTML = `<div class="service-error">Error: ${error.message}</div>`;
+    }
+}
+
+async function updatePredictedWaitTime() {
+    const container = document.getElementById("mlWaitTimeContainer");
+    const textEl = document.getElementById("mlWaitTimeText");
+    const rangeEl = document.getElementById("mlWaitTimeRange");
+    if (!container || !textEl || !rangeEl) return;
+
+    if (!selectedService || selectedSlotId === null) {
+        container.style.display = "none";
+        return;
+    }
+
+    container.style.display = "block";
+    textEl.innerHTML = `<span style="color: #64748b; font-size: 0.95rem;"><i class='bx bx-loader-alt bx-spin' style="margin-right: 5px;"></i>Calculating AI prediction...</span>`;
+    rangeEl.textContent = "-";
+
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clinicId = urlParams.get('id') || "default_clinic";
+        
+        // Find selected slot details to pass timeSlot
+        const slot = cachedSlots.find(s => s.id === selectedSlotId);
+        const timeSlot = slot ? slot.time.split(" - ")[0] : "09:00";
+
+        const res = await fetch(`/api/queue/${encodeURIComponent(clinicId)}/predict-waittime?date=${selectedDate}&timeSlot=${encodeURIComponent(timeSlot)}&serviceId=${encodeURIComponent(selectedService.id)}`);
+        
+        if (!res.ok) throw new Error("Prediction request failed");
+        
+        const data = await res.json();
+        if (data.success) {
+            textEl.innerHTML = `Wait for <strong>${data.estimatedWaitTime} minutes</strong>`;
+            rangeEl.textContent = `Expected Range: ${data.waitTimeRange || `${Math.max(0, data.estimatedWaitTime - 5)}-${data.estimatedWaitTime + 5} mins`} (${data.fallback ? 'Based on queue statistics' : 'Based on ML wait-time model'})`;
+        } else {
+            throw new Error(data.message || "Unknown prediction error");
+        }
+    } catch (err) {
+        console.warn("Could not get predicted wait time:", err);
+        textEl.textContent = "Wait for ~15-20 minutes";
+        rangeEl.textContent = "Based on typical slot busyness";
+    }
+}
+
 window.handleSlotSelection = function (slotId) {
     const slot = cachedSlots.find(s => s.id === slotId);
     if (!slot || slot.status === 'full') {
@@ -285,6 +379,12 @@ window.handleSlotSelection = function (slotId) {
     selectedSlotId = slotId;
     renderSlots();
 
+    // Reset wait time container on new slot selection
+    const waitContainer = document.getElementById("mlWaitTimeContainer");
+    if (waitContainer) {
+        waitContainer.style.display = "none";
+    }
+
     const dialog = document.getElementById('bookingModal');
     const details = document.getElementById('dialogBookingDetails');
     const displayDate = new Date(selectedDate).toLocaleDateString('default', {
@@ -292,6 +392,12 @@ window.handleSlotSelection = function (slotId) {
     });
 
     details.innerHTML = `Confirm your appointment for <br><time><strong>${displayDate}</strong> at <strong>${slot.time}</strong></time>?`;
+    
+    // Fetch and render services for this clinic
+    const urlParams = new URLSearchParams(window.location.search);
+    const clinicId = urlParams.get('id') || 'default_clinic';
+    fetchAndRenderServices(clinicId);
+    
     dialog.showModal();
 };
 
@@ -354,6 +460,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (confirmBtn) {
         confirmBtn.addEventListener('click', async () => {
             if (selectedSlotId !== null) {
+                // Validate service selection
+                if (!selectedService) {
+                    showToast("Please select a service type before confirming.", "error");
+                    return;
+                }
+
                 const slot = cachedSlots.find(s => s.id === selectedSlotId);
                 const urlParams = new URLSearchParams(window.location.search);
                 const clinicId = urlParams.get('id') || "default_clinic";
@@ -386,6 +498,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clinicAddress: clinicAddress,
                             date: selectedDate,
                             timeSlot: slot.time,
+                            serviceId: selectedService.id,
+                            serviceName: selectedService.name,
+                            serviceDuration: selectedService.duration,
                             oldAppointmentId: oldAppointmentId
                         })
                     });
@@ -400,6 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             showToast(`Appointment successfully confirmed for ${selectedDate} at ${slot.time}!`, "success");
                         }
                         selectedSlotId = null;
+                        selectedService = null;
                         await window.handleDateSelection(selectedDate);
                         
                         // If rescheduled, redirect back to appointments page after a short delay

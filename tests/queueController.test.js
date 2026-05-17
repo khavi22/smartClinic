@@ -8,6 +8,7 @@ const {
     rescheduleQueueItem,
     updateQueueItemStatus,
     removeQueueItem,
+    predictWaitTime,
 } = require("../Controllers/queueController");
 
 jest.mock("../services/queueService");
@@ -587,6 +588,138 @@ describe("Queue Controllers", () => {
                 message: "Failed to remove queue item",
                 error: "Firestore error"
             }));
+        });
+    });
+
+    describe("predictWaitTime", () => {
+        it("should return 400 if clinicId is missing", async () => {
+            req.params = {};
+
+            await predictWaitTime(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({ message: "clinicId is required" })
+            );
+        });
+
+        it("should calculate wait time using DB fallback heuristics if ML service is down", async () => {
+            req.params = { clinicId: "clinic1" };
+            req.query = { date: "2026-05-11", timeSlot: "09:00" };
+
+            const mockQueue = {
+                WAITING: [{ id: "q1" }, { id: "q2" }],
+                IN_CONSULTATION: [{ id: "q3" }],
+                COMPLETE: [],
+                MISSED: [],
+            };
+
+            queueService.getQueue.mockResolvedValue(mockQueue);
+
+            await predictWaitTime(req, res);
+
+            expect(queueService.getQueue).toHaveBeenCalledWith("clinic1");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: true,
+                    estimatedWaitTime: 40, // (1 active * 10) + (2 waiting * 15) = 40
+                    waitTimeRange: "35-45 mins",
+                    fallback: true
+                })
+            );
+        });
+
+        it("should handle error in getQueue gracefully", async () => {
+            req.params = { clinicId: "clinic1" };
+            queueService.getQueue.mockRejectedValue(new Error("Database down"));
+
+            await predictWaitTime(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                    message: "Failed to predict wait time",
+                    error: "Database down"
+                })
+            );
+        });
+
+        it("should return predictions from ML service if it is running", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+            
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            
+            const mockResponse = {
+                success: true,
+                estimatedWaitTime: 25,
+                waitTimeRange: "20-30 mins",
+                usedLiveQueue: true,
+                isToday: true
+            };
+            
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: true,
+                json: jest.fn().mockResolvedValue(mockResponse)
+            });
+
+            req.params = { clinicId: "clinic1" };
+            req.query = { date: "2026-05-11", timeSlot: "09:00" };
+
+            await predictWaitTime(req, res);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining("http://localhost:5001/predict-waittime")
+            );
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: true,
+                    estimatedWaitTime: 25,
+                    waitTimeRange: "20-30 mins"
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
+        });
+
+        it("should fallback to DB heuristics if ML service returns not ok", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+            
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: false
+            });
+
+            req.params = { clinicId: "clinic1" };
+            req.query = { date: "2026-05-11", timeSlot: "09:00" };
+
+            const mockQueue = {
+                WAITING: [{ id: "q1" }],
+                IN_CONSULTATION: [],
+                COMPLETE: [],
+                MISSED: [],
+            };
+            queueService.getQueue.mockResolvedValue(mockQueue);
+
+            await predictWaitTime(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: true,
+                    estimatedWaitTime: 15,
+                    fallback: true
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
         });
     });
 });

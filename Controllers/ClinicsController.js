@@ -55,6 +55,30 @@ exports.updateClinicHoursController = async (req, res) => {
   }
 };
 
+// ── UPDATE CLINIC PROFILE ────────────────────────────────────
+exports.updateClinicProfile = async (req, res) => {
+  try {
+    const clinicId = req.user.clinicId;  // set by authMiddleware
+    if (!clinicId) return res.status(400).json({ success: false, message: "No clinicId on token" });
+
+    const { facilityType, province, district, region, address } = req.body;
+
+    // Only update fields that were actually sent
+    const updates = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+    if (facilityType !== undefined) updates.facilityType = facilityType;
+    if (province   !== undefined) updates.province   = province;
+    if (district   !== undefined) updates.district   = district;
+    if (region     !== undefined) updates.region     = region;
+    if (address    !== undefined) updates.address    = address;
+
+    await db.collection("clinics").doc(clinicId).update(updates);
+    res.json({ success: true, message: "Clinic profile updated" });
+  } catch (error) {
+    console.error("Error updating clinic profile:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // ── GET CLINICS ─────────────────────────────────────────────
 exports.getClinics = async (req, res) => {
   const searchName = req.query.search;
@@ -128,13 +152,37 @@ exports.seedServiceTemplates = async (req, res) => {
 // ── CLINIC SERVICES ─────────────────────────────────────────
 exports.getServices = async (req, res) => {
   try {
-    console.log("req.user:", req.user);
-    const clinicId = req.user.clinicId;
-    console.log("clinicId:", clinicId);
+    let clinicId = req.query.clinicId || (req.user && req.user.clinicId);
+    
+    // Optional Auth: if no clinicId, try decoding authorization header
     if (!clinicId) {
-      return res.status(400).json({ error: "No clinicId found on user token. Set custom claims first." });
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split("Bearer ")[1];
+        try {
+          const decoded = await admin.auth().verifyIdToken(token);
+          const clinicSnapshot = await db
+            .collection("clinics")
+            .where("adminUid", "==", decoded.uid)
+            .limit(1)
+            .get();
+
+          if (!clinicSnapshot.empty) {
+            clinicId = clinicSnapshot.docs[0].id;
+          }
+        } catch (authErr) {
+          console.warn("Optional auth decoding failed in getServices:", authErr.message);
+        }
+      }
     }
+    
+    console.log(`[DEBUG] getServices: Fetching services for clinicId = "${clinicId}"`);
+    if (!clinicId) {
+      return res.status(400).json({ error: "clinicId is required as query parameter or from user token" });
+    }
+    
     const services = await getClinicServices(clinicId);
+    console.log(`[DEBUG] getServices: Found ${services.length} services for clinicId = "${clinicId}"`);
     res.json(services);
   } catch (err) {
     console.error("getServices error:", err);
@@ -145,6 +193,7 @@ exports.getServices = async (req, res) => {
 exports.addService = async (req, res) => {
   try {
     const clinicId = req.user.clinicId;
+    console.log(`[DEBUG] addService: Adding service for clinicId = "${clinicId}"`);
     if (!clinicId) return res.status(400).json({ error: "No clinicId on token" });
 
     const { name, description, duration } = req.body;

@@ -308,6 +308,79 @@ exports.completeConsultation = async (req, res) => {
     }
 };
 
+exports.predictWaitTime = async (req, res) => {
+    try {
+        const { clinicId } = req.params;
+        const { date, timeSlot, serviceId, priority } = req.query;
+
+        if (!clinicId) {
+            return res.status(400).json({ success: false, message: "clinicId is required" });
+        }
+
+        const mlBaseUrl = process.env.ML_SERVICE_URL;
+        if (mlBaseUrl) {
+            try {
+                const params = new URLSearchParams({
+                    clinicId,
+                    date: date || new Date().toISOString().split('T')[0],
+                    timeSlot: timeSlot || "09:00",
+                    serviceId: serviceId || "default",
+                    priority: priority || "0"
+                });
+
+                const mlRes = await fetch(`${mlBaseUrl}/predict-waittime?${params.toString()}`);
+                if (mlRes.ok) {
+                    const data = await mlRes.json();
+                    return res.status(200).json({
+                        success: true,
+                        estimatedWaitTime:    data.estimatedWaitTime,
+                        waitTimeRange:        data.waitTimeRange,
+                        waitLabel:            data.waitLabel,
+                        usedLiveQueue:        data.usedLiveQueue,
+                        liveQueueCount:       data.liveQueueCount,
+                        activeConsultations:  data.activeConsultations,
+                        isToday:              data.isToday,
+                    });
+                }
+            } catch (mlError) {
+                console.warn("ML Wait Time Service unavailable, falling back to database heuristics:", mlError.message);
+            }
+        }
+
+        const { getQueue } = require("../services/queueService");
+        const queueObj = await getQueue(clinicId);
+        
+        let waitingCount = 0;
+        let activeCount = 0;
+        
+        if (queueObj) {
+            waitingCount = Array.isArray(queueObj.WAITING) ? queueObj.WAITING.length : 0;
+            activeCount = Array.isArray(queueObj.IN_CONSULTATION) ? queueObj.IN_CONSULTATION.length : 0;
+        }
+
+        const estWait = (activeCount * 10) + (waitingCount * 15);
+        const minWait = Math.max(0, estWait - 5);
+        const maxWait = estWait + 5;
+
+        res.status(200).json({
+            success: true,
+            estimatedWaitTime: estWait,
+            waitTimeRange: `${minWait}-${maxWait} mins`,
+            usedLiveQueue: true,
+            isToday: true,
+            fallback: true
+        });
+
+    } catch (error) {
+        console.error("Error predicting wait time:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to predict wait time",
+            error: error.message
+        });
+    }
+};
+
 
 
 
