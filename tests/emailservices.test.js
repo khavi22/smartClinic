@@ -228,6 +228,36 @@ describe("Email Service", () => {
     });
 
     // =====================================================
+    // sendQueueStatusUpdate
+    // =====================================================
+
+    describe("sendQueueStatusUpdate", () => {
+
+        it("should send queue status update email", async () => {
+
+            await emailService.sendQueueStatusUpdate(
+                "patient@test.com",
+                "John Doe",
+                "Clinic A",
+                "IN_CONSULTATION",
+                "2026-05-20",
+                "10:00 - 11:00"
+            );
+
+            expect(mockSendMail)
+                .toHaveBeenCalledTimes(1);
+
+            expect(mockSendMail)
+                .toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        to: "patient@test.com",
+                        subject: "Queue Status Updated - Clinic A",
+                    })
+                );
+        });
+    });
+
+    // =====================================================
     // sendAdminInvitation
     // =====================================================
 

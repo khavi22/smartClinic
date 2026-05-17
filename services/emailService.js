@@ -148,6 +148,33 @@ const sendAppointmentCancellation = async (
     return sendEmail(email, subject, html);
 };
 
+const sendQueueStatusUpdate = async (
+    email,
+    patientName,
+    clinicName,
+    status,
+    date,
+    timeSlot
+) => {
+
+    const formattedStatus = String(status || "")
+        .replace(/_/g, " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+    const subject = `Queue Status Updated - ${clinicName || "SmartClinic"}`;
+
+    const html = `
+        <h1>Queue Status Updated</h1>
+        <p>Hello ${patientName || "there"}</p>
+        <p>Your queue status at ${clinicName || "your clinic"} is now: <strong>${formattedStatus}</strong></p>
+        ${date ? `<p>Date: ${date}</p>` : ""}
+        ${timeSlot ? `<p>Time: ${timeSlot}</p>` : ""}
+    `;
+
+    return sendEmail(email, subject, html);
+};
+
 const sendAdminInvitation = async (
     email,
     subject,
@@ -169,5 +196,6 @@ module.exports = {
     sendStaffRejection,
     sendAppointmentConfirmation,
     sendAppointmentCancellation,
+    sendQueueStatusUpdate,
     sendAdminInvitation,
 };

@@ -560,7 +560,7 @@ async function updatePatientStatus(patient, status) {
     }
 
     try {
-        showToast(`Updating ${getPatientName(patient)}to ${status}......`, "info");
+        showToast(`Updating ${getPatientName(patient)} to ${status}......`, "info");
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/${encodeURIComponent(patient.queueItemId)}`, {
             method: "PATCH",
             headers: {
