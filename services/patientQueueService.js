@@ -2,7 +2,7 @@ const { db, admin } = require("./config/firebase");
 
 async function getPatientQueueInfo(patientId) {
 
-    const today_date = "2026-05-17";
+    const today_date = new Date().toISOString().split("T")[0]; // "2026-05-17";
 
     const clinicSnapshot = await db.collection("clinics").get();
 
