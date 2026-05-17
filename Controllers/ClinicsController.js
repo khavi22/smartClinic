@@ -152,11 +152,13 @@ exports.getServices = async (req, res) => {
       }
     }
     
+    console.log(`[DEBUG] getServices: Fetching services for clinicId = "${clinicId}"`);
     if (!clinicId) {
       return res.status(400).json({ error: "clinicId is required as query parameter or from user token" });
     }
     
     const services = await getClinicServices(clinicId);
+    console.log(`[DEBUG] getServices: Found ${services.length} services for clinicId = "${clinicId}"`);
     res.json(services);
   } catch (err) {
     console.error("getServices error:", err);
@@ -167,6 +169,7 @@ exports.getServices = async (req, res) => {
 exports.addService = async (req, res) => {
   try {
     const clinicId = req.user.clinicId;
+    console.log(`[DEBUG] addService: Adding service for clinicId = "${clinicId}"`);
     if (!clinicId) return res.status(400).json({ error: "No clinicId on token" });
 
     const { name, description, duration } = req.body;
