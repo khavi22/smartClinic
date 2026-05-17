@@ -333,10 +333,13 @@ exports.predictWaitTime = async (req, res) => {
                     const data = await mlRes.json();
                     return res.status(200).json({
                         success: true,
-                        estimatedWaitTime: data.estimatedWaitTime,
-                        waitTimeRange: data.waitTimeRange,
-                        usedLiveQueue: data.usedLiveQueue,
-                        isToday: data.isToday
+                        estimatedWaitTime:    data.estimatedWaitTime,
+                        waitTimeRange:        data.waitTimeRange,
+                        waitLabel:            data.waitLabel,
+                        usedLiveQueue:        data.usedLiveQueue,
+                        liveQueueCount:       data.liveQueueCount,
+                        activeConsultations:  data.activeConsultations,
+                        isToday:              data.isToday,
                     });
                 }
             } catch (mlError) {
