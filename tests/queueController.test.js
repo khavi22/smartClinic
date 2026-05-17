@@ -645,5 +645,81 @@ describe("Queue Controllers", () => {
                 })
             );
         });
+
+        it("should return predictions from ML service if it is running", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+            
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            
+            const mockResponse = {
+                success: true,
+                estimatedWaitTime: 25,
+                waitTimeRange: "20-30 mins",
+                usedLiveQueue: true,
+                isToday: true
+            };
+            
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: true,
+                json: jest.fn().mockResolvedValue(mockResponse)
+            });
+
+            req.params = { clinicId: "clinic1" };
+            req.query = { date: "2026-05-11", timeSlot: "09:00" };
+
+            await predictWaitTime(req, res);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining("http://localhost:5001/predict-waittime")
+            );
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: true,
+                    estimatedWaitTime: 25,
+                    waitTimeRange: "20-30 mins"
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
+        });
+
+        it("should fallback to DB heuristics if ML service returns not ok", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+            
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: false
+            });
+
+            req.params = { clinicId: "clinic1" };
+            req.query = { date: "2026-05-11", timeSlot: "09:00" };
+
+            const mockQueue = {
+                WAITING: [{ id: "q1" }],
+                IN_CONSULTATION: [],
+                COMPLETE: [],
+                MISSED: [],
+            };
+            queueService.getQueue.mockResolvedValue(mockQueue);
+
+            await predictWaitTime(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: true,
+                    estimatedWaitTime: 15,
+                    fallback: true
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
+        });
     });
 });

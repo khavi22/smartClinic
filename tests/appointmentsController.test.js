@@ -3,7 +3,8 @@ const {
     getAvailability,
     postAppointment,
     getAppointmentsByPatientId,
-    cancelAppointmentController
+    cancelAppointmentController,
+    getSmartSuggestion
 } = require("../Controllers/appointmentsController");
 jest.mock("../services/firebaseService");
 
@@ -71,6 +72,69 @@ describe("appointmentsController", () => {
             expect(res.json).toHaveBeenCalledWith({
                 error: "Failed to fetch availability data."
             });
+        });
+
+        it("should merge ML recommendations into slots when ML service is active", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+            
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            
+            const mockMlPredictions = {
+                predictions: [
+                    { timeSlot: "09:00", recommended: true }
+                ]
+            };
+            
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: true,
+                json: jest.fn().mockResolvedValue(mockMlPredictions)
+            });
+
+            req.query.date = "2026-04-19";
+            req.query.clinicId = "clinic-123";
+            const slots = [{ id: 1, time: "09:00" }, { id: 2, time: "10:00" }];
+            appointmentService.getAvailabilityForDate.mockResolvedValue(slots);
+
+            await getAvailability(req, res);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining("http://localhost:5001/predict?date=2026-04-19")
+            );
+            expect(res.json).toHaveBeenCalledWith({
+                date: "2026-04-19",
+                slots: [
+                    { id: 1, time: "09:00", isRecommended: true },
+                    { id: 2, time: "10:00" }
+                ]
+            });
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
+        });
+
+        it("should proceed without recommendations if ML service call fails", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+            
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            
+            global.fetch = jest.fn().mockRejectedValue(new Error("Network error"));
+
+            req.query.date = "2026-04-19";
+            req.query.clinicId = "clinic-123";
+            const slots = [{ id: 1, time: "09:00" }];
+            appointmentService.getAvailabilityForDate.mockResolvedValue(slots);
+
+            await getAvailability(req, res);
+
+            expect(res.json).toHaveBeenCalledWith({
+                date: "2026-04-19",
+                slots
+            });
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
         });
     });
 
@@ -313,6 +377,97 @@ describe("appointmentsController", () => {
                 message: "Failed to cancel appointment",
                 error: "Cancel failed"
             });
+        });
+    });
+
+    describe("getSmartSuggestion", () => {
+        it("should return static AI Tip when ML_SERVICE_URL is missing", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            delete process.env.ML_SERVICE_URL;
+
+            await getSmartSuggestion(req, res);
+
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    suggestion: expect.stringContaining("Mid-week mornings")
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+        });
+
+        it("should fetch smart suggestions when ML service is active", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+
+            const localDate = new Date();
+            const year = localDate.getFullYear();
+            const month = String(localDate.getMonth() + 1).padStart(2, '0');
+            const day = String(localDate.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            const tomorrowDate = new Date(localDate);
+            tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+            const yTom = tomorrowDate.getFullYear();
+            const mTom = String(tomorrowDate.getMonth() + 1).padStart(2, '0');
+            const dTom = String(tomorrowDate.getDate()).padStart(2, '0');
+            const tomorrowStr = `${yTom}-${mTom}-${dTom}`;
+
+            const mockMlData = {
+                predictionsByDate: {
+                    [todayStr]: [
+                        { timeSlot: "23:00", recommended: true }
+                    ],
+                    [tomorrowStr]: [
+                        { timeSlot: "10:00", recommended: true }
+                    ]
+                }
+            };
+
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: true,
+                json: jest.fn().mockResolvedValue(mockMlData)
+            });
+
+            req.query.clinicId = "clinic-123";
+
+            await getSmartSuggestion(req, res);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining("http://localhost:5001/predict-range")
+            );
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    hasPrediction: true,
+                    today: expect.objectContaining({ time: "23:00" }),
+                    future: expect.objectContaining({ time: "10:00" })
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
+        });
+
+        it("should return static tip when fetch or parse throws an error", async () => {
+            const originalMlUrl = process.env.ML_SERVICE_URL;
+            const originalFetch = global.fetch;
+
+            process.env.ML_SERVICE_URL = "http://localhost:5001";
+            global.fetch = jest.fn().mockRejectedValue(new Error("Network failure"));
+
+            await getSmartSuggestion(req, res);
+
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    hasPrediction: false,
+                    suggestion: expect.stringContaining("try to book your appointments")
+                })
+            );
+
+            process.env.ML_SERVICE_URL = originalMlUrl;
+            global.fetch = originalFetch;
         });
     });
 });
