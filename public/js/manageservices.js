@@ -4,6 +4,15 @@ let currentClinicId = null;
 let editingServiceId = null;
 window.authToken = null;
 
+// Always returns a fresh (non-expired) Firebase ID token.
+async function getAuthToken() {
+  const user = firebase.auth().currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken(/* forceRefresh */ false);
+  window.authToken = token;
+  return token;
+}
+
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
         window.location.href = "login.html";
@@ -140,17 +149,18 @@ window.handleTemplateChange = function() {
 
 async function loadServices() {
   try {
+    const token = await getAuthToken();
     const res = await fetch(`/api/clinics/services?clinicId=${encodeURIComponent(currentClinicId)}`, {
-      headers: { "Authorization": `Bearer ${window.authToken}` }
+      headers: { "Authorization": `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error("Failed to fetch services");
+    if (!res.ok) throw new Error(`Failed to fetch services (${res.status})`);
     const services = await res.json();
 
     renderTable(services);
     renderStats(services);
   } catch (err) {
     showToast("Could not load services. Please try again.", "error");
-    console.error(err);
+    console.error("loadServices error:", err);
   }
 }
 
@@ -171,6 +181,7 @@ function renderTable(services) {
 
   services.forEach(service => {
     const tr = document.createElement("tr");
+    tr.dataset.serviceId = service.id;
     tr.style.borderBottom = "1px solid #e2e8f0";
 
     const nameTd = document.createElement("td");
@@ -204,7 +215,22 @@ function renderTable(services) {
     deleteBtn.textContent = "Delete";
     deleteBtn.type = "button";
     deleteBtn.style.cssText = "padding: 6px 12px; font-size: 0.8rem; font-weight:600; border-radius:8px; color:#ef4444; background:#fef2f2; border:1px solid #fee2e2; cursor:pointer;";
-    deleteBtn.addEventListener("click", () => handleServiceDelete(service.id));
+    deleteBtn.addEventListener("click", () => {
+      // Replace the row with an inline confirmation
+      tr.innerHTML = "";
+      const confirmTd = document.createElement("td");
+      confirmTd.colSpan = 4;
+      confirmTd.style.cssText = "padding: 14px 24px; background: #fff7f7; border-left: 3px solid #ef4444;";
+      confirmTd.innerHTML = `
+        <span style="color:#ef4444; font-weight:600; margin-right:16px;">Delete "${service.name}"? This cannot be undone.</span>
+        <button id="confirmDeleteYes-${service.id}" type="button" style="padding:5px 14px; background:#ef4444; color:white; border:none; border-radius:6px; font-weight:600; cursor:pointer; margin-right:8px;">Yes, Delete</button>
+        <button id="confirmDeleteNo-${service.id}" type="button" style="padding:5px 14px; background:white; border:1px solid #cbd5e1; border-radius:6px; font-weight:600; cursor:pointer;">Cancel</button>
+      `;
+      tr.appendChild(confirmTd);
+
+      document.getElementById(`confirmDeleteYes-${service.id}`).addEventListener("click", () => handleServiceDelete(service.id));
+      document.getElementById(`confirmDeleteNo-${service.id}`).addEventListener("click", () => loadServices());
+    });
 
     actionsTd.appendChild(editBtn);
     actionsTd.appendChild(deleteBtn);
@@ -281,11 +307,12 @@ window.handleServiceSubmit = async function(event) {
   btn.disabled = true;
 
   try {
+    const token = await getAuthToken();
     const res = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${window.authToken}`,
+        "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
@@ -296,36 +323,44 @@ window.handleServiceSubmit = async function(event) {
       return;
     }
 
-    if (!res.ok) throw new Error("Failed to save service");
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      throw new Error(errorBody.error || `Server error ${res.status}`);
+    }
 
+    const wasEditing = editingServiceId;
     closeServiceModal();
     await loadServices();
-    showToast(editingServiceId ? "Service updated successfully!" : "Service added successfully!", "success");
+    showToast(wasEditing ? "Service updated successfully!" : "Service added successfully!", "success");
 
   } catch (err) {
-    showToast("Could not save service. Please try again.", "error");
-    console.error(err);
+    showToast(err.message || "Could not save service. Please try again.", "error");
+    console.error("handleServiceSubmit error:", err);
   } finally {
     btn.disabled = false;
   }
 };
 
 async function handleServiceDelete(id) {
-  if (!confirm("Are you sure you want to delete this service?")) return;
-
   try {
+    const token = await getAuthToken();
     const res = await fetch(`/api/clinics/services/${id}`, {
       method: "DELETE",
-      headers: { "Authorization": `Bearer ${window.authToken}` }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    if (!res.ok) throw new Error("Failed to delete service");
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      throw new Error(errorBody.error || `Server error ${res.status}`);
+    }
+
     await loadServices();
     showToast("Service deleted successfully!", "success");
 
   } catch (err) {
-    showToast("Could not delete service. Please try again.", "error");
-    console.error(err);
+    showToast(err.message || "Could not delete service. Please try again.", "error");
+    console.error("handleServiceDelete error:", err);
+    await loadServices(); // re-render to reset the confirmation row
   }
 }
 

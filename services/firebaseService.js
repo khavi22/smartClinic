@@ -346,16 +346,6 @@ const ensureClinicExists = async ({ clinicId, name, address }) => {
     const doc = await db.collection("clinics").doc(clinicId).get();
 
     if (doc.exists) {
-        // Even if clinic exists, check if it has 0 services in subcollection. If so, seed them!
-        const docRef = db.collection("clinics").doc(clinicId);
-        if (typeof docRef.collection === "function") {
-            const servicesSnapshot = await docRef.collection("services").limit(1).get();
-            if (servicesSnapshot.empty) {
-                console.log(`Existing clinic ${clinicId} has 0 services. Auto-seeding default services...`);
-                await seedClinicDefaultServices(clinicId);
-                return { success: true, alreadyExists: true, seededDefaultServices: true };
-            }
-        }
         return { success: true, alreadyExists: true };
     }
 
@@ -364,8 +354,6 @@ const ensureClinicExists = async ({ clinicId, name, address }) => {
         clinicName: name,
         address
     });
-
-    await seedClinicDefaultServices(clinicId);
 
     return { success: true, newlyCreated: true };
 };
@@ -558,88 +546,16 @@ const getServiceTemplates = async () => {
 };
 
 const getClinicServices = async (clinicId) => {
-  const docRef = db.collection("clinics").doc(clinicId);
-  const snapshot = await docRef.collection("services").get();
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .get();
 
-  if (!snapshot.empty) {
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-  }
-
-  // Subcollection is empty. Try to seed from high-level checklist
-  try {
-    const clinicDoc = await docRef.get();
-    if (clinicDoc.exists) {
-      const data = clinicDoc.data();
-      const highLevelServices = data.services;
-
-      if (Array.isArray(highLevelServices) && highLevelServices.length > 0) {
-        console.log(`Seeding services subcollection for clinic ${clinicId} based on high-level checklist...`);
-        const batch = db.batch();
-        const servicesCollection = docRef.collection("services");
-
-        const HIGH_LEVEL_SERVICE_MAP = {
-          "General Outpatient": { name: "General Outpatient Consultation", description: "Standard consultation for general health issues", duration: 30 },
-          "Emergency & Casualty": { name: "Urgent Care Assessment", description: "Immediate evaluation for acute, non-life-threatening conditions", duration: 30 },
-          "Maternal & Child Health": { name: "Maternal & Child Care Clinic", description: "Specialized care for mothers and infants", duration: 45 },
-          "HIV/AIDS & TB": { name: "Immunology & TB Care", description: "Routine monitoring, counselling, and medication management", duration: 30 },
-          "Mental Health": { name: "Mental Health Counselling", description: "Therapeutic session for mental wellness and support", duration: 60 },
-          "Chronic Disease Management": { name: "Chronic Disease Management", description: "Care coordination and follow-up for chronic conditions", duration: 45 },
-          "Dental": { name: "Dental Cleaning & Check-up", description: "Routine dental cleaning and examination", duration: 45 },
-          "Ophthalmology": { name: "Eye Examination", description: "Comprehensive eye testing and consultation", duration: 30 },
-          "Physiotherapy": { name: "Physiotherapy Session", description: "Physical rehabilitation and therapy session", duration: 45 },
-          "Pharmacy": { name: "Prescription Refill & Counselling", description: "Medication review and pharmacy consultation", duration: 15 },
-          "Radiology & Imaging": { name: "Radiology Appointment", description: "Imaging diagnostic services (X-ray, ultrasound, etc.)", duration: 30 },
-          "Laboratory": { name: "Lab Diagnostic Testing", description: "Blood draws and other specimen collections", duration: 15 },
-          "Paediatrics": { name: "Pediatric Wellness Exam", description: "Child health examination and growth monitoring", duration: 30 },
-          "Surgery": { name: "Surgical Consultation", description: "Pre-operative or post-operative surgical consultation", duration: 30 },
-          "Nutrition & Dietetics": { name: "Nutritional Assessment", description: "Dietary counselling and health planning", duration: 45 }
-        };
-
-        highLevelServices.forEach(svc => {
-          const template = HIGH_LEVEL_SERVICE_MAP[svc] || {
-            name: `${svc} Consultation`,
-            description: `Standard service for ${svc}`,
-            duration: 30
-          };
-          const ref = servicesCollection.doc();
-          batch.set(ref, {
-            ...template,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            active: true
-          });
-        });
-
-        await batch.commit();
-        
-        // Re-query the subcollection
-        const newSnapshot = await servicesCollection.get();
-        return newSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-      }
-    }
-  } catch (err) {
-    console.error("Failed to seed from high-level checklist in getClinicServices:", err);
-  }
-
-  // Fallback: If both subcollection and high-level checklist are empty, seed standard default services
-  try {
-    console.log(`Fallback: Seeding default services for clinic ${clinicId}...`);
-    await seedClinicDefaultServices(clinicId);
-    const newSnapshot = await docRef.collection("services").get();
-    return newSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-  } catch (err) {
-    console.error("Failed to seed default fallback services:", err);
-    return [];
-  }
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 };
 
 const addClinicService = async (clinicId, data) => {
