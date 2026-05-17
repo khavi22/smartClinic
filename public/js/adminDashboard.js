@@ -33,7 +33,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
             await loadActiveStaff(currentClinicId);
-            
+            // await loadClinicProfile(currentClinicId);
+            await loadSlotCapacity(currentClinicId); 
         }
 
     } catch (error) {
@@ -372,84 +373,76 @@ window.fireStaff = async (staffUid, name) => {
     }
 };
 
-// ── CLINIC PROFILE: load ────────────────────────────────────────────────────
-async function loadClinicProfile(clinicId) {
-    const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
-    if (!doc.exists) return;
-    const data = doc.data();
 
-    // Facility type
-    if (data.facilityType) {
-        const radio = document.querySelector(`input[name="facilityType"][value="${data.facilityType}"]`);
-        if (radio) radio.checked = true;
-    }
+// ── SLOT CAPACITY ────────────────────────────────────────────
+const slotCapacitySlider = document.getElementById("slotCapacitySlider");
+const capacityValueDisplay = document.getElementById("capacityValue");
+const capacitySaveBtn = document.getElementById("capacitySaveBtn");
+const capacitySaveStatus = document.getElementById("capacitySaveStatus");
 
-    // Province
-    if (data.province) {
-        const sel = document.getElementById("clinicProvince");
-        if (sel) sel.value = data.province;
-    }
+if (slotCapacitySlider) {
+    slotCapacitySlider.addEventListener("input", () => {
+        capacityValueDisplay.textContent = slotCapacitySlider.value;
+        slotCapacitySlider.setAttribute("aria-valuenow", slotCapacitySlider.value);
+    });
+}
 
-    // District & Region
-    if (data.district) {
-        const el = document.getElementById("clinicDistrict");
-        if (el) el.value = data.district;
-    }
-    if (data.region) {
-        const el = document.getElementById("clinicRegion");
-        if (el) el.value = data.region;
-    }
+async function loadSlotCapacity(clinicId) {
+    try {
+        const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
+        if (!doc.exists) return;
 
-    // Services
-    if (data.services && Array.isArray(data.services)) {
-        data.services.forEach(svc => {
-            const cb = document.querySelector(`#profileForm input[name="services"][value="${svc}"]`);
-            if (cb) cb.checked = true;
-        });
+        const capacity = doc.data().slotCapacity;
+        if (capacity && slotCapacitySlider) {
+            slotCapacitySlider.value = capacity;
+            capacityValueDisplay.textContent = capacity;
+            slotCapacitySlider.setAttribute("aria-valuenow", capacity);
+        }
+    } catch (error) {
+        console.error("Error loading slot capacity:", error);
     }
 }
 
-// ── CLINIC PROFILE: save ─────────────────────────────────────────────────────
-document.getElementById("saveProfileBtn").addEventListener("click", async () => {
-    if (!currentClinicId) {
-        showToast("No clinic associated with your account.", "error");
-        return;
-    }
+if (capacitySaveBtn) {
+    capacitySaveBtn.addEventListener("click", async () => {
+        if (!currentClinicId) {
+            showToast("No clinic associated with your account.", "error");
+            return;
+        }
 
-    const btn = document.getElementById("saveProfileBtn");
-    const status = document.getElementById("profileSaveStatus");
+        capacitySaveBtn.disabled = true;
+        capacitySaveBtn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving…`;
+        capacitySaveStatus.textContent = "";
 
-    const facilityTypeEl = document.querySelector('input[name="facilityType"]:checked');
-    const facilityType = facilityTypeEl ? facilityTypeEl.value : "";
-    const services = [...document.querySelectorAll('#profileForm input[name="services"]:checked')]
-        .map(cb => cb.value);
+        try {
+            const idToken = await firebase.auth().currentUser.getIdToken();
+            const response = await fetch(`/api/clinics/${currentClinicId}/slot-capacity`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ slotCapacity: Number(slotCapacitySlider.value) })
+            });
 
-    btn.disabled = true;
-    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving…`;
-    status.textContent = "";
-    status.className = "save-status";
+            const result = await response.json();
 
-    try {
-        // Exclude province, district, region from the update payload to prevent updates
-        await firebase.firestore().collection("clinics").doc(currentClinicId).set({
-            facilityType,
-            services
-        }, { merge: true });
-
-        status.textContent = "✓ Profile saved successfully";
-        status.className = "save-status";
-        btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
-        btn.disabled = false;
-
-        setTimeout(() => { status.textContent = ""; }, 4000);
-        setClinicFormEditable(false);
-    } catch (err) {
-        console.error("Save profile error:", err);
-        status.textContent = "Failed to save. Please try again.";
-        status.className = "save-status error";
-        btn.innerHTML = `<i class='bx bx-save'></i> Save Profile`;
-        btn.disabled = false;
-    }
-});
-
-
+            if (response.ok) {
+                capacitySaveStatus.textContent = "✓ Capacity saved successfully";
+                capacitySaveStatus.style.color = "var(--success-green)";
+                showToast("Slot capacity updated successfully.", "success");
+            } else {
+                throw new Error(result.error || "Failed to save capacity");
+            }
+        } catch (error) {
+            console.error("Error saving slot capacity:", error);
+            capacitySaveStatus.textContent = "× Error saving capacity";
+            capacitySaveStatus.style.color = "#ef4444";
+            showToast(error.message || "Failed to save slot capacity.", "error");
+        } finally {
+            capacitySaveBtn.disabled = false;
+            capacitySaveBtn.innerHTML = `<i class='bx bx-save'></i> <span>Save Capacity</span>`;
+            setTimeout(() => { capacitySaveStatus.textContent = ""; }, 4000);
+        }
+    });
+}

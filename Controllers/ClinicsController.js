@@ -1,6 +1,11 @@
 const axios = require("axios");
 const { updateClinicOperatingHours, ensureClinicExists, getClinicServices, addClinicService, updateClinicService, deleteClinicService, serviceExists } = require("../services/firebaseService");
 const { admin, db } = require("../services/config/firebase");
+const { 
+    getAvailabilityForDate, 
+    createAppointment,
+    updateClinicSlotCapacity 
+} = require("../services/clinicService");
 
 // ── OPERATING HOURS ─────────────────────────────────────────
 exports.updateClinicHoursController = async (req, res) => {
@@ -54,7 +59,63 @@ exports.updateClinicHoursController = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+// ── Slots CLINICS ─────────────────────────────────────────────
+exports.updateSlotCapacity = async (req, res) => {
+    console.log("PATCH slot-capacity hit", req.params, req.body);
+    try {
+        const { clinicId } = req.params;
+        const { slotCapacity } = req.body;
 
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const idToken = authHeader.split("Bearer ")[1];
+        let decodedToken;
+        try {
+            decodedToken = await admin.auth().verifyIdToken(idToken);
+        } catch (authError) {
+            return res.status(401).json({ error: "Unauthorized: Invalid token" });
+        }
+
+        const uid = decodedToken.uid;
+
+        const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+        if (!clinicDoc.exists) {
+            return res.status(404).json({ error: "Clinic not found." });
+        }
+
+        if (clinicDoc.data().adminUid !== uid) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        if (!slotCapacity) {
+            return res.status(400).json({ error: "Slot capacity is required." });
+        }
+
+        const result = await updateClinicSlotCapacity(clinicId, slotCapacity);
+
+        return res.status(200).json({
+            message: "Slot capacity updated successfully.",
+            data: result
+        });
+    } catch (error) {
+        console.error("Error updating slot capacity:", error);
+
+        if (error.message === "Clinic not found.") {
+            return res.status(404).json({ error: error.message });
+        }
+        if (
+            error.message === "Invalid clinic ID." ||
+            error.message === "Slot capacity must be a positive integer."
+        ) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        return res.status(500).json({ error: "Internal server error." });
+    }
+};
 // ── UPDATE CLINIC PROFILE ────────────────────────────────────
 exports.updateClinicProfile = async (req, res) => {
   try {
