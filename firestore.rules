@@ -9,6 +9,17 @@ service cloud.firestore {
     function isOwner(uid) {
       return signedIn() && request.auth.uid == uid;
     }
+    function isSupportTeam() {
+      return signedIn() && request.auth.token.email in [
+        'mahlatseclayton1@gmail.com',
+        '2821750@students.wits.ac.za',
+        '2829538@students.wits.ac.za',
+        '2841214@students.wits.ca.za',
+        '2913455@students.wits.ac.za',
+        'gontsemaledu99@gmail.com',
+        'Nnaki128@gmail.com'
+      ];
+    }
 
     // -- Collection Rules --
 
@@ -55,6 +66,11 @@ service cloud.firestore {
       );
       allow create: if signedIn() && request.resource.data.patientId == request.auth.uid;
       allow update, delete: if signedIn() && resource.data.patientId == request.auth.uid;
+    }
+
+    // Admin Invitations - Only support team can create, read, and manage
+    match /adminInvitations/{invitationId} {
+      allow read, create, update, delete: if isSupportTeam();
     }
     
     // Default Deny for everything else

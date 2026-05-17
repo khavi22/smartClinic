@@ -119,105 +119,20 @@ const sendAppointmentConfirmation = async (email, patientName, clinicName, clini
         ? `Appointment Rescheduled - ${clinicName}`
         : `Appointment Confirmed - ${clinicName}`;
 
-    const headerColor = isReschedule ? "#f59e0b" : "#2563eb";
-    const headerTitle = isReschedule ? "Appointment Rescheduled" : "Appointment Confirmed";
-    const introText   = isReschedule
-        ? `Your appointment at <strong>${clinicName}</strong> has been rescheduled. Here are your updated details:`
-        : `Your appointment at <strong>${clinicName}</strong> has been successfully booked. Here are your details:`;
-
-    const html = `
-        <article style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-            <header style="background: ${headerColor}; padding: 32px; text-align: center; color: white;">
-                <h1 style="margin: 0; font-size: 24px;">${headerTitle}</h1>
-            </header>
-            <section style="padding: 32px; line-height: 1.6;">
-                <p>Hello <strong>${patientName}</strong>,</p>
-                <p>${introText}</p>
-                <section style="background: #f8fafc; border-left: 4px solid ${headerColor}; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b; width: 40%;">Clinic</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${clinicName}</td>
-                        </tr>
-                        <tr style="border-top: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">Address</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${clinicAddress}</td>
-                        </tr>
-                        <tr style="border-top: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">Date</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${date}</td>
-                        </tr>
-                        <tr style="border-top: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">Time</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${timeSlot}</td>
-                        </tr>
-                    </table>
-                </section>
-                <p style="font-size: 14px; color: #64748b;">Please arrive 10 minutes early. Remember to bring your ID and medical aid card if applicable.</p>
-                <section style="text-align: center; margin: 32px 0;">
-                    <a href="${BASE_URL}/appointments.html"
-                       style="background: ${headerColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
-                       View My Appointments
-                    </a>
-                </section>
-            </section>
-            <footer style="background: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-                © 2026 SmartClinic. All rights reserved.
-            </footer>
-        </article>
-    `;
-    await sendEmail(email, subject, html, "SmartClinic");
+const sendAdminInvitation = async (email, subject, html) => {
+    try {
+        await sendEmail(email, subject, html, "SmartClinic Support");
+        console.log(`Admin invitation sent to ${email}`);
+    } catch (error) {
+        console.error("Error sending admin invitation:", error);
+        throw error;
+    }
 };
 
-const sendAppointmentCancellation = async (email, patientName, clinicName, clinicAddress, date, timeSlot) => {
-    const subject = `Appointment Cancelled - ${clinicName}`;
-    const html = `
-        <article style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-            <header style="background: #ef4444; padding: 32px; text-align: center; color: white;">
-                <h1 style="margin: 0; font-size: 24px;">Appointment Cancelled</h1>
-            </header>
-            <section style="padding: 32px; line-height: 1.6;">
-                <p>Hello <strong>${patientName}</strong>,</p>
-                <p>Your appointment at <strong>${clinicName}</strong> has been cancelled. Here are the details of the cancelled booking:</p>
-                <section style="background: #f8fafc; border-left: 4px solid #ef4444; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b; width: 40%;">Clinic</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${clinicName}</td>
-                        </tr>
-                        <tr style="border-top: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">Address</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${clinicAddress}</td>
-                        </tr>
-                        <tr style="border-top: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">Date</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${date}</td>
-                        </tr>
-                        <tr style="border-top: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">Time</td>
-                            <td style="padding: 8px 0; font-size: 15px; font-weight: 600;">${timeSlot}</td>
-                        </tr>
-                    </table>
-                </section>
-                <p style="font-size: 14px; color: #64748b;">If you did not request this cancellation or would like to rebook, please contact the clinic directly.</p>
-                <section style="text-align: center; margin: 32px 0;">
-                    <a href="${BASE_URL}/appointments.html"
-                       style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
-                       Book a New Appointment
-                    </a>
-                </section>
-            </section>
-            <footer style="background: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-                © 2026 SmartClinic. All rights reserved.
-            </footer>
-        </article>
-    `;
-    await sendEmail(email, subject, html, "SmartClinic");
-};
 module.exports = {
     sendStaffInvitation,
     sendStaffApproval,
     sendStaffRejection,
-    sendAppointmentConfirmation,
-    sendAppointmentCancellation
-};
+    sendAdminInvitation,
+    sendEmail
+}};
