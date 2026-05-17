@@ -460,6 +460,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (confirmBtn) {
         confirmBtn.addEventListener('click', async () => {
             if (selectedSlotId !== null) {
+                // Ensure selectedService matches the actual visual DOM state
+                const selectedRadio = document.querySelector('input[name="service"]:checked');
+                if (selectedRadio) {
+                    selectedService = {
+                        id: selectedRadio.value,
+                        name: selectedRadio.dataset.name,
+                        duration: parseInt(selectedRadio.dataset.duration)
+                    };
+                }
+
                 // Validate service selection
                 if (!selectedService) {
                     showToast("Please select a service type before confirming.", "error");
