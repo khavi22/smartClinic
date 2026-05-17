@@ -623,6 +623,71 @@ const serviceExists = async (clinicId, name) => {
   return !snapshot.empty;
 };
 
+/**
+ * Get no-show rate report for a clinic within a date range.
+ * A "no-show" is any appointment with status === "no-show".
+ * 
+ * @param {string} clinicId
+ * @param {string} startDate  - "YYYY-MM-DD"
+ * @param {string} endDate    - "YYYY-MM-DD"
+ * @returns {{ total: number, noShows: number, noShowRate: string, breakdown: Array }}
+ */
+const getNoShowReport = async (clinicId, startDate, endDate) => {
+    if (!clinicId || !startDate || !endDate) {
+        throw new Error("clinicId, startDate, and endDate are required");
+    }
+
+    let query = db.collection("appointments")
+        .where("clinicId", "==", clinicId)
+        .where("date", ">=", startDate)
+        .where("date", "<=", endDate);
+
+    const snapshot = await query.get();
+
+    const appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Only count appointments that were actually scheduled (exclude cancelled by patient)
+    const scheduled = appointments.filter(a => a.status !== "cancelled");
+    const noShows = scheduled.filter(a => a.status === "no-show");
+
+    // Group no-shows by date for a daily breakdown
+    const breakdownMap = {};
+    scheduled.forEach(a => {
+        if (!breakdownMap[a.date]) {
+            breakdownMap[a.date] = { date: a.date, total: 0, noShows: 0 };
+        }
+        breakdownMap[a.date].total += 1;
+        if (a.status === "no-show") {
+            breakdownMap[a.date].noShows += 1;
+        }
+    });
+
+    const breakdown = Object.values(breakdownMap)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map(row => ({
+            ...row,
+            noShowRate: row.total > 0
+                ? ((row.noShows / row.total) * 100).toFixed(1) + "%"
+                : "0.0%"
+        }));
+
+    const totalScheduled = scheduled.length;
+    const totalNoShows = noShows.length;
+    const overallRate = totalScheduled > 0
+        ? ((totalNoShows / totalScheduled) * 100).toFixed(1) + "%"
+        : "0.0%";
+
+    return {
+        clinicId,
+        startDate,
+        endDate,
+        totalScheduled,
+        totalNoShows,
+        noShowRate: overallRate,
+        breakdown
+    };
+};
+
 module.exports = {
     createUserProfile,
     createClinic,
@@ -652,6 +717,6 @@ module.exports = {
     addClinicService,
     updateClinicService,
     deleteClinicService,
-    serviceExists
+    serviceExists,
+    getNoShowReport
 };
-

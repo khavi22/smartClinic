@@ -1,6 +1,46 @@
 const firebaseService = require("../services/firebaseService");
 const emailService = require("../services/emailService");
 
+exports.getNoShowReport = async (req, res) => {
+    try {
+        const { clinicId, startDate, endDate } = req.query;
+
+        if (!clinicId || !startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: "clinicId, startDate, and endDate query parameters are required"
+            });
+        }
+
+        // Basic date format validation (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+            return res.status(400).json({
+                success: false,
+                message: "Dates must be in YYYY-MM-DD format"
+            });
+        }
+
+        if (startDate > endDate) {
+            return res.status(400).json({
+                success: false,
+                message: "startDate must be on or before endDate"
+            });
+        }
+
+        const report = await firebaseService.getNoShowReport(clinicId, startDate, endDate);
+
+        return res.status(200).json({ success: true, report });
+    } catch (error) {
+        console.error("No-show report error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to generate no-show report",
+            error: error.message
+        });
+    }
+};
+
 exports.inviteStaff = async (req, res) => {
     try {
         const { email, clinicId } = req.body;
