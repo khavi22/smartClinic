@@ -39,6 +39,8 @@ const {
     getClinicNameById,
     deleteUserAccount,
     getPatientProfileById,   // ✅ new
+    getNoShowReport,
+    getWaitTimeReport,
 } = require("../services/firebaseService");
 const { db } = require("../services/config/firebase");
 
@@ -380,6 +382,194 @@ describe("firebaseService", () => {
             const result = await getPatientProfileById("nonexistent-id");
 
             expect(result).toBeNull();
+        });
+    });
+
+    describe("report helpers", () => {
+        function appointmentSnapshot(appointments) {
+            return {
+                docs: appointments.map((appointment, index) => ({
+                    id: `appointment-${index + 1}`,
+                    data: () => appointment
+                }))
+            };
+        }
+
+        function mockAppointmentsQuery(appointments) {
+            const query = {
+                where: jest.fn(),
+                get: jest.fn().mockResolvedValue(appointmentSnapshot(appointments))
+            };
+            query.where.mockReturnValue(query);
+            db.collection.mockReturnValue(query);
+            return query;
+        }
+
+        it("builds a no-show report with totals and daily breakdown", async () => {
+            const query = mockAppointmentsQuery([
+                { date: "2026-05-01", status: "booked" },
+                { date: "2026-05-01", status: "no-show" },
+                { date: "2026-05-02", status: "cancelled" }
+            ]);
+
+            const result = await getNoShowReport("clinic-1", "2026-05-01", "2026-05-31");
+
+            expect(query.where).toHaveBeenCalledWith("clinicId", "==", "clinic-1");
+            expect(query.where).toHaveBeenCalledWith("date", ">=", "2026-05-01");
+            expect(query.where).toHaveBeenCalledWith("date", "<=", "2026-05-31");
+            expect(result).toEqual({
+                clinicId: "clinic-1",
+                startDate: "2026-05-01",
+                endDate: "2026-05-31",
+                totalScheduled: 3,
+                totalNoShows: 2,
+                noShowRate: "66.7%",
+                breakdown: [
+                    {
+                        date: "2026-05-01",
+                        total: 2,
+                        noShows: 1,
+                        noShowRate: "50.0%"
+                    },
+                    {
+                        date: "2026-05-02",
+                        total: 1,
+                        noShows: 1,
+                        noShowRate: "100.0%"
+                    }
+                ]
+            });
+        });
+
+        it("builds an empty no-show report when there are no appointments", async () => {
+            mockAppointmentsQuery([]);
+
+            await expect(
+                getNoShowReport("clinic-1", "2026-05-01", "2026-05-31")
+            ).resolves.toMatchObject({
+                totalScheduled: 0,
+                totalNoShows: 0,
+                noShowRate: "0.0%",
+                breakdown: []
+            });
+        });
+
+        it("requires clinic and date range for no-show reports", async () => {
+            await expect(
+                getNoShowReport("", "2026-05-01", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getNoShowReport("clinic-1", "", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getNoShowReport("clinic-1", "2026-05-01", "")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+        });
+
+        it("builds wait-time report summaries by hour and date", async () => {
+            const query = mockAppointmentsQuery([
+                {
+                    date: "2026-05-01",
+                    status: "completed",
+                    serviceDuration: 30,
+                    timeSlot: "09:00"
+                },
+                {
+                    date: "2026-05-01",
+                    status: "completed",
+                    serviceDuration: 45,
+                    timeSlot: "09:30"
+                },
+                {
+                    date: "2026-05-02",
+                    status: "completed",
+                    serviceDuration: 20
+                },
+                {
+                    date: "2026-05-02",
+                    status: "booked",
+                    serviceDuration: 60,
+                    timeSlot: "10:00"
+                },
+                {
+                    date: "2026-05-02",
+                    status: "completed",
+                    serviceDuration: "30",
+                    timeSlot: "11:00"
+                },
+                {
+                    date: "2026-05-03",
+                    status: "completed",
+                    serviceDuration: 0,
+                    timeSlot: "12:00"
+                }
+            ]);
+
+            const result = await getWaitTimeReport("clinic-1", "2026-05-01", "2026-05-31");
+
+            expect(query.where).toHaveBeenCalledWith("clinicId", "==", "clinic-1");
+            expect(result).toEqual({
+                clinicId: "clinic-1",
+                startDate: "2026-05-01",
+                endDate: "2026-05-31",
+                totalCompleted: 3,
+                overallAvgWaitMinutes: 31.7,
+                byTimeOfDay: [
+                    {
+                        timeSlot: "09:00",
+                        appointmentsCompleted: 2,
+                        avgWaitMinutes: 37.5
+                    },
+                    {
+                        timeSlot: "unknown:00",
+                        appointmentsCompleted: 1,
+                        avgWaitMinutes: 20
+                    }
+                ],
+                byDate: [
+                    {
+                        date: "2026-05-01",
+                        appointmentsCompleted: 2,
+                        avgWaitMinutes: 37.5
+                    },
+                    {
+                        date: "2026-05-02",
+                        appointmentsCompleted: 1,
+                        avgWaitMinutes: 20
+                    }
+                ]
+            });
+        });
+
+        it("builds an empty wait-time report when no appointments completed", async () => {
+            mockAppointmentsQuery([
+                { date: "2026-05-01", status: "booked", serviceDuration: 30, timeSlot: "09:00" }
+            ]);
+
+            await expect(
+                getWaitTimeReport("clinic-1", "2026-05-01", "2026-05-31")
+            ).resolves.toMatchObject({
+                totalCompleted: 0,
+                overallAvgWaitMinutes: 0,
+                byTimeOfDay: [],
+                byDate: []
+            });
+        });
+
+        it("requires clinic and date range for wait-time reports", async () => {
+            await expect(
+                getWaitTimeReport("", "2026-05-01", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getWaitTimeReport("clinic-1", "", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getWaitTimeReport("clinic-1", "2026-05-01", "")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
         });
     });
 

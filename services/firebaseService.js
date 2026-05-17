@@ -810,6 +810,7 @@ module.exports = {
     updateClinicService,
     deleteClinicService,
     serviceExists,
+    getPatientProfileById,
     getNoShowReport,
     getWaitTimeReport
 };
