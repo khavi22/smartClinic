@@ -15,7 +15,6 @@ async function getMyNextQueue(req, res) {
         }
 
         const queue = await getPatientQueueInfo(patientId);
-        console.log("Controller - Next Queue:", queue);
         res.status(200).json({
             success: true,
             queue,

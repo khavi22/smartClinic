@@ -154,6 +154,11 @@ function createAppointmentCard(appointment, past = false) {
       rescheduleDialog.showModal();
     };
 
+    const queueLink = document.createElement("a");
+    queueLink.className = "btn-action queue";
+    queueLink.href = "patientQueue.html";
+    queueLink.textContent = "Queue";
+
     const cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
     cancelBtn.className = "btn-action danger";
@@ -163,6 +168,7 @@ function createAppointmentCard(appointment, past = false) {
       cancelDialog.showModal();
     };
 
+    actions.appendChild(queueLink);
     actions.appendChild(rescheduleBtn);
     actions.appendChild(cancelBtn);
     article.appendChild(actions);

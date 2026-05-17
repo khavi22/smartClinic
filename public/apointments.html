@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
   <nav class="global-app-bar" aria-label="Main Navigation">
@@ -27,6 +28,10 @@
           <i class='bx bx-search'></i>
           Find Clinic
         </a>
+        <a href="patientQueue.html" class="nav-search-btn">
+          <i class='bx bx-time-five'></i>
+          My Queue
+        </a>
         <a href="apointments.html" class="nav-appointment-btn active">
           <i class='bx bx-calendar-event'></i>
           My Appointments
@@ -41,6 +46,20 @@
         <h1>My Appointments</h1>
         <p>Manage and track your healthcare schedule</p>
       </hgroup>
+      <nav class="header-nav" aria-label="Appointment shortcuts">
+        <a href="patientQueue.html" class="queue-shortcut">
+          <span class="queue-shortcut-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 6v6l4 2"/>
+              <circle cx="12" cy="12" r="9"/>
+            </svg>
+          </span>
+          <span>
+            <strong>Track Queue</strong>
+            <small>See your live position</small>
+          </span>
+        </a>
+      </nav>
     </header>
 
     <article class="scheduling-dashboard">
