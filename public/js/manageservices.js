@@ -140,7 +140,7 @@ window.handleTemplateChange = function() {
 
 async function loadServices() {
   try {
-    const res = await fetch("/api/clinics/services", {
+    const res = await fetch(`/api/clinics/services?clinicId=${encodeURIComponent(currentClinicId)}`, {
       headers: { "Authorization": `Bearer ${window.authToken}` }
     });
     if (!res.ok) throw new Error("Failed to fetch services");
@@ -175,22 +175,22 @@ function renderTable(services) {
 
     const nameTd = document.createElement("td");
     nameTd.textContent = service.name;
-    nameTd.style.padding = "14px 18px";
+    nameTd.style.padding = "20px 24px";
     nameTd.style.fontWeight = "500";
     nameTd.style.color = "#0f172a";
 
     const durationTd = document.createElement("td");
     durationTd.textContent = `${service.duration} min`;
-    durationTd.style.padding = "14px 18px";
+    durationTd.style.padding = "20px 24px";
     durationTd.style.color = "#475569";
 
     const descTd = document.createElement("td");
     descTd.textContent = service.description;
-    descTd.style.padding = "14px 18px";
+    descTd.style.padding = "20px 24px";
     descTd.style.color = "#64748b";
 
     const actionsTd = document.createElement("td");
-    actionsTd.style.padding = "14px 18px";
+    actionsTd.style.padding = "20px 24px";
     actionsTd.style.textAlign = "right";
 
     const editBtn = document.createElement("button");
