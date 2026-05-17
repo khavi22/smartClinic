@@ -1,9 +1,20 @@
-const httpMocks = require("node-mocks-http");
-const EventEmitter = require("events").EventEmitter;
+const mockVerifyIdToken = jest.fn();
+
+const httpMocks = {
+    createRequest: (options = {}) => ({
+        method: "GET",
+        headers: {},
+        query: {},
+        params: {},
+        body: {},
+        user: {},
+        ...options,
+    }),
+};
 
 jest.mock("axios");
 
-jest.mock("../../services/firebaseService", () => ({
+jest.mock("../services/firebaseService", () => ({
     updateClinicOperatingHours: jest.fn(),
     ensureClinicExists: jest.fn(),
     getClinicServices: jest.fn(),
@@ -13,17 +24,17 @@ jest.mock("../../services/firebaseService", () => ({
     serviceExists: jest.fn(),
 }));
 
-jest.mock("../../services/clinicService", () => ({
+jest.mock("../services/clinicService", () => ({
     getAvailabilityForDate: jest.fn(),
     createAppointment: jest.fn(),
     updateClinicSlotCapacity: jest.fn(),
     getStaffUtilisationData: jest.fn(),
 }));
 
-jest.mock("../../services/config/firebase", () => ({
+jest.mock("../services/config/firebase", () => ({
     admin: {
         auth: () => ({
-            verifyIdToken: jest.fn(),
+            verifyIdToken: mockVerifyIdToken,
         }),
         firestore: {
             FieldValue: {
@@ -46,21 +57,30 @@ const {
     updateClinicService,
     deleteClinicService,
     serviceExists,
-} = require("../../services/firebaseService");
+} = require("../services/firebaseService");
 
 const {
     updateClinicSlotCapacity,
     getStaffUtilisationData,
-} = require("../../services/clinicService");
+} = require("../services/clinicService");
 
-const { admin, db } = require("../../services/config/firebase");
+const { admin, db } = require("../services/config/firebase");
 
-const clinicController = require("../../controllers/clinicController");
+const clinicController = require("../controllers/ClinicsController");
 
 function mockResponse() {
-    return httpMocks.createResponse({
-        eventEmitter: EventEmitter,
-    });
+    return {
+        statusCode: 200,
+        body: undefined,
+        status(code) {
+            this.statusCode = code;
+            return this;
+        },
+        json(payload) {
+            this.body = payload;
+            return this;
+        },
+    };
 }
 
 describe("Clinic Controller", () => {
@@ -133,6 +153,122 @@ describe("Clinic Controller", () => {
             await clinicController.updateClinicHoursController(req, res);
 
             expect(res.statusCode).toBe(401);
+        });
+
+        it("should return 400 if clinic hours payload is incomplete", async () => {
+
+            admin.auth().verifyIdToken.mockResolvedValue({
+                uid: "admin1",
+            });
+
+            const req = httpMocks.createRequest({
+                headers: {
+                    authorization: "Bearer token123",
+                },
+                body: {
+                    clinicId: "clinic1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await clinicController.updateClinicHoursController(req, res);
+
+            expect(res.statusCode).toBe(400);
+        });
+
+        it("should return 401 if token verification fails", async () => {
+
+            admin.auth().verifyIdToken.mockRejectedValue(
+                new Error("bad token")
+            );
+
+            const req = httpMocks.createRequest({
+                headers: {
+                    authorization: "Bearer bad-token",
+                },
+                body: {
+                    clinicId: "clinic1",
+                    operatingHours: {
+                        monday: "08:00-17:00",
+                    },
+                },
+            });
+
+            const res = mockResponse();
+
+            await clinicController.updateClinicHoursController(req, res);
+
+            expect(res.statusCode).toBe(401);
+        });
+
+        it("should return 404 if clinic is missing", async () => {
+
+            admin.auth().verifyIdToken.mockResolvedValue({
+                uid: "admin1",
+            });
+
+            db.collection.mockReturnValue({
+                doc: () => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: false,
+                    }),
+                }),
+            });
+
+            const req = httpMocks.createRequest({
+                headers: {
+                    authorization: "Bearer token123",
+                },
+                body: {
+                    clinicId: "clinic1",
+                    operatingHours: {
+                        monday: "08:00-17:00",
+                    },
+                },
+            });
+
+            const res = mockResponse();
+
+            await clinicController.updateClinicHoursController(req, res);
+
+            expect(res.statusCode).toBe(404);
+        });
+
+        it("should return 403 if the user is not clinic admin", async () => {
+
+            admin.auth().verifyIdToken.mockResolvedValue({
+                uid: "admin1",
+            });
+
+            db.collection.mockReturnValue({
+                doc: () => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({
+                            adminUid: "someone-else",
+                        }),
+                    }),
+                }),
+            });
+
+            const req = httpMocks.createRequest({
+                headers: {
+                    authorization: "Bearer token123",
+                },
+                body: {
+                    clinicId: "clinic1",
+                    operatingHours: {
+                        monday: "08:00-17:00",
+                    },
+                },
+            });
+
+            const res = mockResponse();
+
+            await clinicController.updateClinicHoursController(req, res);
+
+            expect(res.statusCode).toBe(403);
         });
     });
 

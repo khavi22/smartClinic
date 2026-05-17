@@ -1,21 +1,22 @@
 const mockServerTimestamp = jest.fn(() => "mock-server-timestamp");
 const mockSetCustomUserClaims = jest.fn().mockResolvedValue();
 const mockDeleteUser = jest.fn().mockResolvedValue();
+const mockDb = {
+    collection: jest.fn()
+};
+const mockFirestore = jest.fn(() => mockDb);
+mockFirestore.FieldValue = {
+    serverTimestamp: mockServerTimestamp
+};
 
 jest.mock("../services/config/firebase", () => ({
-    db: {
-        collection: jest.fn()
-    },
+    db: mockDb,
     admin: {
         auth: jest.fn(() => ({
             setCustomUserClaims: mockSetCustomUserClaims,
             deleteUser: mockDeleteUser
         })),
-        firestore: {
-            FieldValue: {
-                serverTimestamp: mockServerTimestamp
-            }
-        }
+        firestore: mockFirestore
     }
 }));
 

@@ -7,6 +7,8 @@ describe("Availability Logic Tests", () => {
     let req, res, consoleErrorSpy;
 
     beforeEach(() => {
+        process.env.ML_SERVICE_URL = "";
+        global.fetch = jest.fn();
         req = { query: {}, body: {}, params: {} };
         res = {
             status: jest.fn().mockReturnThis(),
@@ -18,6 +20,7 @@ describe("Availability Logic Tests", () => {
 
     afterEach(() => {
         consoleErrorSpy.mockRestore();
+        delete global.fetch;
     });
 
     it("should return empty slots if the clinic is closed", async () => {

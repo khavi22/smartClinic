@@ -1,7 +1,15 @@
-const httpMocks = require("node-mocks-http");
-const EventEmitter = require("events").EventEmitter;
+const httpMocks = {
+    createRequest: (options = {}) => ({
+        method: "GET",
+        headers: {},
+        query: {},
+        params: {},
+        body: {},
+        ...options,
+    }),
+};
 
-jest.mock("../../services/firebaseService", () => ({
+jest.mock("../services/firebaseService", () => ({
     getAvailabilityForDate: jest.fn(),
     createAppointment: jest.fn(),
     getAppointmentsByPatientId: jest.fn(),
@@ -9,19 +17,19 @@ jest.mock("../../services/firebaseService", () => ({
     getPatientProfileById: jest.fn(),
 }));
 
-jest.mock("../../services/emailService", () => ({
+jest.mock("../services/emailService", () => ({
     sendAppointmentConfirmation: jest.fn(),
     sendAppointmentCancellation: jest.fn(),
 }));
 
-jest.mock("../../services/config/firebase", () => ({
+jest.mock("../services/config/firebase", () => ({
     admin: {
         firestore: jest.fn(),
     },
     db: {},
 }));
 
-const appointmentController = require("../../controllers/appointmentController");
+const appointmentController = require("../controllers/appointmentsController");
 
 const {
     getAvailabilityForDate,
@@ -29,16 +37,25 @@ const {
     getAppointmentsByPatientId,
     cancelAppointment,
     getPatientProfileById,
-} = require("../../services/firebaseService");
+} = require("../services/firebaseService");
 
-const emailService = require("../../services/emailService");
+const emailService = require("../services/emailService");
 
-const { admin } = require("../../services/config/firebase");
+const { admin } = require("../services/config/firebase");
 
 function mockResponse() {
-    return httpMocks.createResponse({
-        eventEmitter: EventEmitter,
-    });
+    return {
+        statusCode: 200,
+        body: undefined,
+        status(code) {
+            this.statusCode = code;
+            return this;
+        },
+        json(payload) {
+            this.body = payload;
+            return this;
+        },
+    };
 }
 
 describe("Appointment Controller", () => {
