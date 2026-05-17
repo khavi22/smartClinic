@@ -154,7 +154,7 @@ function renderSlots() {
             } else {
                 capacityLabel = "Currently Unavailable";
             }
-            
+
             const mlBadge = slot.isRecommended && !isPast && slot.status !== 'full' ? '<mark class="slot-badge recommended" style="background-color: var(--success); color: white; margin-left: 5px;">★ Recommended</mark>' : '';
 
             return `
@@ -225,7 +225,7 @@ window.handleDateSelection = async function (dateStr) {
 
             if (data.hasPrediction) {
                 let html = `<section class="ai-best-time-container">`;
-                
+
                 if (data.today) {
                     html += `
                         <section class="ai-suggestion-box">
@@ -238,7 +238,7 @@ window.handleDateSelection = async function (dateStr) {
                     `;
                 }
                 if (data.future) {
-                     html += `
+                    html += `
                         <section class="ai-suggestion-box">
                             <span class="ai-suggestion-title">Upcoming Best</span>
                             <section class="ai-date-row">
@@ -249,7 +249,7 @@ window.handleDateSelection = async function (dateStr) {
                         </section>
                     `;
                 }
-                
+
                 html += `</section><p class="ai-hint-text">${data.hint}</p>`;
                 textEl.innerHTML = html;
                 setTimeout(() => {
@@ -285,20 +285,20 @@ async function fetchAndRenderServices(clinicId) {
 
     try {
         servicesContainer.innerHTML = '<div class="service-loading">Loading services...</div>';
-        
+
         const res = await fetch(`/api/clinics/services?clinicId=${encodeURIComponent(clinicId)}`);
         if (!res.ok) throw new Error('Failed to fetch services');
-        
+
         cachedServices = await res.json();
-        
+
         if (!cachedServices || cachedServices.length === 0) {
             servicesContainer.innerHTML = '<div class="service-error">No services available</div>';
             return;
         }
-        
+
         // Reset selected service when loading new ones
         selectedService = null;
-        
+
         let html = '';
         cachedServices.forEach(service => {
             const isSelected = selectedService && selectedService.id === service.id ? 'checked' : '';
@@ -310,9 +310,9 @@ async function fetchAndRenderServices(clinicId) {
                 </label>
             `;
         });
-        
+
         servicesContainer.innerHTML = html;
-        
+
         // Add change listeners
         servicesContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -348,15 +348,15 @@ async function updatePredictedWaitTime() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const clinicId = urlParams.get('id') || "default_clinic";
-        
+
         // Find selected slot details to pass timeSlot
         const slot = cachedSlots.find(s => s.id === selectedSlotId);
         const timeSlot = slot ? slot.time.split(" - ")[0] : "09:00";
 
         const res = await fetch(`/api/queue/${encodeURIComponent(clinicId)}/predict-waittime?date=${selectedDate}&timeSlot=${encodeURIComponent(timeSlot)}&serviceId=${encodeURIComponent(selectedService.id)}`);
-        
+
         if (!res.ok) throw new Error("Prediction request failed");
-        
+
         const data = await res.json();
         if (data.success) {
             textEl.innerHTML = `Wait for <strong>${data.estimatedWaitTime} minutes</strong>`;
@@ -392,12 +392,12 @@ window.handleSlotSelection = function (slotId) {
     });
 
     details.innerHTML = `Confirm your appointment for <br><time><strong>${displayDate}</strong> at <strong>${slot.time}</strong></time>?`;
-    
+
     // Fetch and render services for this clinic
     const urlParams = new URLSearchParams(window.location.search);
     const clinicId = urlParams.get('id') || 'default_clinic';
     fetchAndRenderServices(clinicId);
-    
+
     dialog.showModal();
 };
 
@@ -481,9 +481,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const clinicId = urlParams.get('id') || "default_clinic";
                 const oldAppointmentId = urlParams.get('oldAppointmentId');
                 const clinicName = document.getElementById('hospitalName')?.textContent || "Unknown Clinic";
-                const clinicAddress = document.getElementById('hospitalAddressText')?.textContent || 
-                                     document.getElementById('hospitalAddress')?.querySelector('span')?.textContent || 
-                                     "Address not provided";
+                const clinicAddress = document.getElementById('hospitalAddressText')?.textContent ||
+                    document.getElementById('hospitalAddress')?.querySelector('span')?.textContent ||
+                    "Address not provided";
 
                 confirmBtn.disabled = true;
                 cancelBtn.disabled = true;
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const originalText = confirmBtn.textContent;
                 confirmBtn.innerHTML = '<span class="spinner"></span> Processing...';
                 confirmBtn.classList.add('loading');
-                
+
                 try {
                     const patientId = localStorage.getItem("patientId");
 
@@ -527,10 +527,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         selectedSlotId = null;
                         selectedService = null;
                         await window.handleDateSelection(selectedDate);
-                        
+
                         // If rescheduled, redirect back to appointments page after a short delay
                         if (oldAppointmentId) {
-                           setTimeout(() => { window.location.href = 'apointments.html'; }, 1500);
+                            setTimeout(() => { window.location.href = 'apointments.html'; }, 1500);
                         }
                     } else {
                         showToast(`Booking failed: ${data.error}`, "error");
