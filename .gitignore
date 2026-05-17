@@ -3,3 +3,11 @@ coverage/
 .env
 .env.local
 serviceAccountKey.json
+
+# Agent and customization files (local development only)
+.instructions.md
+.prompt.md
+.agent.md
+copilot-instructions.md
+AGENTS.md
+.vscode/settings.json

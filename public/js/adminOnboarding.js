@@ -40,15 +40,33 @@ class AdminOnboardingUI {
         this.resultsContainer.innerHTML = '';
 
         try {
+            // Get the Firebase ID token
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `login.html?returnTo=${returnTo}`;
+                return;
+            }
+            const token = await user.getIdToken();
+
             const response = await fetch('/api/admin-onboarding/search', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ query })
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    return;
+                }
+                if (response.status === 403) {
+                    throw new Error('Access denied. You do not have permission to perform this action.');
+                }
                 throw new Error('Failed to search clinics');
             }
 
@@ -102,15 +120,33 @@ class AdminOnboardingUI {
 
         // Fetch clinic admin code
         try {
+            // Get the Firebase ID token
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `login.html?returnTo=${returnTo}`;
+                return;
+            }
+            const token = await user.getIdToken();
+
             const response = await fetch('/api/admin-onboarding/clinic-code', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ placeId: place.id })
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    return;
+                }
+                if (response.status === 403) {
+                    throw new Error('Access denied. You do not have permission to perform this action.');
+                }
                 throw new Error('Failed to fetch clinic code');
             }
 
@@ -168,6 +204,15 @@ class AdminOnboardingUI {
         `;
 
         try {
+            // Get the Firebase ID token
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `login.html?returnTo=${returnTo}`;
+                return;
+            }
+            const token = await user.getIdToken();
+
             // Trim to remove any whitespace textContent may have picked up
             const adminCode = document.getElementById('displayAdminCode').textContent.trim();
 
@@ -192,12 +237,23 @@ class AdminOnboardingUI {
             const response = await fetch('/api/admin-onboarding/send-invite', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
+                // Handle auth failures
+                if (response.status === 401) {
+                    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    return;
+                }
+                if (response.status === 403) {
+                    throw new Error('Access denied. You do not have permission to perform this action.');
+                }
+                
                 // Parse the backend error body to get the exact validation message
                 let errorMessage = 'Failed to send invitation';
                 try {
@@ -304,7 +360,19 @@ function copyToClipboard(elementId) {
     });
 }
 
-// Initialize the UI once the DOM is fully loaded
+// Initialize the UI once auth check has passed and DOM is fully loaded
+function initializeAdminOnboardingUI() {
+    if (!window.adminOnboardingUI) {
+        window.adminOnboardingUI = new AdminOnboardingUI();
+        console.log("AdminOnboardingUI instance created and stored on window");
+    }
+}
+
+// Also initialize on DOMContentLoaded if auth already checked
 document.addEventListener('DOMContentLoaded', () => {
-    window.adminOnboardingUI = new AdminOnboardingUI();
+    // Check if main content is already visible (auth passed)
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent && mainContent.style.display !== 'none') {
+        initializeAdminOnboardingUI();
+    }
 });
