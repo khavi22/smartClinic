@@ -258,7 +258,61 @@
                 </header>
             </article>
         </section>
+        <!-- ── REPORTS CARD ── -->
+        <section class="admin-grid" style="margin-top: 0; margin-bottom: 32px;">
+            <article class="admin-card" aria-labelledby="reports-heading">
+                <header class="card-header">
+                    <span class="card-icon"><i class='bx bx-bar-chart-alt-2' aria-hidden="true"></i></span>
+                    <div>
+                        <h2 id="reports-heading">Analytics & Reports</h2>
+                        <p>View operational insights and export clinic performance data</p>
+                    </div>
+                </header>
 
+                <div class="reports-list">
+
+                    <div class="report-item">
+                        <div class="report-info">
+                            <span class="report-icon accent-blue"><i class='bx bx-group'></i></span>
+                            <div>
+                                <div class="report-title">Staff Utilisation</div>
+                                <div class="report-desc">Workload distribution, peak hours, and staff activity patterns</div>
+                            </div>
+                        </div>
+                        <a href="staffReport.html" class="btn-report">
+                            <i class='bx bx-line-chart'></i> View Report
+                        </a>
+                    </div>
+
+                    <div class="report-item">
+                        <div class="report-info">
+                            <span class="report-icon accent-green"><i class='bx bx-time-five'></i></span>
+                            <div>
+                                <div class="report-title">Average Patient Wait Times</div>
+                                <div class="report-desc">Queue wait times by time slot, day, and staff member</div>
+                            </div>
+                        </div>
+                        <a href="waitTimesReport.html" class="btn-report">
+                            <i class='bx bx-line-chart'></i> View Report
+                        </a>
+                    </div>
+
+                    <div class="report-item" style="border-bottom: none;">
+                        <div class="report-info">
+                            <span class="report-icon accent-orange"><i class='bx bx-calendar-x'></i></span>
+                            <div>
+                                <div class="report-title">Appointment No-Show Rates</div>
+                                <div class="report-desc">No-show trends by date, time slot, and patient demographics</div>
+                            </div>
+                        </div>
+                        <a href="noShowReport.html" class="btn-report">
+                            <i class='bx bx-line-chart'></i> View Report
+                        </a>
+                    </div>
+
+                </div>
+            </article>
+        </section>
         <!-- ── SLOT CAPACITY CARD ── -->
         <article class="admin-card capacity-card" aria-labelledby="capacity-heading">
             <header class="card-header">
