@@ -4,7 +4,8 @@ const { admin, db } = require("../services/config/firebase");
 const { 
     getAvailabilityForDate, 
     createAppointment,
-    updateClinicSlotCapacity 
+    updateClinicSlotCapacity,
+    getStaffUtilisationData
 } = require("../services/clinicService");
 
 // ── OPERATING HOURS ─────────────────────────────────────────
@@ -295,4 +296,40 @@ exports.deleteService = async (req, res) => {
     console.error("deleteService error:", err);
     res.status(500).json({ error: err.message });
   }
+};
+
+// ── STAFF UTILISATION REPORT ──────────────────────────────────
+exports.getStaffUtilisationReport = async (req, res) => {
+    console.log("GET staff-utilisation hit", req.params, req.query);
+    try {
+        const { clinicId } = req.params;
+        const { startDate, endDate } = req.query;
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const idToken = authHeader.split("Bearer ")[1];
+        let decodedToken;
+        try {
+            decodedToken = await admin.auth().verifyIdToken(idToken);
+        } catch {
+            return res.status(401).json({ error: "Unauthorized: Invalid token" });
+        }
+
+        const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+        if (!clinicDoc.exists) return res.status(404).json({ error: "Clinic not found." });
+        if (clinicDoc.data().adminUid !== decodedToken.uid) return res.status(403).json({ error: "Forbidden" });
+
+        if (!startDate || !endDate) return res.status(400).json({ error: "startDate and endDate are required." });
+
+        const clinicName = clinicDoc.data().clinicName || "Clinic";
+        const result = await getStaffUtilisationData(clinicId, startDate, endDate);
+        return res.status(200).json({ success: true, data: { ...result, clinicName } });
+
+    } catch (error) {
+        console.error("Error fetching staff utilisation report:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
 };

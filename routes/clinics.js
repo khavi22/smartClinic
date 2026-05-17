@@ -11,7 +11,8 @@ const {
     updateService, 
     deleteService,
     updateClinicProfile,
-    updateSlotCapacity
+    updateSlotCapacity,
+    getStaffUtilisationReport
 } = require("../Controllers/ClinicsController");
 const { authMiddleware, requireAdmin } = require("../middlewares/auth");
 
@@ -32,5 +33,8 @@ router.post("/services", authMiddleware, addService);
 router.put("/services/:serviceId", authMiddleware, updateService);
 
 router.delete("/services/:serviceId", authMiddleware, deleteService);
+
+//reports
+router.get("/:clinicId/staff-utilisation", getStaffUtilisationReport);
 
 module.exports = router;
