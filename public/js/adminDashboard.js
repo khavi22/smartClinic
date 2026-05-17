@@ -28,11 +28,14 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         const data = result.profile;
         currentClinicId = data.clinicId;
+        window.authToken = idToken;
         if (currentClinicId) {
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
             await loadActiveStaff(currentClinicId);
             await loadClinicProfile(currentClinicId);
+            await loadTemplates();
+            await loadServices();
         }
 
     } catch (error) {
@@ -510,4 +513,247 @@ setClinicFormEditable(false);
 toggleClinicEditBtn.addEventListener("click", () => {
 
     setClinicFormEditable(!clinicEditingEnabled);
+});
+
+// ── SERVICES & DURATIONS MANAGEMENT (MERGED FROM manageservices.js) ──
+let editingServiceId = null;
+
+// ── LOAD TEMPLATES INTO MODAL DROPDOWN ─────────────────────
+async function loadTemplates() {
+  try {
+    const res = await fetch("/api/clinics/templates", {
+      headers: { "Authorization": `Bearer ${window.authToken}` }
+    });
+    if (!res.ok) throw new Error("Failed to fetch templates");
+    const templates = await res.json();
+
+    const select = document.getElementById("templateSelect");
+    select.innerHTML = `<option value="">Choose a template...</option>`;
+
+    templates.forEach(t => {
+      const option = document.createElement("option");
+      option.value = JSON.stringify(t);
+      option.textContent = t.name;
+      select.appendChild(option);
+    });
+
+  } catch (err) {
+    console.error("Could not load templates:", err);
+  }
+}
+
+// ── HANDLE TEMPLATE SELECTION ───────────────────────────────
+window.handleTemplateChange = function() {
+  const select = document.getElementById("templateSelect");
+  if (!select.value) return;
+
+  const template = JSON.parse(select.value);
+  document.getElementById("serviceName").value = template.name;
+  document.getElementById("serviceDescription").value = template.description;
+  document.getElementById("serviceDuration").value = template.duration;
+};
+
+// ── LOAD SERVICES ───────────────────────────────────────────
+async function loadServices() {
+  try {
+    const res = await fetch("/api/clinics/services", {
+      headers: { "Authorization": `Bearer ${window.authToken}` }
+    });
+    if (!res.ok) throw new Error("Failed to fetch services");
+    const services = await res.json();
+
+    renderTable(services);
+    renderStats(services);
+
+  } catch (err) {
+    showToast("Could not load services. Please try again.", "error");
+    console.error(err);
+  }
+}
+
+// ── RENDER TABLE ────────────────────────────────────────────
+function renderTable(services) {
+  const tbody = document.getElementById("servicesTableBody");
+  tbody.innerHTML = "";
+
+  if (services.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.textContent = "No customized services yet. Click \"Add Custom Service\" to get started.";
+    td.style.cssText = "text-align:center; color:#888; padding:2rem;";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  services.forEach(service => {
+    const tr = document.createElement("tr");
+    tr.style.borderBottom = "1px solid #e2e8f0";
+
+    const nameTd = document.createElement("td");
+    nameTd.textContent = service.name;
+    nameTd.style.padding = "14px 18px";
+    nameTd.style.fontWeight = "500";
+    nameTd.style.color = "#0f172a";
+
+    const durationTd = document.createElement("td");
+    durationTd.textContent = `${service.duration} min`;
+    durationTd.style.padding = "14px 18px";
+    durationTd.style.color = "#475569";
+
+    const descTd = document.createElement("td");
+    descTd.textContent = service.description;
+    descTd.style.padding = "14px 18px";
+    descTd.style.color = "#64748b";
+
+    const actionsTd = document.createElement("td");
+    actionsTd.style.padding = "14px 18px";
+    actionsTd.style.textAlign = "right";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.className = "btn btn-secondary";
+    editBtn.type = "button";
+    editBtn.style.cssText = "padding: 6px 12px; font-size: 0.8rem; font-weight:600; border-radius:8px; margin-right:6px; cursor:pointer;";
+    editBtn.addEventListener("click", () => openEditModal(service));
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.type = "button";
+    deleteBtn.style.cssText = "padding: 6px 12px; font-size: 0.8rem; font-weight:600; border-radius:8px; color:#ef4444; background:#fef2f2; border:1px solid #fee2e2; cursor:pointer;";
+    deleteBtn.addEventListener("click", () => handleServiceDelete(service.id));
+
+    actionsTd.appendChild(editBtn);
+    actionsTd.appendChild(deleteBtn);
+
+    tr.appendChild(nameTd);
+    tr.appendChild(durationTd);
+    tr.appendChild(descTd);
+    tr.appendChild(actionsTd);
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ── RENDER STATS ────────────────────────────────────────────
+function renderStats(services) {
+  document.getElementById("totalServices").textContent = services.length;
+
+  const avg = services.length
+    ? Math.round(services.reduce((sum, s) => sum + s.duration, 0) / services.length)
+    : 0;
+
+  document.getElementById("avgDuration").textContent = `${avg} min`;
+}
+
+// ── MODAL: OPEN (ADD) ───────────────────────────────────────
+window.openServiceModal = function() {
+  editingServiceId = null;
+  document.getElementById("serviceModalTitle").textContent = "Add Custom Service";
+  document.getElementById("serviceSubmitBtn").textContent = "Add Service";
+  document.getElementById("serviceForm").reset();
+  document.getElementById("templateSelectGroup").style.display = "block";
+  document.getElementById("serviceModal").showModal();
+};
+
+// ── MODAL: OPEN (EDIT) ──────────────────────────────────────
+window.openEditModal = function(service) {
+  editingServiceId = service.id;
+  document.getElementById("serviceModalTitle").textContent = "Edit Service";
+  document.getElementById("serviceSubmitBtn").textContent = "Save Changes";
+
+  // Hide template dropdown when editing
+  document.getElementById("templateSelectGroup").style.display = "none";
+
+  document.getElementById("serviceName").value = service.name;
+  document.getElementById("serviceDescription").value = service.description;
+  document.getElementById("serviceDuration").value = service.duration;
+
+  document.getElementById("serviceModal").showModal();
+};
+
+// ── MODAL: CLOSE ────────────────────────────────────────────
+window.closeServiceModal = function() {
+  document.getElementById("serviceModal").close();
+  document.getElementById("serviceForm").reset();
+  document.getElementById("templateSelectGroup").style.display = "block";
+  editingServiceId = null;
+};
+
+// ── FORM SUBMIT (ADD / EDIT) ────────────────────────────────
+window.handleServiceSubmit = async function(event) {
+  event.preventDefault();
+
+  const data = {
+    name: document.getElementById("serviceName").value.trim(),
+    description: document.getElementById("serviceDescription").value.trim(),
+    duration: Number(document.getElementById("serviceDuration").value),
+  };
+
+  if (!data.name || !data.description || !data.duration || data.duration < 1) {
+    showToast("Please fill in all fields correctly.", "error");
+    return;
+  }
+
+  const url = editingServiceId
+    ? `/api/clinics/services/${editingServiceId}`
+    : `/api/clinics/services`;
+
+  const method = editingServiceId ? "PUT" : "POST";
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${window.authToken}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (res.status === 409) {
+      showToast("A service with that name already exists.", "error");
+      return;
+    }
+
+    if (!res.ok) throw new Error("Failed to save service");
+
+    closeServiceModal();
+    await loadServices();
+    showToast(editingServiceId ? "Service updated successfully!" : "Service added successfully!", "success");
+
+  } catch (err) {
+    showToast("Could not save service. Please try again.", "error");
+    console.error(err);
+  }
+};
+
+// ── DELETE ──────────────────────────────────────────────────
+async function handleServiceDelete(id) {
+  if (!confirm("Are you sure you want to delete this service?")) return;
+
+  try {
+    const res = await fetch(`/api/clinics/services/${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${window.authToken}` }
+    });
+
+    if (!res.ok) throw new Error("Failed to delete service");
+    await loadServices();
+    showToast("Service deleted successfully!", "success");
+
+  } catch (err) {
+    showToast("Could not delete service. Please try again.", "error");
+    console.error(err);
+  }
+}
+
+// ── LIVE SEARCH ─────────────────────────────────────────────
+document.getElementById("serviceSearchInput").addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#servicesTableBody tr");
+  rows.forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(query) ? "" : "none";
+  });
 });
