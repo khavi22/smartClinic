@@ -36,7 +36,8 @@ const {
     getClinicIdFromVerificationCode,
     claimClinic,
     getClinicNameById,
-    deleteUserAccount
+    deleteUserAccount,
+    getPatientProfileById,   // ✅ new
 } = require("../services/firebaseService");
 const { db } = require("../services/config/firebase");
 
@@ -76,11 +77,9 @@ describe("firebaseService", () => {
                 if (name === "clinics") {
                     return { doc: jest.fn(() => ({ get: clinicGet })) };
                 }
-
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -116,7 +115,6 @@ describe("firebaseService", () => {
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -142,7 +140,7 @@ describe("firebaseService", () => {
 
         it("creates an appointment", async () => {
             const duplicateQuery = createLoopQuery({ empty: true });
-            const capacityQuery = createLoopQuery({ size: 0 });
+            const capacityQuery  = createLoopQuery({ size: 0 });
             const add = jest.fn().mockResolvedValue({ id: "appt-1" });
             const appointmentsRef = {
                 where: jest.fn()
@@ -207,11 +205,9 @@ describe("firebaseService", () => {
                 if (name === "clinics") {
                     return { doc: jest.fn(() => ({ get: clinicGet })) };
                 }
-
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -238,7 +234,7 @@ describe("firebaseService", () => {
 
         it("throws when the appointment slot is full", async () => {
             const duplicateQuery = createLoopQuery({ empty: true });
-            const capacityQuery = createLoopQuery({ size: 10 });
+            const capacityQuery  = createLoopQuery({ size: 10 });
             const appointmentsRef = {
                 where: jest.fn()
                     .mockImplementationOnce(() => duplicateQuery)
@@ -264,13 +260,7 @@ describe("firebaseService", () => {
             db.collection.mockReturnValue(appointmentsRef);
 
             const result = await createAppointment(
-                null,
-                "2026-04-20",
-                "10:00 - 11:00",
-                "patient-1",
-                null,
-                null,
-                true
+                null, "2026-04-20", "10:00 - 11:00", "patient-1", null, null, true
             );
 
             expect(result).toEqual(expect.objectContaining({
@@ -291,11 +281,9 @@ describe("firebaseService", () => {
                 if (name === "clinics") {
                     return { doc: jest.fn(() => ({ get: clinicGet })) };
                 }
-
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -308,6 +296,47 @@ describe("firebaseService", () => {
             db.collection.mockReturnValue(query);
 
             await expect(getAppointmentsByPatientId("patient-1")).rejects.toThrow("Patient lookup fail");
+        });
+    });
+
+    // ── getPatientProfileById ─────────────────────────────────────────────────
+    describe("getPatientProfileById", () => {
+        it("returns patient data when patient exists", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({
+                            uid: "patient-1",
+                            fullName: "Sipho Dlamini",
+                            email: "sipho@gmail.com",
+                            role: "patient"
+                        })
+                    })
+                }))
+            });
+
+            const result = await getPatientProfileById("patient-1");
+
+            expect(db.collection).toHaveBeenCalledWith("patients");
+            expect(result).toEqual({
+                uid: "patient-1",
+                fullName: "Sipho Dlamini",
+                email: "sipho@gmail.com",
+                role: "patient"
+            });
+        });
+
+        it("returns null when patient does not exist", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                }))
+            });
+
+            const result = await getPatientProfileById("nonexistent-id");
+
+            expect(result).toBeNull();
         });
     });
 
@@ -506,31 +535,21 @@ describe("firebaseService", () => {
         });
 
         it("gets clinic id from admin code", async () => {
-            const query = createLoopQuery({
-                empty: false,
-                docs: [{ id: "clinic-1" }]
-            });
+            const query = createLoopQuery({ empty: false, docs: [{ id: "clinic-1" }] });
             db.collection.mockReturnValue(query);
 
             await expect(getClinicIdFromAdminCode("ADM-1")).resolves.toBe("clinic-1");
         });
 
         it("returns null when admin code is not found", async () => {
-            const query = createLoopQuery({
-                empty: true,
-                docs: []
-            });
+            const query = createLoopQuery({ empty: true, docs: [] });
             db.collection.mockReturnValue(query);
 
             await expect(getClinicIdFromAdminCode("ADM-MISSING")).resolves.toBeNull();
         });
 
-
         it("gets clinic id and role from admin verification code", async () => {
-            const adminQuery = createLoopQuery({
-                empty: false,
-                docs: [{ id: "clinic-1" }]
-            });
+            const adminQuery = createLoopQuery({ empty: false, docs: [{ id: "clinic-1" }] });
             const adminCollection = { where: jest.fn(() => adminQuery) };
 
             db.collection.mockReturnValue(adminCollection);
@@ -560,10 +579,7 @@ describe("firebaseService", () => {
 
             await claimClinic("clinic-1", "admin-1");
 
-            expect(update).toHaveBeenCalledWith({
-                adminUid: "admin-1",
-                isActive: true
-            });
+            expect(update).toHaveBeenCalledWith({ adminUid: "admin-1", isActive: true });
         });
     });
 
@@ -578,7 +594,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 if (name === "appointments") {
                     return {
                         where: jest.fn(() => ({
@@ -589,7 +604,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 return {
                     doc: jest.fn(() => ({
                         get: jest.fn().mockResolvedValue({ exists: false }),
@@ -614,7 +628,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 if (name === "admins") {
                     return {
                         doc: jest.fn(() => ({
@@ -623,7 +636,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 if (name === "clinics") {
                     return {
                         where: jest.fn(() => ({
@@ -634,7 +646,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 return {
                     doc: jest.fn(() => ({
                         get: jest.fn().mockResolvedValue({ exists: false }),
@@ -645,10 +656,7 @@ describe("firebaseService", () => {
 
             await deleteUserAccount("admin-1");
 
-            expect(clinicUpdate).toHaveBeenCalledWith({
-                adminUid: null,
-                isActive: false
-            });
+            expect(clinicUpdate).toHaveBeenCalledWith({ adminUid: null, isActive: false });
             expect(mockDeleteUser).toHaveBeenCalledWith("admin-1");
         });
 

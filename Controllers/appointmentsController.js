@@ -1,3 +1,4 @@
+const { admin, db } = require('../services/config/firebase');
 const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment } = require("../services/firebaseService");
 
 exports.getAvailability = async (req, res) => {
@@ -17,6 +18,9 @@ exports.getAvailability = async (req, res) => {
     }
 };
 
+const firebaseService = require('../services/firebaseService');
+const emailService    = require('../services/emailService');
+
 exports.postAppointment = async (req, res) => {
     try {
         const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, oldAppointmentId } = req.body;
@@ -25,14 +29,41 @@ exports.postAppointment = async (req, res) => {
             return res.status(400).json({ error: "Missing date or timeSlot" });
         }
 
-        // If this is a reschedule, cancel the old appointment first
         if (oldAppointmentId) {
             console.log(`Rescheduling: Cancelling old appointment ${oldAppointmentId}`);
             await cancelAppointment(oldAppointmentId);
         }
 
-        const newAppointment = await createAppointment(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId);
+        const newAppointment = await createAppointment(
+            clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId
+        );
+
+        // ✉️ Send confirmation email
+        try {
+            const patient = await firebaseService.getUserProfileById(patientId);
+
+            // Only send if patient exists and has an email
+            if (patient?.email) {
+                await emailService.sendAppointmentConfirmation(
+                    patient.email,           
+                    patient.fullName,        
+                    clinicName,
+                    clinicAddress,
+                    date,
+                    timeSlot,
+                    !!oldAppointmentId       
+                );
+                console.log(`✅ Confirmation email sent to ${patient.email}`);
+            } else {
+                console.warn(`⚠️ No email found for patientId: ${patientId}`);
+            }
+        } catch (emailError) {
+            // Email failure never blocks the appointment saving
+            console.error("❌ Failed to send confirmation email:", emailError);
+        }
+
         res.json({ success: true, appointment: newAppointment });
+
     } catch (error) {
         console.error("Failed to create appointment:", error);
 
@@ -66,7 +97,6 @@ exports.cancelAppointmentController = async (req, res) => {
     try {
         const appointmentId = req.params.id;
 
-        // Validate input
         if (!appointmentId) {
             return res.status(400).json({
                 success: false,
@@ -74,8 +104,34 @@ exports.cancelAppointmentController = async (req, res) => {
             });
         }
 
-        // Call service
+        // Fetch appointment BEFORE cancelling to get details for email
+        const appointmentDoc = await admin.firestore()
+            .collection('appointments')
+            .doc(appointmentId)
+            .get();
+
         const result = await cancelAppointment(appointmentId);
+
+        // ✉️ Send cancellation email
+        try {
+            if (appointmentDoc.exists) {
+                const appt = appointmentDoc.data();
+                const patient = await firebaseService.getPatientProfileById(appt.patientId);
+                if (patient?.email) {
+                    await emailService.sendAppointmentCancellation(
+                        patient.email,
+                        patient.fullName,
+                        appt.clinicName,
+                        appt.clinicAddress,
+                        appt.date,
+                        appt.timeSlot
+                    );
+                    console.log(`✅ Cancellation email sent to ${patient.email}`);
+                }
+            }
+        } catch (emailError) {
+            console.error("❌ Failed to send cancellation email:", emailError);
+        }
 
         return res.status(200).json({
             success: true,
@@ -84,7 +140,6 @@ exports.cancelAppointmentController = async (req, res) => {
 
     } catch (error) {
         console.error("Cancel Appointment Controller Error:", error);
-
         return res.status(500).json({
             success: false,
             message: "Failed to cancel appointment",

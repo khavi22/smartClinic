@@ -463,6 +463,14 @@ const deleteUserAccount = async (uid) => {
 
     return profile;
 };
+async function getPatientProfileById(uid) {
+    const doc = await admin.firestore()
+        .collection('patients')  // ✅ confirmed from your Firestore screenshot
+        .doc(uid)
+        .get();
+
+    return doc.exists ? doc.data() : null;
+}
 
 module.exports = {
     createUserProfile,
@@ -485,5 +493,6 @@ module.exports = {
     inviteStaffByEmail,
     getInviteByEmail,
     updateStaffApprovalStatus,
-    getPendingStaffByClinic
+    getPendingStaffByClinic,
+    getPatientProfileById
 };
