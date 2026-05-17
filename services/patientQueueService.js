@@ -46,11 +46,11 @@ async function getPatientQueueInfo(patientId) {
                 return total + (patient.serviceDuration || 0);
             }, 0);
 
-            const yourDuration =
-                patient_Queue_Item.serviceDuration || 0;
-
-            const estimatedWaitTime =
-                waitBeforeYou + yourDuration;
+            const estimatedWaitTime = waitBeforeYou;
+            
+            await queueItemsSnapshot.docs[0].ref.update({
+                estimatedWaitTime: estimatedWaitTime
+            });
 
             return {
                 patientName: patient_Queue_Item.patientName,
@@ -62,7 +62,7 @@ async function getPatientQueueInfo(patientId) {
                 totalInQueue: all_patients.length,
 
                 waitBeforeYou,
-                yourDuration,
+
                 estimatedWaitTime
             };
         }
