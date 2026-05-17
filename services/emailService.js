@@ -115,8 +115,20 @@ const sendStaffRejection = async (email, clinicName, adminName, adminEmail) => {
     await sendEmail(email, subject, html, adminName, adminEmail);
 };
 
+const sendAdminInvitation = async (email, subject, html) => {
+    try {
+        await sendEmail(email, subject, html, "SmartClinic Support");
+        console.log(`Admin invitation sent to ${email}`);
+    } catch (error) {
+        console.error("Error sending admin invitation:", error);
+        throw error;
+    }
+};
+
 module.exports = {
     sendStaffInvitation,
     sendStaffApproval,
-    sendStaffRejection
+    sendStaffRejection,
+    sendAdminInvitation,
+    sendEmail
 };

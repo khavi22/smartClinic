@@ -18,13 +18,20 @@ app.use(express.static(path.join(__dirname, "public")));
 
 
 
-let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes , patientQueueRoutes;
+let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes , patientQueueRoutes, adminOnboardingRoutes;
 
 try {
   clinicsRoutes = require("./routes/clinics");
   console.log("✓ Clinics routes loaded");
 } catch (err) {
   console.error("✗ Error loading clinics routes:", err);
+}
+
+try {
+  adminOnboardingRoutes = require("./routes/adminOnboarding");
+  console.log("✓ Admin onboarding routes loaded");
+} catch (err) {
+  console.error("✗ Error loading admin onboarding routes:", err);
 }
 
 try{
@@ -78,6 +85,7 @@ if (staffAvailabilityRoutes) app.use("/api/staff/availability", staffAvailabilit
 if (adminRoutes) app.use("/api/admin", adminRoutes);
 if (queueRoutes) app.use("/api/queue", queueRoutes);
 if (patientQueueRoutes) app.use("/api/patient/queue", patientQueueRoutes);
+if (adminOnboardingRoutes) app.use("/api/admin-onboarding", adminOnboardingRoutes);
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
