@@ -549,7 +549,6 @@ async function getPatientProfileById(uid) {
     return doc.exists ? doc.data() : null;
 }
 
-
 const getServiceTemplates = async () => {
   const snapshot = await db.collection("serviceTemplates").get();
 

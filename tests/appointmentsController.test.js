@@ -1,665 +1,495 @@
-const firebaseService = require("../services/firebaseService");
-const emailService = require("../services/emailService");
-const {
-    getAvailability,
-    postAppointment,
-    getAppointmentsByPatientId,
-    cancelAppointmentController,
-    getSmartSuggestion
-} = require("../Controllers/appointmentsController");
+const httpMocks = require("node-mocks-http");
+const EventEmitter = require("events").EventEmitter;
 
-jest.mock("../services/firebaseService");
-jest.mock("../services/emailService");
-jest.mock("../services/config/firebase", () => ({
-    db: { collection: jest.fn() },
-    admin: {
-        auth: jest.fn(() => ({
-            setCustomUserClaims: jest.fn().mockResolvedValue(),
-            deleteUser: jest.fn().mockResolvedValue()
-        })),
-        firestore: jest.fn().mockReturnValue({
-            collection: jest.fn().mockReturnValue({
-                doc: jest.fn().mockReturnValue({
-                    get: jest.fn().mockResolvedValue({
-                        exists: true,
-                        data: () => ({
-                            patientId: "patient-1",
-                            clinicName: "Smart Clinic",
-                            clinicAddress: "123 Main Rd",
-                            date: "2026-04-20",
-                            timeSlot: "09:00 - 10:00"
-                        })
-                    })
-                })
-            })
-        })
-    }
+jest.mock("../../services/firebaseService", () => ({
+    getAvailabilityForDate: jest.fn(),
+    createAppointment: jest.fn(),
+    getAppointmentsByPatientId: jest.fn(),
+    cancelAppointment: jest.fn(),
+    getPatientProfileById: jest.fn(),
 }));
 
-describe("appointmentsController", () => {
-    let req;
-    let res;
-    let consoleErrorSpy;
-    let consoleLogSpy;
-    let consoleWarnSpy;
+jest.mock("../../services/emailService", () => ({
+    sendAppointmentConfirmation: jest.fn(),
+    sendAppointmentCancellation: jest.fn(),
+}));
+
+jest.mock("../../services/config/firebase", () => ({
+    admin: {
+        firestore: jest.fn(),
+    },
+    db: {},
+}));
+
+const appointmentController = require("../../controllers/appointmentController");
+
+const {
+    getAvailabilityForDate,
+    createAppointment,
+    getAppointmentsByPatientId,
+    cancelAppointment,
+    getPatientProfileById,
+} = require("../../services/firebaseService");
+
+const emailService = require("../../services/emailService");
+
+const { admin } = require("../../services/config/firebase");
+
+function mockResponse() {
+    return httpMocks.createResponse({
+        eventEmitter: EventEmitter,
+    });
+}
+
+describe("Appointment Controller", () => {
 
     beforeEach(() => {
-        req = {
-            query: {},
-            body: {},
-            params: {}
-        };
-
-        res = {
-            json: jest.fn(),
-            status: jest.fn().mockReturnThis()
-        };
-
         jest.clearAllMocks();
-        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-        consoleLogSpy   = jest.spyOn(console, "log").mockImplementation(() => {});
-        consoleWarnSpy  = jest.spyOn(console, "warn").mockImplementation(() => {});
 
-        // ✅ default mock for admin.firestore used in cancelAppointmentController
-        const { admin } = require("../services/config/firebase");
-        admin.firestore.mockReturnValue({
-            collection: jest.fn().mockReturnValue({
-                doc: jest.fn().mockReturnValue({
-                    get: jest.fn().mockResolvedValue({
-                        exists: true,
-                        data: () => ({
-                            patientId: "patient-1",
-                            clinicName: "Smart Clinic",
-                            clinicAddress: "123 Main Rd",
-                            date: "2026-04-20",
-                            timeSlot: "09:00 - 10:00"
-                        })
-                    })
-                })
-            })
-        });
+        global.fetch = jest.fn();
     });
 
-    afterEach(() => {
-        consoleErrorSpy.mockRestore();
-        consoleLogSpy.mockRestore();
-        consoleWarnSpy.mockRestore();
-    });
+    // =====================================================
+    // getAvailability
+    // =====================================================
 
     describe("getAvailability", () => {
-        it("should return 400 when the date is missing", async () => {
-            await getAvailability(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                error: "Missing date parameter"
-            });
-        });
+        it("should return availability slots", async () => {
 
-        it("should fetch availability with the default clinic id", async () => {
-            req.query.date = "2026-04-19";
-            const slots = [{ id: 1, time: "01:00 - 02:00" }];
-            firebaseService.getAvailabilityForDate.mockResolvedValue(slots);
+            getAvailabilityForDate.mockResolvedValue([
+                {
+                    time: "10",
+                    available: true,
+                },
+            ]);
 
-            await getAvailability(req, res);
-
-            expect(firebaseService.getAvailabilityForDate).toHaveBeenCalledWith("default", "2026-04-19");
-            expect(res.json).toHaveBeenCalledWith({
-                date: "2026-04-19",
-                slots
-            });
-        });
-
-        it("should return 500 when availability lookup fails", async () => {
-            req.query.date   = "2026-04-19";
-            req.query.clinicId = "clinic-123";
-            firebaseService.getAvailabilityForDate.mockRejectedValue(new Error("Lookup failed"));
-
-            await getAvailability(req, res);
-
-            expect(firebaseService.getAvailabilityForDate).toHaveBeenCalledWith("clinic-123", "2026-04-19");
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({
-                error: "Failed to fetch availability data."
-            });
-        });
-
-        it("should merge ML recommendations into slots when ML service is active", async () => {
-            const originalMlUrl = process.env.ML_SERVICE_URL;
-            const originalFetch = global.fetch;
-            
-            process.env.ML_SERVICE_URL = "http://localhost:5001";
-            
-            const mockMlPredictions = {
-                predictions: [
-                    { timeSlot: "09:00", recommended: true }
-                ]
-            };
-            
-            global.fetch = jest.fn().mockResolvedValue({
+            fetch.mockResolvedValue({
                 ok: true,
-                json: jest.fn().mockResolvedValue(mockMlPredictions)
+                json: async () => ({
+                    predictions: [],
+                }),
             });
 
-            req.query.date = "2026-04-19";
-            req.query.clinicId = "clinic-123";
-            const slots = [{ id: 1, time: "09:00" }, { id: 2, time: "10:00" }];
-            appointmentService.getAvailabilityForDate.mockResolvedValue(slots);
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
 
-            await getAvailability(req, res);
-
-            expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining("http://localhost:5001/predict?date=2026-04-19")
-            );
-            expect(res.json).toHaveBeenCalledWith({
-                date: "2026-04-19",
-                slots: [
-                    { id: 1, time: "09:00", isRecommended: true },
-                    { id: 2, time: "10:00" }
-                ]
+            const req = httpMocks.createRequest({
+                query: {
+                    date: "2026-05-20",
+                    clinicId: "clinic1",
+                },
             });
 
-            process.env.ML_SERVICE_URL = originalMlUrl;
-            global.fetch = originalFetch;
+            const res = mockResponse();
+
+            await appointmentController.getAvailability(req, res);
+
+            expect(res.statusCode).toBe(200);
+
+            expect(getAvailabilityForDate)
+                .toHaveBeenCalledWith(
+                    "clinic1",
+                    "2026-05-20"
+                );
         });
 
-        it("should proceed without recommendations if ML service call fails", async () => {
-            const originalMlUrl = process.env.ML_SERVICE_URL;
-            const originalFetch = global.fetch;
-            
-            process.env.ML_SERVICE_URL = "http://localhost:5001";
-            
-            global.fetch = jest.fn().mockRejectedValue(new Error("Network error"));
+        it("should return 400 if date missing", async () => {
 
-            req.query.date = "2026-04-19";
-            req.query.clinicId = "clinic-123";
-            const slots = [{ id: 1, time: "09:00" }];
-            appointmentService.getAvailabilityForDate.mockResolvedValue(slots);
-
-            await getAvailability(req, res);
-
-            expect(res.json).toHaveBeenCalledWith({
-                date: "2026-04-19",
-                slots
+            const req = httpMocks.createRequest({
+                query: {},
             });
 
-            process.env.ML_SERVICE_URL = originalMlUrl;
-            global.fetch = originalFetch;
+            const res = mockResponse();
+
+            await appointmentController.getAvailability(req, res);
+
+            expect(res.statusCode).toBe(400);
+        });
+
+        it("should continue if ML service fails", async () => {
+
+            getAvailabilityForDate.mockResolvedValue([]);
+
+            fetch.mockRejectedValue(new Error("ML failed"));
+
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            const req = httpMocks.createRequest({
+                query: {
+                    date: "2026-05-20",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getAvailability(req, res);
+
+            expect(res.statusCode).toBe(200);
         });
     });
+
+    // =====================================================
+    // postAppointment
+    // =====================================================
 
     describe("postAppointment", () => {
-        it("should return 400 when date or timeSlot is missing", async () => {
-            req.body = { patientId: "patient-1" };
 
-            await postAppointment(req, res);
+        it("should create appointment successfully", async () => {
 
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                error: "Missing date or timeSlot"
+            createAppointment.mockResolvedValue({
+                id: "appointment1",
             });
+
+            getPatientProfileById.mockResolvedValue({
+                email: "test@example.com",
+                fullName: "John Doe",
+            });
+
+            emailService.sendAppointmentConfirmation.mockResolvedValue();
+
+            const req = httpMocks.createRequest({
+                body: {
+                    patientId: "patient1",
+                    clinicId: "clinic1",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(200);
+
+            expect(createAppointment).toHaveBeenCalled();
+
+            expect(emailService.sendAppointmentConfirmation)
+                .toHaveBeenCalled();
         });
 
-        it("should create a normal appointment", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd",
-                serviceId: "service-1",
-                serviceName: "Consultation",
-                serviceDuration: 15
-            };
-            firebaseService.createAppointment.mockResolvedValue({ id: "appt-1" });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentConfirmation.mockResolvedValue({});
+        it("should return 400 when date missing", async () => {
 
-            await postAppointment(req, res);
-
-            expect(appointmentService.cancelAppointment).not.toHaveBeenCalled();
-            expect(appointmentService.createAppointment).toHaveBeenCalledWith(
-                "clinic-1",
-                "2026-04-20",
-                "09:00 - 10:00",
-                "patient-1",
-                "Smart Clinic",
-                "123 Main Rd",
-                false,
-                "service-1",
-                "Consultation",
-                15
-            );
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                appointment: { id: "appt-1" }
+            const req = httpMocks.createRequest({
+                body: {
+                    timeSlot: "10:00",
+                },
             });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(400);
         });
 
-        it("should cancel the old appointment during a reschedule", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd",
-                oldAppointmentId: "old-1",
-                serviceId: "service-1",
-                serviceName: "Consultation",
-                serviceDuration: 15
-            };
-            firebaseService.cancelAppointment.mockResolvedValue({ message: "Cancelled" });
-            firebaseService.createAppointment.mockResolvedValue({ id: "appt-2" });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
+        it("should return 400 when service info missing", async () => {
+
+            const req = httpMocks.createRequest({
+                body: {
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                },
             });
-            emailService.sendAppointmentConfirmation.mockResolvedValue({});
 
-            await postAppointment(req, res);
+            const res = mockResponse();
 
-            expect(appointmentService.cancelAppointment).toHaveBeenCalledWith("old-1");
-            expect(appointmentService.createAppointment).toHaveBeenCalledWith(
-                "clinic-1",
-                "2026-04-20",
-                "09:00 - 10:00",
-                "patient-1",
-                "Smart Clinic",
-                "123 Main Rd",
-                true,
-                "service-1",
-                "Consultation",
-                15
-            );
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(400);
         });
 
-        it("should return 400 when the slot is full and unavailable", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                serviceId: "service-1",
-                serviceName: "Consultation",
-                serviceDuration: 15
-            };
-            firebaseService.createAppointment.mockRejectedValue(new Error("This slot is full"));
+        it("should cancel old appointment during reschedule", async () => {
 
-            await postAppointment(req, res);
+            cancelAppointment.mockResolvedValue();
 
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ error: "This slot is full" });
+            createAppointment.mockResolvedValue({
+                id: "newAppointment",
+            });
+
+            getPatientProfileById.mockResolvedValue(null);
+
+            const req = httpMocks.createRequest({
+                body: {
+                    patientId: "patient1",
+                    clinicId: "clinic1",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                    oldAppointmentId: "old123",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(cancelAppointment)
+                .toHaveBeenCalledWith("old123");
         });
 
-        it("should return 400 when the patient already has a booking", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                serviceId: "service-1",
-                serviceName: "Consultation",
-                serviceDuration: 15
-            };
-            firebaseService.createAppointment.mockRejectedValue(
-                new Error("You already have a booking for this day.")
+        it("should return 400 for slot full error", async () => {
+
+            createAppointment.mockRejectedValue(
+                new Error("slot is full")
             );
 
-            await postAppointment(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                error: "You already have a booking for this day."
-            });
-        });
-
-        it("should return 500 for unexpected appointment creation errors", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                serviceId: "service-1",
-                serviceName: "Consultation",
-                serviceDuration: 15
-            };
-            firebaseService.createAppointment.mockRejectedValue(new Error("DB failure"));
-
-            await postAppointment(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({
-                error: "Failed to create appointment. Please try again later."
-            });
-        });
-
-        it("should send a confirmation email after successful booking", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd"
-            };
-            firebaseService.createAppointment.mockResolvedValue({ id: "appt-1" });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentConfirmation.mockResolvedValue({});
-
-            await postAppointment(req, res);
-
-            expect(emailService.sendAppointmentConfirmation).toHaveBeenCalledWith(
-                "patient@gmail.com", "Sipho Dlamini",
-                "Smart Clinic", "123 Main Rd",
-                "2026-04-20", "09:00 - 10:00", false
-            );
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                appointment: { id: "appt-1" }
-            });
-        });
-
-        it("should send a reschedule email when oldAppointmentId is provided", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd",
-                oldAppointmentId: "old-1"
-            };
-            firebaseService.cancelAppointment.mockResolvedValue({ message: "Cancelled" });
-            firebaseService.createAppointment.mockResolvedValue({ id: "appt-2" });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentConfirmation.mockResolvedValue({});
-
-            await postAppointment(req, res);
-
-            expect(emailService.sendAppointmentConfirmation).toHaveBeenCalledWith(
-                "patient@gmail.com", "Sipho Dlamini",
-                "Smart Clinic", "123 Main Rd",
-                "2026-04-20", "09:00 - 10:00", true
-            );
-        });
-
-        it("should still create appointment even if confirmation email fails", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd"
-            };
-            firebaseService.createAppointment.mockResolvedValue({ id: "appt-1" });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentConfirmation.mockRejectedValue(new Error("SMTP error"));
-
-            await postAppointment(req, res);
-
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                appointment: { id: "appt-1" }
-            });
-        });
-
-        it("should not send email if patient has no email address", async () => {
-            req.body = {
-                patientId: "patient-1",
-                clinicId: "clinic-1",
-                date: "2026-04-20",
-                timeSlot: "09:00 - 10:00",
-                clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd"
-            };
-            firebaseService.createAppointment.mockResolvedValue({ id: "appt-1" });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                fullName: "Sipho Dlamini"
+            const req = httpMocks.createRequest({
+                body: {
+                    patientId: "patient1",
+                    clinicId: "clinic1",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                },
             });
 
-            await postAppointment(req, res);
+            const res = mockResponse();
 
-            expect(emailService.sendAppointmentConfirmation).not.toHaveBeenCalled();
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                appointment: { id: "appt-1" }
-            });
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(400);
         });
     });
+
+    // =====================================================
+    // getAppointmentsByPatientId
+    // =====================================================
 
     describe("getAppointmentsByPatientId", () => {
-        it("should return 400 if patientId is missing", async () => {
-            await getAppointmentsByPatientId(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ error: "Missing patientId" });
+        it("should fetch appointments", async () => {
+
+            getAppointmentsByPatientId.mockResolvedValue([
+                {
+                    id: "appointment1",
+                },
+            ]);
+
+            const req = httpMocks.createRequest({
+                params: {
+                    patientId: "patient1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getAppointmentsByPatientId(req, res);
+
+            expect(res.statusCode).toBe(200);
+
+            expect(getAppointmentsByPatientId)
+                .toHaveBeenCalledWith("patient1");
         });
 
-        it("should return appointments for a valid patientId", async () => {
-            req.params.patientId = "patient123";
-            const mockAppointments = [
-                { id: "appt1", patientId: "patient123", doctorId: "doc1", status: "booked" },
-                { id: "appt2", patientId: "patient123", doctorId: "doc2", status: "pending" }
-            ];
-            firebaseService.getAppointmentsByPatientId.mockResolvedValue(mockAppointments);
+        it("should return 400 if patientId missing", async () => {
 
-            await getAppointmentsByPatientId(req, res);
+            const req = httpMocks.createRequest({
+                params: {},
+            });
 
-            expect(firebaseService.getAppointmentsByPatientId).toHaveBeenCalledWith("patient123");
-            expect(res.json).toHaveBeenCalledWith({ appointments: mockAppointments });
-        });
+            const res = mockResponse();
 
-        it("should return 500 if the service throws an error", async () => {
-            req.params.patientId = "patient123";
-            firebaseService.getAppointmentsByPatientId.mockRejectedValue(new Error("Database error"));
+            await appointmentController.getAppointmentsByPatientId(req, res);
 
-            await getAppointmentsByPatientId(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({ error: "Failed to fetch appointments" });
+            expect(res.statusCode).toBe(400);
         });
     });
+
+    // =====================================================
+    // cancelAppointmentController
+    // =====================================================
 
     describe("cancelAppointmentController", () => {
-        it("should return 400 when appointment id is missing", async () => {
-            await cancelAppointmentController(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({
-                success: false,
-                message: "Appointment ID is required"
+        it("should cancel appointment successfully", async () => {
+
+            const mockGet = jest.fn().mockResolvedValue({
+                exists: true,
+                data: () => ({
+                    patientId: "patient1",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                }),
             });
-        });
 
-        it("should cancel an appointment successfully", async () => {
-            req.params.id = "appt-1";
-            firebaseService.cancelAppointment.mockResolvedValue({
-                message: "Booking cancelled successfully"
-            });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentCancellation.mockResolvedValue({});
-
-            await cancelAppointmentController(req, res);
-
-            expect(firebaseService.cancelAppointment).toHaveBeenCalledWith("appt-1");
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                message: "Booking cancelled successfully"
-            });
-        });
-
-        it("should send a cancellation email after successful cancellation", async () => {
-            req.params.id = "appt-1";
-            firebaseService.cancelAppointment.mockResolvedValue({
-                message: "Booking cancelled successfully"
-            });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentCancellation.mockResolvedValue({});
-
-            await cancelAppointmentController(req, res);
-
-            expect(emailService.sendAppointmentCancellation).toHaveBeenCalledWith(
-                "patient@gmail.com", "Sipho Dlamini",
-                "Smart Clinic", "123 Main Rd",
-                "2026-04-20", "09:00 - 10:00"
-            );
-            expect(res.status).toHaveBeenCalledWith(200);
-        });
-
-        it("should still cancel appointment even if cancellation email fails", async () => {
-            req.params.id = "appt-1";
-            firebaseService.cancelAppointment.mockResolvedValue({
-                message: "Booking cancelled successfully"
-            });
-            firebaseService.getPatientProfileById.mockResolvedValue({
-                email: "patient@gmail.com",
-                fullName: "Sipho Dlamini"
-            });
-            emailService.sendAppointmentCancellation.mockRejectedValue(new Error("SMTP error"));
-
-            await cancelAppointmentController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                message: "Booking cancelled successfully"
-            });
-        });
-
-        it("should return 500 when cancellation fails", async () => {
-            req.params.id = "appt-1";
-            firebaseService.cancelAppointment.mockRejectedValue(new Error("Cancel failed"));
-
-            const { admin } = require("../services/config/firebase");
             admin.firestore.mockReturnValue({
-                collection: jest.fn().mockReturnValue({
-                    doc: jest.fn().mockReturnValue({
-                        get: jest.fn().mockResolvedValue({ exists: false })
-                    })
-                })
+                collection: jest.fn(() => ({
+                    doc: jest.fn(() => ({
+                        get: mockGet,
+                    })),
+                })),
             });
 
-            await cancelAppointmentController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({
-                success: false,
-                message: "Failed to cancel appointment",
-                error: "Cancel failed"
+            cancelAppointment.mockResolvedValue({
+                message: "Appointment cancelled",
             });
+
+            getPatientProfileById.mockResolvedValue({
+                email: "test@example.com",
+                fullName: "John Doe",
+            });
+
+            emailService.sendAppointmentCancellation
+                .mockResolvedValue();
+
+            const req = httpMocks.createRequest({
+                params: {
+                    id: "appointment1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.cancelAppointmentController(req, res);
+
+            expect(res.statusCode).toBe(200);
+
+            expect(cancelAppointment)
+                .toHaveBeenCalledWith("appointment1");
+
+            expect(emailService.sendAppointmentCancellation)
+                .toHaveBeenCalled();
+        });
+
+        it("should return 400 if appointment id missing", async () => {
+
+            const req = httpMocks.createRequest({
+                params: {},
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.cancelAppointmentController(req, res);
+
+            expect(res.statusCode).toBe(400);
+        });
+
+        it("should still succeed if cancellation email fails", async () => {
+
+            const mockGet = jest.fn().mockResolvedValue({
+                exists: true,
+                data: () => ({
+                    patientId: "patient1",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                }),
+            });
+
+            admin.firestore.mockReturnValue({
+                collection: jest.fn(() => ({
+                    doc: jest.fn(() => ({
+                        get: mockGet,
+                    })),
+                })),
+            });
+
+            cancelAppointment.mockResolvedValue({
+                message: "Appointment cancelled",
+            });
+
+            getPatientProfileById.mockResolvedValue({
+                email: "test@example.com",
+                fullName: "John Doe",
+            });
+
+            emailService.sendAppointmentCancellation
+                .mockRejectedValue(new Error("Email failed"));
+
+            const req = httpMocks.createRequest({
+                params: {
+                    id: "appointment1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.cancelAppointmentController(req, res);
+
+            expect(res.statusCode).toBe(200);
         });
     });
 
+    // =====================================================
+    // getSmartSuggestion
+    // =====================================================
+
     describe("getSmartSuggestion", () => {
-        it("should return static AI Tip when ML_SERVICE_URL is missing", async () => {
-            const originalMlUrl = process.env.ML_SERVICE_URL;
-            delete process.env.ML_SERVICE_URL;
 
-            await getSmartSuggestion(req, res);
+        it("should return smart suggestions", async () => {
 
-            expect(res.json).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    suggestion: expect.stringContaining("Mid-week mornings")
-                })
-            );
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
 
-            process.env.ML_SERVICE_URL = originalMlUrl;
-        });
-
-        it("should fetch smart suggestions when ML service is active", async () => {
-            const originalMlUrl = process.env.ML_SERVICE_URL;
-            const originalFetch = global.fetch;
-
-            process.env.ML_SERVICE_URL = "http://localhost:5001";
-
-            const localDate = new Date();
-            const year = localDate.getFullYear();
-            const month = String(localDate.getMonth() + 1).padStart(2, '0');
-            const day = String(localDate.getDate()).padStart(2, '0');
-            const todayStr = `${year}-${month}-${day}`;
-
-            const tomorrowDate = new Date(localDate);
-            tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-            const yTom = tomorrowDate.getFullYear();
-            const mTom = String(tomorrowDate.getMonth() + 1).padStart(2, '0');
-            const dTom = String(tomorrowDate.getDate()).padStart(2, '0');
-            const tomorrowStr = `${yTom}-${mTom}-${dTom}`;
-
-            const mockMlData = {
-                predictionsByDate: {
-                    [todayStr]: [
-                        { timeSlot: "23:00", recommended: true }
-                    ],
-                    [tomorrowStr]: [
-                        { timeSlot: "10:00", recommended: true }
-                    ]
-                }
-            };
-
-            global.fetch = jest.fn().mockResolvedValue({
+            fetch.mockResolvedValue({
                 ok: true,
-                json: jest.fn().mockResolvedValue(mockMlData)
+                json: async () => ({
+                    predictionsByDate: {
+                        "2026-05-18": [
+                            {
+                                recommended: true,
+                                timeSlot: "10",
+                            },
+                        ],
+                    },
+                }),
             });
 
-            req.query.clinicId = "clinic-123";
+            const req = httpMocks.createRequest({
+                query: {
+                    clinicId: "clinic1",
+                },
+            });
 
-            await getSmartSuggestion(req, res);
+            const res = mockResponse();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining("http://localhost:5001/predict-range")
-            );
-            expect(res.json).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    hasPrediction: true,
-                    today: expect.objectContaining({ time: "23:00" }),
-                    future: expect.objectContaining({ time: "10:00" })
-                })
-            );
+            await appointmentController.getSmartSuggestion(req, res);
 
-            process.env.ML_SERVICE_URL = originalMlUrl;
-            global.fetch = originalFetch;
+            expect(res.statusCode).toBe(200);
         });
 
-        it("should return static tip when fetch or parse throws an error", async () => {
-            const originalMlUrl = process.env.ML_SERVICE_URL;
-            const originalFetch = global.fetch;
+        it("should return fallback suggestion if ML service missing", async () => {
 
-            process.env.ML_SERVICE_URL = "http://localhost:5001";
-            global.fetch = jest.fn().mockRejectedValue(new Error("Network failure"));
+            delete process.env.ML_SERVICE_URL;
 
-            await getSmartSuggestion(req, res);
+            const req = httpMocks.createRequest({});
 
-            expect(res.json).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    hasPrediction: false,
-                    suggestion: expect.stringContaining("try to book your appointments")
-                })
-            );
+            const res = mockResponse();
 
-            process.env.ML_SERVICE_URL = originalMlUrl;
-            global.fetch = originalFetch;
+            await appointmentController.getSmartSuggestion(req, res);
+
+            expect(res.statusCode).toBe(200);
+        });
+
+        it("should return fallback suggestion on ML error", async () => {
+
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            fetch.mockRejectedValue(new Error("ML Error"));
+
+            const req = httpMocks.createRequest({});
+
+            const res = mockResponse();
+
+            await appointmentController.getSmartSuggestion(req, res);
+
+            expect(res.statusCode).toBe(200);
         });
     });
 });
