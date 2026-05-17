@@ -9,7 +9,8 @@ const {
     getServices, 
     addService, 
     updateService, 
-    deleteService 
+    deleteService,
+    updateClinicProfile
 } = require("../Controllers/ClinicsController");
 const { authMiddleware, requireAdmin } = require("../middlewares/auth");
 
@@ -19,6 +20,9 @@ router.post("/ensure-exists", ensureClinicExistsController); // POST /api/clinic
 // service templates
 router.get("/templates", getServiceTemplates);
 router.post("/templates/seed", authMiddleware, requireAdmin, seedServiceTemplates); // seeding protected
+
+// clinic profile
+router.put("/profile", authMiddleware, updateClinicProfile);  // PUT /api/clinics/profile
 
 // services 
 router.get("/services", getServices);  // Allow public access for booking UI

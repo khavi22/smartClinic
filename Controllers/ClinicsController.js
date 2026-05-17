@@ -55,6 +55,30 @@ exports.updateClinicHoursController = async (req, res) => {
   }
 };
 
+// ── UPDATE CLINIC PROFILE ────────────────────────────────────
+exports.updateClinicProfile = async (req, res) => {
+  try {
+    const clinicId = req.user.clinicId;  // set by authMiddleware
+    if (!clinicId) return res.status(400).json({ success: false, message: "No clinicId on token" });
+
+    const { facilityType, province, district, region, address } = req.body;
+
+    // Only update fields that were actually sent
+    const updates = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+    if (facilityType !== undefined) updates.facilityType = facilityType;
+    if (province   !== undefined) updates.province   = province;
+    if (district   !== undefined) updates.district   = district;
+    if (region     !== undefined) updates.region     = region;
+    if (address    !== undefined) updates.address    = address;
+
+    await db.collection("clinics").doc(clinicId).update(updates);
+    res.json({ success: true, message: "Clinic profile updated" });
+  } catch (error) {
+    console.error("Error updating clinic profile:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // ── GET CLINICS ─────────────────────────────────────────────
 exports.getClinics = async (req, res) => {
   const searchName = req.query.search;

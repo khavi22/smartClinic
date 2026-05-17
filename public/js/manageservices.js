@@ -82,7 +82,7 @@ async function loadClinicProfile(clinicId) {
     }
 }
 
-// ── SAVE FACILITY TYPE ──
+// ── SAVE CLINIC PROFILE (facility type + location) ──
 document.getElementById('clinicProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const saveBtn = document.getElementById('saveClinicProfileBtn');
@@ -93,23 +93,40 @@ document.getElementById('clinicProfileForm').addEventListener('submit', async (e
     status.textContent = "";
 
     try {
-        const facilityType = document.querySelector('input[name="facilityType"]:checked')?.value || "";
+        const token = await getAuthToken();
 
-        await firebase.firestore().collection("clinics").doc(currentClinicId).update({
-            facilityType: facilityType,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        const payload = {
+            facilityType: document.querySelector('input[name="facilityType"]:checked')?.value || "",
+            province:     document.getElementById('clinicProvince').value.trim(),
+            district:     document.getElementById('clinicDistrict').value.trim(),
+            region:       document.getElementById('clinicRegion').value.trim(),
+            address:      document.getElementById('clinicAddress').value.trim(),
+        };
+
+        const res = await fetch('/api/clinics/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
         });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || `Server error ${res.status}`);
+        }
 
         status.textContent = "Saved successfully!";
         status.className = "save-status";
         setTimeout(() => { status.textContent = ""; }, 3000);
     } catch (err) {
-        console.error("Error saving profile", err);
-        status.textContent = "Error saving changes";
+        console.error("Error saving clinic profile:", err);
+        status.textContent = err.message || "Error saving changes";
         status.className = "save-status error";
     } finally {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = "<i class='bx bx-save'></i> Save Facility Type";
+        saveBtn.innerHTML = "<i class='bx bx-save'></i> Save Clinic Profile";
     }
 });
 
