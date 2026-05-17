@@ -10,7 +10,7 @@ const appointmentTimeInput = document.getElementById("appointmentTimeInput");
 const priorityInput = document.getElementById("priorityInput");
 const queueActionStatus = document.getElementById("queueActionStatus");
 
-const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED"];
+const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED",];
 let currentClinicId = null;
 let currentIdToken = null;
 let currentStaffId = null;
@@ -560,7 +560,7 @@ async function updatePatientStatus(patient, status) {
     }
 
     try {
-        showToast(`Updating ${getPatientName(patient)}...`, "info");
+        showToast(`Updating ${getPatientName(patient)}to ${status}......`, "info");
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/${encodeURIComponent(patient.queueItemId)}`, {
             method: "PATCH",
             headers: {

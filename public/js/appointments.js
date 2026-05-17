@@ -85,15 +85,31 @@ function createAppointmentCard(appointment, past = false) {
   const dateParts = formatDateParts(appointment.date);
 
   const status = normalizeStatus(appointment.status);
+
   const cancelled = status === "cancelled";
+  const missed = status === "missed";
+  const completed = status === "completed";
+
   const today = isToday(appointment.date);
 
   const article = document.createElement("article");
   article.className = "appointment-entry";
 
-  if (past) article.classList.add("state-past");
-  if (cancelled) article.classList.add("state-cancelled");
-  if (today && !cancelled) article.classList.add("state-today");
+  if (past || completed) {
+    article.classList.add("state-past");
+  }
+
+  if (cancelled) {
+    article.classList.add("state-cancelled");
+  }
+
+  if (missed) {
+    article.classList.add("state-missed");
+  }
+
+  if (today && !cancelled && !missed && !completed) {
+    article.classList.add("state-today");
+  }
 
   let statusClass = "tag-confirmed";
   let statusText = "Confirmed";
@@ -101,7 +117,12 @@ function createAppointmentCard(appointment, past = false) {
   if (cancelled) {
     statusClass = "tag-cancelled";
     statusText = "Cancelled";
-  } else if (past) {
+  } 
+  else if (missed) {
+    statusClass = "tag-missed";
+    statusText = "Missed";
+  } 
+  else if (completed || past) {
     statusClass = "tag-completed";
     statusText = "Completed";
   }
@@ -118,33 +139,46 @@ function createAppointmentCard(appointment, past = false) {
         <header>
           <h3>
             ${clinicName}
-            ${today && !cancelled ? `<mark class="badge-today">Today</mark>` : ""}
+            ${today && !cancelled && !missed && !completed
+              ? `<mark class="badge-today">Today</mark>`
+              : ""}
           </h3>
         </header>
 
         <section class="entry-metadata" aria-label="Appointment details">
           <address class="clinic-address">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
             ${clinicAddress}
           </address>
+
           <p class="time-meta">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
             Scheduled for ${time}
           </p>
         </section>
 
         <footer class="entry-status">
-          <span class="status-indicator ${statusClass}">${statusText}</span>
+          <span class="status-indicator ${statusClass}">
+            ${statusText}
+          </span>
         </footer>
       </section>
     </section>
   `;
 
-  if (!past && !cancelled) {
+  const inactiveStatuses = ["cancelled", "completed", "missed"];
+
+  if (!past && !inactiveStatuses.includes(status)) {
     const actions = document.createElement("nav");
     actions.className = "entry-actions";
     actions.setAttribute("aria-label", "Appointment actions");
-    
+
     const rescheduleBtn = document.createElement("button");
     rescheduleBtn.type = "button";
     rescheduleBtn.className = "btn-action secondary";
@@ -171,6 +205,7 @@ function createAppointmentCard(appointment, past = false) {
     actions.appendChild(queueLink);
     actions.appendChild(rescheduleBtn);
     actions.appendChild(cancelBtn);
+
     article.appendChild(actions);
   }
 
@@ -182,12 +217,24 @@ function renderAppointments() {
   pastList.innerHTML = "";
 
   const upcomingAppointments = appointments
-    .filter(appt => normalizeStatus(appt.status) !== "cancelled" && !isPast(appt.date))
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  .filter(appt => {
+    const status = normalizeStatus(appt.status);
+
+    return (
+      !["cancelled", "completed", "missed"].includes(status) &&
+      !isPast(appt.date)
+    );
+  })
 
   const pastAppointments = appointments
-    .filter(appt => isPast(appt.date) || normalizeStatus(appt.status) === "cancelled")
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  .filter(appt => {
+    const status = normalizeStatus(appt.status);
+
+    return (
+      isPast(appt.date) ||
+      ["cancelled", "completed", "missed"].includes(status)
+    );
+  })
 
   upcomingCount.textContent = upcomingAppointments.length;
   pastCount.textContent = pastAppointments.length;
