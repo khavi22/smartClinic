@@ -420,9 +420,6 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
 
     const facilityTypeEl = document.querySelector('input[name="facilityType"]:checked');
     const facilityType = facilityTypeEl ? facilityTypeEl.value : "";
-    const province = document.getElementById("clinicProvince").value;
-    const district = document.getElementById("clinicDistrict").value.trim();
-    const region = document.getElementById("clinicRegion").value.trim();
     const services = [...document.querySelectorAll('#profileForm input[name="services"]:checked')]
         .map(cb => cb.value);
 
@@ -432,11 +429,9 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
     status.className = "save-status";
 
     try {
+        // Exclude province, district, region from the update payload to prevent updates
         await firebase.firestore().collection("clinics").doc(currentClinicId).set({
             facilityType,
-            province,
-            district,
-            region,
             services
         }, { merge: true });
 
@@ -477,6 +472,16 @@ function setClinicFormEditable(enabled) {
             field.type === "button" ||
             field.type === "submit"
         ) return;
+
+        // Google Maps location fields are strictly view-only
+        if (
+            field.id === "clinicProvince" ||
+            field.id === "clinicDistrict" ||
+            field.id === "clinicRegion"
+        ) {
+            field.disabled = true;
+            return;
+        }
 
         field.disabled = !enabled;
     });

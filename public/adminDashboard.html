@@ -311,11 +311,11 @@
 
                     <!-- Location -->
                     <fieldset class="profile-fieldset">
-                        <legend>Location Details</legend>
+                        <legend>Location Details <span class="legend-sub">(retrieved from Google Maps, view-only)</span></legend>
                         <div class="location-grid">
                             <div class="form-field">
                                 <label for="clinicProvince">Province</label>
-                                <select id="clinicProvince" name="province" class="premium-select">
+                                <select id="clinicProvince" name="province" class="premium-select" disabled>
                                     <option value="">— Select Province —</option>
                                     <option>Eastern Cape</option>
                                     <option>Free State</option>
@@ -330,11 +330,11 @@
                             </div>
                             <div class="form-field">
                                 <label for="clinicDistrict">District</label>
-                                <input type="text" id="clinicDistrict" name="district" class="premium-input" placeholder="e.g. City of Cape Town">
+                                <input type="text" id="clinicDistrict" name="district" class="premium-input" placeholder="e.g. City of Cape Town" disabled>
                             </div>
                             <div class="form-field">
                                 <label for="clinicRegion">Region / Sub-district</label>
-                                <input type="text" id="clinicRegion" name="region" class="premium-input" placeholder="e.g. Tygerberg">
+                                <input type="text" id="clinicRegion" name="region" class="premium-input" placeholder="e.g. Tygerberg" disabled>
                             </div>
                         </div>
                     </fieldset>

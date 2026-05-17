@@ -128,9 +128,29 @@ exports.seedServiceTemplates = async (req, res) => {
 // ── CLINIC SERVICES ─────────────────────────────────────────
 exports.getServices = async (req, res) => {
   try {
-    // Allow both query param (for public booking UI) and user token (for admin)
     let clinicId = req.query.clinicId || (req.user && req.user.clinicId);
-    console.log("clinicId from query:", req.query.clinicId, "from user:", req.user?.clinicId);
+    
+    // Optional Auth: if no clinicId, try decoding authorization header
+    if (!clinicId) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split("Bearer ")[1];
+        try {
+          const decoded = await admin.auth().verifyIdToken(token);
+          const clinicSnapshot = await db
+            .collection("clinics")
+            .where("adminUid", "==", decoded.uid)
+            .limit(1)
+            .get();
+
+          if (!clinicSnapshot.empty) {
+            clinicId = clinicSnapshot.docs[0].id;
+          }
+        } catch (authErr) {
+          console.warn("Optional auth decoding failed in getServices:", authErr.message);
+        }
+      }
+    }
     
     if (!clinicId) {
       return res.status(400).json({ error: "clinicId is required as query parameter or from user token" });
