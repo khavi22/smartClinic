@@ -376,6 +376,7 @@ describe("queueService", () => {
             expect(queueRefs["waiting-1"].update).toHaveBeenCalledWith(expect.objectContaining({
                 status: "IN_CONSULTATION",
                 assignedStaffId: "staff-1",
+                consultationStartedAt: "mock-server-timestamp",
                 updatedBy: "staff-1"
             }));
             expect(result).toEqual(expect.objectContaining({
@@ -400,21 +401,27 @@ describe("queueService", () => {
         });
 
         it("completes a consultation and returns the highest priority next patient", async () => {
+            const startTime = new Date("2026-05-11T07:35:00");
             const { queueRefs } = setupFirestore({
                 queueItems: [
-                    { id: "active", data: { status: "IN_CONSULTATION", patientName: "Active" } },
+                    { id: "active", data: { status: "IN_CONSULTATION", patientName: "Active", consultationStartedAt: startTime } },
                     { id: "later", data: { status: "WAITING", patientName: "Later", priority: 2, appointmentTime: "08:00 - 09:00", queueNumber: 1 } },
                     { id: "next", data: { status: "WAITING", patientName: "Next", priority: 1, appointmentTime: "10:00 - 11:00", queueNumber: 5 } }
                 ]
             });
 
+            // Set fake timer system time to be exactly 15 minutes after start time
+            jest.setSystemTime(new Date("2026-05-11T07:50:00"));
+
             const result = await queueService.completeConsultation("clinic-1", "active", "staff-1");
 
             expect(queueRefs.active.update).toHaveBeenCalledWith(expect.objectContaining({
                 status: "COMPLETE",
+                consultationCompletedAt: "mock-server-timestamp",
+                actualDuration: 15,
                 updatedBy: "staff-1"
             }));
-            expect(result.completed).toEqual(expect.objectContaining({ queueItemId: "active", status: "COMPLETE" }));
+            expect(result.completed).toEqual(expect.objectContaining({ queueItemId: "active", status: "COMPLETE", actualDuration: 15 }));
             expect(result.nextPatient).toEqual(expect.objectContaining({ queueItemId: "next" }));
         });
 

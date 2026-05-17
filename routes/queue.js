@@ -4,6 +4,7 @@ const queueController = require("../Controllers/queueController");
 
 // Get queue (this will ALSO add today's appointments)
 router.get("/:clinicId", queueController.getQueue);
+router.get("/:clinicId/predict-waittime", queueController.predictWaitTime);
 router.get("/:clinicId/available-slots", queueController.getAvailableQueueSlots);
 router.post("/:clinicId", queueController.addQueueItem);
 router.post("/:clinicId/start-consultation", queueController.startConsultation);

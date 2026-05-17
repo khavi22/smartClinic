@@ -93,7 +93,10 @@ describe("appointmentsController", () => {
                 date: "2026-04-20",
                 timeSlot: "09:00 - 10:00",
                 clinicName: "Smart Clinic",
-                clinicAddress: "123 Main Rd"
+                clinicAddress: "123 Main Rd",
+                serviceId: "service-1",
+                serviceName: "Consultation",
+                serviceDuration: 15
             };
             appointmentService.createAppointment.mockResolvedValue({ id: "appt-1" });
 
@@ -107,7 +110,10 @@ describe("appointmentsController", () => {
                 "patient-1",
                 "Smart Clinic",
                 "123 Main Rd",
-                false
+                false,
+                "service-1",
+                "Consultation",
+                15
             );
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
@@ -123,7 +129,10 @@ describe("appointmentsController", () => {
                 timeSlot: "09:00 - 10:00",
                 clinicName: "Smart Clinic",
                 clinicAddress: "123 Main Rd",
-                oldAppointmentId: "old-1"
+                oldAppointmentId: "old-1",
+                serviceId: "service-1",
+                serviceName: "Consultation",
+                serviceDuration: 15
             };
             appointmentService.cancelAppointment.mockResolvedValue({ message: "Cancelled" });
             appointmentService.createAppointment.mockResolvedValue({ id: "appt-2" });
@@ -138,7 +147,10 @@ describe("appointmentsController", () => {
                 "patient-1",
                 "Smart Clinic",
                 "123 Main Rd",
-                true
+                true,
+                "service-1",
+                "Consultation",
+                15
             );
         });
 
@@ -147,7 +159,10 @@ describe("appointmentsController", () => {
                 patientId: "patient-1",
                 clinicId: "clinic-1",
                 date: "2026-04-20",
-                timeSlot: "09:00 - 10:00"
+                timeSlot: "09:00 - 10:00",
+                serviceId: "service-1",
+                serviceName: "Consultation",
+                serviceDuration: 15
             };
             appointmentService.createAppointment.mockRejectedValue(
                 new Error("This slot is full")
@@ -166,7 +181,10 @@ describe("appointmentsController", () => {
                 patientId: "patient-1",
                 clinicId: "clinic-1",
                 date: "2026-04-20",
-                timeSlot: "09:00 - 10:00"
+                timeSlot: "09:00 - 10:00",
+                serviceId: "service-1",
+                serviceName: "Consultation",
+                serviceDuration: 15
             };
             appointmentService.createAppointment.mockRejectedValue(
                 new Error("You already have a booking for this day.")
@@ -185,7 +203,10 @@ describe("appointmentsController", () => {
                 patientId: "patient-1",
                 clinicId: "clinic-1",
                 date: "2026-04-20",
-                timeSlot: "09:00 - 10:00"
+                timeSlot: "09:00 - 10:00",
+                serviceId: "service-1",
+                serviceName: "Consultation",
+                serviceDuration: 15
             };
             appointmentService.createAppointment.mockRejectedValue(new Error("DB failure"));
 
