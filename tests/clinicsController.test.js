@@ -397,145 +397,146 @@ describe("ClinicsController", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
     });
-});
-describe("getStaffUtilisationReport", () => {
-    beforeEach(() => {
-        req.params = { clinicId: "clinic1" };
-        req.query = { startDate: "2026-04-01", endDate: "2026-04-02" };
-        req.headers = { authorization: "Bearer valid-token" };
-    });
- 
-    it("should return 401 if authorization header is missing", async () => {
-        req.headers = {};
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized" }));
-    });
- 
-    it("should return 401 if authorization header does not start with Bearer", async () => {
-        req.headers = { authorization: "Basic some-token" };
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized" }));
-    });
- 
-    it("should return 401 if token verification fails", async () => {
-        mockVerifyIdToken.mockRejectedValueOnce(new Error("Invalid token"));
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized: Invalid token" }));
-    });
- 
-    it("should return 404 if clinic does not exist", async () => {
-        db.collection.mockReturnValue({
-            doc: jest.fn().mockReturnValue({
-                get: jest.fn().mockResolvedValue({ exists: false })
-            })
+
+    describe("getStaffUtilisationReport", () => {
+        beforeEach(() => {
+            req.params = { clinicId: "clinic1" };
+            req.query = { startDate: "2026-04-01", endDate: "2026-04-02" };
+            req.headers = { authorization: "Bearer valid-token" };
         });
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Clinic not found." }));
-    });
- 
-    it("should return 403 if the authenticated user is not the clinic admin", async () => {
-        mockVerifyIdToken.mockResolvedValueOnce({ uid: "not-the-admin" });
-        db.collection.mockReturnValue({
-            doc: jest.fn().mockReturnValue({
-                get: jest.fn().mockResolvedValue({
-                    exists: true,
-                    data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+    
+        it("should return 401 if authorization header is missing", async () => {
+            req.headers = {};
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized" }));
+        });
+    
+        it("should return 401 if authorization header does not start with Bearer", async () => {
+            req.headers = { authorization: "Basic some-token" };
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized" }));
+        });
+    
+        it("should return 401 if token verification fails", async () => {
+            mockVerifyIdToken.mockRejectedValueOnce(new Error("Invalid token"));
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized: Invalid token" }));
+        });
+    
+        it("should return 404 if clinic does not exist", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({ exists: false })
                 })
-            })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Clinic not found." }));
         });
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(403);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Forbidden" }));
-    });
- 
-    it("should return 400 if startDate is missing", async () => {
-        req.query = { endDate: "2026-04-02" };
-        db.collection.mockReturnValue({
-            doc: jest.fn().mockReturnValue({
-                get: jest.fn().mockResolvedValue({
-                    exists: true,
-                    data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+    
+        it("should return 403 if the authenticated user is not the clinic admin", async () => {
+            mockVerifyIdToken.mockResolvedValueOnce({ uid: "not-the-admin" });
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
                 })
-            })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Forbidden" }));
         });
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "startDate and endDate are required." }));
-    });
- 
-    it("should return 400 if endDate is missing", async () => {
-        req.query = { startDate: "2026-04-01" };
-        db.collection.mockReturnValue({
-            doc: jest.fn().mockReturnValue({
-                get: jest.fn().mockResolvedValue({
-                    exists: true,
-                    data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+    
+        it("should return 400 if startDate is missing", async () => {
+            req.query = { endDate: "2026-04-02" };
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
                 })
-            })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "startDate and endDate are required." }));
         });
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "startDate and endDate are required." }));
-    });
- 
-    it("should return 200 with report data on success", async () => {
-        db.collection.mockReturnValue({
-            doc: jest.fn().mockReturnValue({
-                get: jest.fn().mockResolvedValue({
-                    exists: true,
-                    data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+    
+        it("should return 400 if endDate is missing", async () => {
+            req.query = { startDate: "2026-04-01" };
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
                 })
-            })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "startDate and endDate are required." }));
         });
- 
-        const mockResult = {
-            staffList: [],
-            totalPatients: 10,
-            dateRange: { startDate: "2026-04-01", endDate: "2026-04-02" }
-        };
-        clinicService.getStaffUtilisationData.mockResolvedValue(mockResult);
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(clinicService.getStaffUtilisationData).toHaveBeenCalledWith("clinic1", "2026-04-01", "2026-04-02");
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-            success: true,
-            data: expect.objectContaining({
+    
+        it("should return 200 with report data on success", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
+                })
+            });
+    
+            const mockResult = {
+                staffList: [],
                 totalPatients: 10,
-                clinicName: "Test Clinic"
-            })
-        }));
-    });
- 
-    it("should return 500 when an unexpected error is thrown", async () => {
-        db.collection.mockReturnValue({
-            doc: jest.fn().mockReturnValue({
-                get: jest.fn().mockRejectedValue(new Error("Firestore error"))
-            })
+                dateRange: { startDate: "2026-04-01", endDate: "2026-04-02" }
+            };
+            clinicService.getStaffUtilisationData.mockResolvedValue(mockResult);
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(clinicService.getStaffUtilisationData).toHaveBeenCalledWith("clinic1", "2026-04-01", "2026-04-02");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                data: expect.objectContaining({
+                    totalPatients: 10,
+                    clinicName: "Test Clinic"
+                })
+            }));
         });
- 
-        await getStaffUtilisationReport(req, res);
- 
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Internal server error." }));
+    
+        it("should return 500 when an unexpected error is thrown", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockRejectedValue(new Error("Firestore error"))
+                })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Internal server error." }));
+        });
     });
 });

@@ -13,8 +13,8 @@ jest.mock("../services/config/firebase", () => ({
         }
     }
 }));
-
-const { updateClinicSlotCapacity } = require("../services/clinicService");
+const clinicService = jest.requireActual("../services/clinicService");
+const { updateClinicSlotCapacity, getStaffUtilisationData } = require("../services/clinicService");
 const { db } = require("../services/config/firebase");
 
 describe("updateClinicSlotCapacity", () => {
