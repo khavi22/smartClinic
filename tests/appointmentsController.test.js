@@ -29,7 +29,7 @@ jest.mock("../services/config/firebase", () => ({
     db: {},
 }));
 
-const appointmentController = require("../controllers/appointmentsController");
+const appointmentController = require("../Controllers/appointmentsController");
 
 const {
     getAvailabilityForDate,

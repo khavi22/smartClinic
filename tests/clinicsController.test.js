@@ -66,7 +66,7 @@ const {
 
 const { admin, db } = require("../services/config/firebase");
 
-const clinicController = require("../controllers/ClinicsController");
+const clinicController = require("../Controllers/ClinicsController");
 
 function mockResponse() {
     return {
