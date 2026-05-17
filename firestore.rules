@@ -37,11 +37,13 @@ service cloud.firestore {
     // Clinics are publicly searchable; only the owning admin can update profile fields
     match /clinics/{clinicId} {
       allow read: if true;
-      // Server can write freely (handled via Admin SDK)
-      // Authenticated admin can update their own clinic's profile metadata
-      allow write: if signedIn() &&
+      // Server can write/delete freely (handled via Admin SDK)
+      allow create, delete: if false;
+      // Authenticated admin can update their own clinic's profile metadata, excluding read-only Google Maps/administrative fields
+      allow update: if signedIn() &&
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.clinicId == clinicId;
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.clinicId == clinicId &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['province', 'district', 'region', 'address', 'clinicName', 'placeId', 'adminCode', 'adminUid', 'isActive']));
     }
 
     // Appointments are private to the patient, but readable by clinic staff

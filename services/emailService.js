@@ -3,30 +3,39 @@ require("dotenv").config();
 
 /**
  * Service to send emails via Nodemailer.
- * Configure these environment variables in your .env file:
+ * Configure these environment variables in your .env file or deployment settings:
  * SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  */
 
-const BASE_URL = process.env.BASE_URL || "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/";
+// Environment variables should be used for SMTP configuration
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const BASE_URL = process.env.BASE_URL;
+
+if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !BASE_URL) {
+    console.warn("⚠️ Warning: Email service is missing some configuration variables (SMTP_* or BASE_URL).");
+}
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "465"),
-    secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
+    host: SMTP_HOST,
+    port: parseInt(SMTP_PORT),
+    secure: SMTP_PORT === "465", // true for 465, false for other ports
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: SMTP_USER,
+        pass: SMTP_PASS,
     },
 });
 
 const sendEmail = async (to, subject, html, fromName = "SmartClinic", replyTo = null) => {
     try {
         const mailOptions = {
-            from: `"${fromName}" <${process.env.SMTP_USER}>`,
+            from: `"${fromName}" <${SMTP_USER}>`,
             to: to,
             subject: subject,
             html: html,
-            replyTo: replyTo || process.env.SMTP_USER
+            replyTo: replyTo || SMTP_USER
         };
 
         const info = await transporter.sendMail(mailOptions);
@@ -41,26 +50,26 @@ const sendEmail = async (to, subject, html, fromName = "SmartClinic", replyTo = 
 const sendStaffInvitation = async (email, clinicName, adminName, adminEmail) => {
     const subject = `${adminName} has invited you to join ${clinicName}`;
     const html = `
-        <div style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-            <div style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); padding: 32px; text-align: center; color: white;">
+        <article style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <header style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); padding: 32px; text-align: center; color: white;">
                 <h1 style="margin: 0; font-size: 24px;">SmartClinic Invitation</h1>
-            </div>
-            <div style="padding: 32px; line-height: 1.6;">
+            </header>
+            <section style="padding: 32px; line-height: 1.6;">
                 <p>Hello,</p>
                 <p><strong>${adminName}</strong> has invited you to join the staff at <strong>${clinicName}</strong> on the SmartClinic platform.</p>
                 <p>Please register using this email address to get started with your new account.</p>
-                <div style="text-align: center; margin: 32px 0;">
-                    <a href="${BASE_URL}signUp.html" 
+                <section style="text-align: center; margin: 32px 0;">
+                    <a href="${BASE_URL}/signUp.html" 
                        style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                        Finalize Registration
                     </a>
-                </div>
+                </section>
                 <p style="font-size: 14px; color: #64748b;">Note: After signing up, your account will undergo a brief review by the administrator before access is granted.</p>
-            </div>
-            <div style="background: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+            </section>
+            <footer style="background: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
                 © 2026 SmartClinic. All rights reserved.
-            </div>
-        </div>
+            </footer>
+        </article>
     `;
     await sendEmail(email, subject, html, adminName, adminEmail);
 };
@@ -68,22 +77,22 @@ const sendStaffInvitation = async (email, clinicName, adminName, adminEmail) => 
 const sendStaffApproval = async (email, clinicName, adminName, adminEmail) => {
     const subject = `Account Approved - ${clinicName}`;
     const html = `
-        <div style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-            <div style="background: #10b981; padding: 32px; text-align: center; color: white;">
+        <article style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <header style="background: #10b981; padding: 32px; text-align: center; color: white;">
                 <h1 style="margin: 0; font-size: 24px;">Account Approved</h1>
-            </div>
-            <div style="padding: 32px; line-height: 1.6;">
+            </header>
+            <section style="padding: 32px; line-height: 1.6;">
                 <p>Great news!</p>
                 <p>Your staff account for <strong>${clinicName}</strong> has been approved by <strong>${adminName}</strong>.</p>
                 <p>You can now log in and access the Staff Dashboard to manage appointments and clinic settings.</p>
-                <div style="text-align: center; margin: 32px 0;">
-                    <a href="${BASE_URL}login.html" 
+                <section style="text-align: center; margin: 32px 0;">
+                    <a href="${BASE_URL}/login.html" 
                        style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
                        Login to Dashboard
                     </a>
-                </div>
-            </div>
-        </div>
+                </section>
+            </section>
+        </article>
     `;
     await sendEmail(email, subject, html, adminName, adminEmail);
 };
@@ -91,17 +100,17 @@ const sendStaffApproval = async (email, clinicName, adminName, adminEmail) => {
 const sendStaffRejection = async (email, clinicName, adminName, adminEmail) => {
     const subject = `Staff Application Status - ${clinicName}`;
     const html = `
-        <div style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-            <div style="background: #ef4444; padding: 32px; text-align: center; color: white;">
+        <article style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <header style="background: #ef4444; padding: 32px; text-align: center; color: white;">
                 <h1 style="margin: 0; font-size: 24px;">Application Status</h1>
-            </div>
-            <div style="padding: 32px; line-height: 1.6;">
+            </header>
+            <section style="padding: 32px; line-height: 1.6;">
                 <p>Hello,</p>
                 <p>Thank you for your interest in joining <strong>${clinicName}</strong>.</p>
                 <p>We regret to inform you that your application has been declined by <strong>${adminName}</strong> at this time.</p>
                 <p>If you have any questions or believe this was an error, please reach out to the clinic directly.</p>
-            </div>
-        </div>
+            </section>
+        </article>
     `;
     await sendEmail(email, subject, html, adminName, adminEmail);
 };

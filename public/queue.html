@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Queue — smartClinic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/global_nav.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+</head>
+<body class="staff-dashboard-page">
+
+    <!-- ── NAV ── -->
+    <nav class="global-app-bar" aria-label="Main Navigation">
+        <section class="nav-container">
+            <a href="staffDashboard.html" class="nav-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>smartClinic</span>
+            </a>
+            <section class="nav-user" aria-label="Account">
+                <a href="staffDashboard.html" class="nav-dashboard-link">
+                    <i class='bx bx-calendar-check'></i>
+                    <span>Availability</span>
+                </a>
+                <span id="clinicNameDisplay" class="nav-clinic-badge">Clinic Access</span>
+                <button id="logoutBtn" class="nav-logout-btn" type="button">
+                    <i class='bx bx-log-out'></i>
+                    Logout
+                </button>
+            </section>
+        </section>
+    </nav>
+
+    <!-- ── PAGE ── -->
+    <main class="staff-main">
+
+        <!-- Page header -->
+        <header class="staff-page-header">
+            <section class="staff-header-inner">
+                <p class="brand-kicker">Operations</p>
+                <h1>Live Patient Queue</h1>
+                <p id="userGreeting" class="staff-greeting">Welcome back</p>
+                <p>Track real-time consultations and manage patient flow effectively.</p>
+            </section>
+        </header>
+
+        <section class="staff-grid">
+            
+            <!-- ── ADD PATIENT CARD ── -->
+            <article class="staff-card add-patient-card">
+                <header class="card-header">
+                    <span class="card-icon"><i class='bx bx-user-plus'></i></span>
+                    <div>
+                        <h2>Check-in Patient</h2>
+                        <p>Add a walk-in or manual entry to the queue</p>
+                    </div>
+                </header>
+
+                <form id="addQueueForm" class="premium-queue-form">
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label for="patientNameInput">Patient Full Name</label>
+                            <div class="input-wrapper">
+                                <i class='bx bx-user'></i>
+                                <input type="text" id="patientNameInput" placeholder="e.g. Sarah Miller" required>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="appointmentTimeInput">Time Slot</label>
+                            <div class="select-wrapper">
+                                <i class='bx bx-time'></i>
+                                <select id="appointmentTimeInput" required>
+                                    <option value="">Loading slots...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="serviceSelectInput">Service Type</label>
+                            <div class="select-wrapper">
+                                <i class='bx bx-briefcase-alt-2'></i>
+                                <select id="serviceSelectInput" required>
+                                    <option value="">Loading services...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="priorityInput">Priority Level</label>
+                            <div class="select-wrapper">
+                                <i class='bx bx-error-alt'></i>
+                                <select id="priorityInput">
+                                    <option value="0">Normal</option>
+                                    <option value="-1">Urgent (High)</option>
+                                    <option value="1">Routine (Low)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="premium-add-btn">
+                            <i class='bx bx-plus'></i>
+                            Add to Queue
+                        </button>
+                    </div>
+                </form>
+            </article>
+
+            <!-- ── STATS OVERVIEW ── -->
+            <section class="queue-stats-row">
+                <div class="stat-card blue">
+                    <div class="stat-icon"><i class='bx bx-group'></i></div>
+                    <div class="stat-content">
+                        <h3>Today's Load</h3>
+                        <p id="totalQueueCount" class="stat-value">--</p>
+                        <p class="stat-sub">Total bookings</p>
+                    </div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-icon"><i class='bx bx-time'></i></div>
+                    <div class="stat-content">
+                        <h3>Waiting</h3>
+                        <p id="waitingQueueCount" class="stat-value">--</p>
+                        <p class="stat-sub">Ready to be seen</p>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-icon"><i class='bx bx-pulse'></i></div>
+                    <div class="stat-content">
+                        <h3>In Consultation</h3>
+                        <p id="consultationQueueCount" class="stat-value">--</p>
+                        <p class="stat-sub">Currently with doctor</p>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-icon"><i class='bx bx-brain'></i></div>
+                    <div class="stat-content">
+                        <h3>AI Predicted Wait</h3>
+                        <p id="predictedWaitTime" class="stat-value">-- mins</p>
+                        <p id="predictedWaitRange" class="stat-sub">Calculating...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── QUEUE TABLE ── -->
+            <article class="staff-card table-card">
+                <header class="card-header">
+                    <span class="card-icon"><i class='bx bx-list-ol'></i></span>
+                    <div>
+                        <h2>Live Registry</h2>
+                        <p>Real-time patient status monitoring</p>
+                    </div>
+                </header>
+
+                <div class="premium-table-wrapper">
+                    <table id="queueTable" class="premium-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Patient</th>
+                                <th>Appt. Time</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueTableBody">
+                            <tr>
+                                <td colspan="6" class="table-empty-state">
+                                    <i class='bx bx-loader-alt bx-spin'></i>
+                                    <p>Synchronizing queue data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 smartClinic &bull; Live Operations Management</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/notifications.js"></script>
+    <script src="js/queue.js?v=4"></script>
+</body>
+</html>

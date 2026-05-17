@@ -77,3 +77,47 @@ exports.processStaffApproval = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.getActiveStaff = async (req, res) => {
+    try {
+        const { clinicId } = req.query;
+        if (!clinicId) return res.status(400).json({ success: false, message: "Clinic ID is required." });
+
+        const activeStaff = await firebaseService.getActiveStaffByClinic(clinicId);
+        res.json({ success: true, staff: activeStaff });
+    } catch (error) {
+        console.error("Get active staff error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.removeStaff = async (req, res) => {
+    try {
+        const { staffUid } = req.body;
+        const adminUid = req.user.uid;
+        
+        if (!staffUid) {
+            return res.status(400).json({ success: false, message: "Missing staffUid" });
+        }
+
+        // Security Check: Ensure the staff member belongs to this admin's clinic
+        const staffProfile = await firebaseService.getUserProfileById(staffUid);
+        const adminProfile = await firebaseService.getUserProfileById(adminUid);
+
+        if (!staffProfile || staffProfile.role !== "staff") {
+            return res.status(404).json({ success: false, message: "Staff member not found." });
+        }
+
+        if (staffProfile.clinicId !== adminProfile.clinicId) {
+            return res.status(403).json({ success: false, message: "You do not have permission to remove this staff member." });
+        }
+
+        // Perform full deletion (Auth, Profile, and Invite)
+        await firebaseService.deleteUserAccount(staffUid);
+        
+        res.json({ success: true, message: "Staff account and invitation deleted successfully." });
+    } catch (error) {
+        console.error("Remove staff error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

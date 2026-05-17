@@ -4,9 +4,12 @@ const { admin, db } = require("../services/config/firebase");
 const {
     ensureClinicExistsController,
     updateClinicHoursController,
-    getClinics
+    getClinics,
+    updateSlotCapacity,
+    getStaffUtilisationReport
 } = require("../Controllers/ClinicsController");
-
+const clinicService = require("../services/clinicService");
+jest.mock("../services/clinicService");
 jest.mock("axios");
 jest.mock("../services/firebaseService");
 const mockVerifyIdToken = jest.fn().mockResolvedValue({ uid: "admin-123" });
@@ -64,6 +67,120 @@ describe("ClinicsController", () => {
                 message: "Failed to initialize clinic",
                 error: "Init failed"
             }));
+        });
+    });
+    describe("updateSlotCapacity", () => {
+        beforeEach(() => {
+            req.params = { clinicId: "c1" };
+            req.body = { slotCapacity: 10 };
+        });
+
+        it("should return 401 if no auth header", async () => {
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+        });
+
+        it("should return 401 if token verification fails", async () => {
+            req.headers.authorization = "Bearer token";
+            mockVerifyIdToken.mockRejectedValueOnce(new Error("Bad token"));
+
+            await updateSlotCapacity(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized: Invalid token" });
+        });
+
+        it("should return 404 if clinic does not exist", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                }))
+            });
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ error: "Clinic not found." });
+        });
+
+        it("should return 403 if user is not the clinic admin", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "OTHER" })
+                    })
+                }))
+            });
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
+        });
+
+        it("should return 400 if slotCapacity is missing", async () => {
+            req.headers.authorization = "Bearer token";
+            req.body = {};
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123" })
+                    })
+                }))
+            });
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ error: "Slot capacity is required." });
+        });
+
+        it("should return 200 on success", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123" })
+                    })
+                }))
+            });
+
+            clinicService.updateClinicSlotCapacity.mockResolvedValue({ clinicId: "c1", slotCapacity: 10 });
+
+            await updateSlotCapacity(req, res);
+
+            expect(clinicService.updateClinicSlotCapacity).toHaveBeenCalledWith("c1", 10);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Slot capacity updated successfully.",
+                data: { clinicId: "c1", slotCapacity: 10 }
+            });
+        });
+
+        it("should return 500 if service throws unexpectedly", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123" })
+                    })
+                }))
+            });
+
+            clinicService.updateClinicSlotCapacity.mockRejectedValue(new Error("Unexpected error"));
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({ error: "Internal server error." });
         });
     });
 
@@ -163,6 +280,263 @@ describe("ClinicsController", () => {
             axios.post.mockRejectedValue(new Error("Network Error"));
             await getClinics(req, res);
             expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe("getServiceTemplates", () => {
+        it("should return templates successfully", async () => {
+            const mockTemplates = [{ id: "t1", name: "Consultation" }];
+            db.collection.mockReturnValue({
+                get: jest.fn().mockResolvedValue({
+                    docs: [{ id: "t1", data: () => ({ name: "Consultation" }) }]
+                })
+            });
+
+            const controller = require("../Controllers/ClinicsController");
+            await controller.getServiceTemplates(req, res);
+
+            expect(res.json).toHaveBeenCalledWith(mockTemplates);
+        });
+
+        it("should return 500 on error", async () => {
+            db.collection.mockReturnValue({
+                get: jest.fn().mockRejectedValue(new Error("DB Error"))
+            });
+            await require("../Controllers/ClinicsController").getServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe("seedServiceTemplates", () => {
+        it("should return already seeded message if not empty", async () => {
+            db.collection.mockReturnValue({
+                limit: jest.fn().mockReturnThis(),
+                get: jest.fn().mockResolvedValue({ empty: false })
+            });
+            await require("../Controllers/ClinicsController").seedServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Already seeded" }));
+        });
+
+        it("should return instructions if empty", async () => {
+            db.collection.mockReturnValue({
+                limit: jest.fn().mockReturnThis(),
+                get: jest.fn().mockResolvedValue({ empty: true })
+            });
+            await require("../Controllers/ClinicsController").seedServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining("Use node scripts") }));
+        });
+
+        it("should return 500 on error", async () => {
+            db.collection.mockReturnValue({
+                limit: jest.fn().mockReturnThis(),
+                get: jest.fn().mockRejectedValue(new Error("Seed fail"))
+            });
+            await require("../Controllers/ClinicsController").seedServiceTemplates(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe("Service Management", () => {
+        beforeEach(() => {
+            req.user = { clinicId: "clinic-123" };
+        });
+
+        it("getServices should return services successfully", async () => {
+            const mockServices = [{ id: "s1", name: "Checkup" }];
+            firebaseService.getClinicServices.mockResolvedValue(mockServices);
+            
+            await require("../Controllers/ClinicsController").getServices(req, res);
+            
+            expect(res.json).toHaveBeenCalledWith(mockServices);
+        });
+
+        it("addService should create a service", async () => {
+            req.body = { name: "S1", description: "D", duration: 30 };
+            firebaseService.serviceExists.mockResolvedValue(false);
+            firebaseService.addClinicService.mockResolvedValue("new-id");
+
+            await require("../Controllers/ClinicsController").addService(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: "new-id" }));
+        });
+
+        it("addService should return 409 if exists", async () => {
+            req.body = { name: "S1", description: "D", duration: 30 };
+            firebaseService.serviceExists.mockResolvedValue(true);
+
+            await require("../Controllers/ClinicsController").addService(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(409);
+        });
+
+        it("updateService should call service with data", async () => {
+            req.params = { serviceId: "s1" };
+            req.body = { duration: 45 };
+            
+            await require("../Controllers/ClinicsController").updateService(req, res);
+            
+            expect(firebaseService.updateClinicService).toHaveBeenCalledWith("clinic-123", "s1", req.body);
+            expect(res.json).toHaveBeenCalled();
+        });
+
+        it("deleteService should call service with id", async () => {
+            req.params = { serviceId: "s1" };
+            
+            await require("../Controllers/ClinicsController").deleteService(req, res);
+            
+            expect(firebaseService.deleteClinicService).toHaveBeenCalledWith("clinic-123", "s1");
+            expect(res.json).toHaveBeenCalled();
+        });
+
+        it("should return 400 if clinicId is missing on user", async () => {
+            req.user = {};
+            await require("../Controllers/ClinicsController").getServices(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+        });
+    });
+
+    describe("getStaffUtilisationReport", () => {
+        beforeEach(() => {
+            req.params = { clinicId: "clinic1" };
+            req.query = { startDate: "2026-04-01", endDate: "2026-04-02" };
+            req.headers = { authorization: "Bearer valid-token" };
+        });
+    
+        it("should return 401 if authorization header is missing", async () => {
+            req.headers = {};
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized" }));
+        });
+    
+        it("should return 401 if authorization header does not start with Bearer", async () => {
+            req.headers = { authorization: "Basic some-token" };
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized" }));
+        });
+    
+        it("should return 401 if token verification fails", async () => {
+            mockVerifyIdToken.mockRejectedValueOnce(new Error("Invalid token"));
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Unauthorized: Invalid token" }));
+        });
+    
+        it("should return 404 if clinic does not exist", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Clinic not found." }));
+        });
+    
+        it("should return 403 if the authenticated user is not the clinic admin", async () => {
+            mockVerifyIdToken.mockResolvedValueOnce({ uid: "not-the-admin" });
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
+                })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Forbidden" }));
+        });
+    
+        it("should return 400 if startDate is missing", async () => {
+            req.query = { endDate: "2026-04-02" };
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
+                })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "startDate and endDate are required." }));
+        });
+    
+        it("should return 400 if endDate is missing", async () => {
+            req.query = { startDate: "2026-04-01" };
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
+                })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "startDate and endDate are required." }));
+        });
+    
+        it("should return 200 with report data on success", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123", clinicName: "Test Clinic" })
+                    })
+                })
+            });
+    
+            const mockResult = {
+                staffList: [],
+                totalPatients: 10,
+                dateRange: { startDate: "2026-04-01", endDate: "2026-04-02" }
+            };
+            clinicService.getStaffUtilisationData.mockResolvedValue(mockResult);
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(clinicService.getStaffUtilisationData).toHaveBeenCalledWith("clinic1", "2026-04-01", "2026-04-02");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                data: expect.objectContaining({
+                    totalPatients: 10,
+                    clinicName: "Test Clinic"
+                })
+            }));
+        });
+    
+        it("should return 500 when an unexpected error is thrown", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn().mockReturnValue({
+                    get: jest.fn().mockRejectedValue(new Error("Firestore error"))
+                })
+            });
+    
+            await getStaffUtilisationReport(req, res);
+    
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Internal server error." }));
         });
     });
 });

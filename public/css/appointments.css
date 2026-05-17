@@ -18,12 +18,12 @@
   --pc-gray-200: #e5e7eb;
   --pc-gray-100: #f3f4f6;
   --pc-white: #ffffff;
-  
+
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --radius-lg: 1rem;
   --radius-md: 0.75rem;
-  
+
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
 }
@@ -107,6 +107,59 @@ body {
 .button-cta:hover {
   background-color: #1d4ed8;
   transform: translateY(-1px);
+}
+
+.queue-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 190px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+  color: var(--pc-gray-900);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.queue-shortcut:hover {
+  transform: translateY(-1px);
+  border-color: var(--pc-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.queue-shortcut-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--pc-blue);
+  background: var(--pc-blue-soft);
+  border-radius: 0.7rem;
+}
+
+.queue-shortcut-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.queue-shortcut strong,
+.queue-shortcut small {
+  display: block;
+}
+
+.queue-shortcut strong {
+  font-size: 0.94rem;
+  line-height: 1.2;
+}
+
+.queue-shortcut small {
+  color: var(--pc-gray-500);
+  font-size: 0.76rem;
+  margin-top: 0.15rem;
 }
 
 /* Dashboard Core */
@@ -314,6 +367,9 @@ body {
 }
 
 .btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.6rem 1.25rem;
   border: 1px solid var(--pc-gray-200);
   background: var(--pc-white);
@@ -323,12 +379,26 @@ body {
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none;
+  color: var(--pc-gray-700);
+  min-width: 112px;
 }
 
 .btn-action.secondary:hover {
   border-color: var(--pc-blue);
   color: var(--pc-blue);
   background: var(--pc-blue-soft);
+}
+
+.btn-action.queue {
+  border-color: #bfdbfe;
+  background: var(--pc-blue);
+  color: var(--pc-white);
+}
+
+.btn-action.queue:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
 .btn-action.danger {
@@ -409,18 +479,23 @@ body {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
+  .header-nav,
+  .queue-shortcut {
+    width: 100%;
+  }
+
   .appointment-entry {
     flex-direction: column;
     align-items: flex-start;
     padding: 1.5rem;
   }
-  
+
   .entry-actions {
     flex-direction: row;
     width: 100%;
   }
-  
+
   .btn-action {
     flex: 1;
   }
@@ -436,4 +511,4 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
-}
+}

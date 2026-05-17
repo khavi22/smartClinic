@@ -13,6 +13,7 @@ const getCollectionNameForRole = (role) => ROLE_COLLECTIONS[role];
 
 const getAvailabilityForDate = async (clinicId, dateStr) => {
     let slots = [];
+    let slotCapacity = MAX_CAPACITY_PER_SLOT;
 
     for (let hour = 0; hour < 24; hour += 1) {
         const start = hour.toString().padStart(2, "0") + ":00";
@@ -33,6 +34,8 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
 
             if (clinicDoc.exists) {
                 const clinicData = clinicDoc.data();
+                slotCapacity = clinicData.slotCapacity ?? MAX_CAPACITY_PER_SLOT;
+
                 const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
                 const dayOfWeek = days[new Date(dateStr).getDay()];
                 const hours = clinicData.operatingHours ? clinicData.operatingHours[dayOfWeek] : null;
@@ -50,6 +53,9 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
                     const slotStart = slot.time.split(" - ")[0];
                     return slotStart >= hours.open && slotStart < closeTime;
                 });
+
+                // Apply clinic-specific capacity to all slots
+                slots = slots.map((slot) => ({ ...slot, total: slotCapacity }));
             }
         }
 
@@ -99,7 +105,10 @@ const createAppointment = async (
     patientId,
     clinicName,
     clinicAddress,
-    isReschedule = false
+    isReschedule = false,
+    serviceId = null,
+    serviceName = null,
+    serviceDuration = null
 ) => {
     try {
         const appointmentsRef = db.collection("appointments");
@@ -126,6 +135,10 @@ const createAppointment = async (
         }
 
         const capacitySnapshot = await capacityQuery.get();
+        const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+        const slotCapacity = clinicDoc.exists 
+        ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT) 
+        : MAX_CAPACITY_PER_SLOT;
 
         if (capacitySnapshot.size >= MAX_CAPACITY_PER_SLOT) {
             throw new Error("This slot is full.");
@@ -138,6 +151,9 @@ const createAppointment = async (
             date: dateStr,
             timeSlot,
             patientId,
+            serviceId: serviceId || null,
+            serviceName: serviceName || null,
+            serviceDuration: serviceDuration || null,
             status: "booked",
             createdAt: new Date().toISOString()
         };
@@ -265,29 +281,69 @@ const validateAdminCode = async (adminCode, clinicId) => {
     return !snapshot.empty;
 };
 
+const seedClinicDefaultServices = async (clinicId) => {
+    try {
+        const templatesSnapshot = await db.collection("serviceTemplates").get();
+        let servicesToSeed = [];
+
+        if (!templatesSnapshot.empty) {
+            templatesSnapshot.forEach(doc => {
+                const data = doc.data();
+                servicesToSeed.push({
+                    name: data.name,
+                    description: data.description,
+                    duration: data.duration
+                });
+            });
+        } else {
+            // Fallback standard templates if collection is empty
+            servicesToSeed = [
+                { name: "General Consultation", description: "Initial consultation with a general practitioner", duration: 30 },
+                { name: "Dental Cleaning", description: "Professional teeth cleaning and examination", duration: 45 },
+                { name: "Vaccination", description: "Immunization and vaccine administration", duration: 15 },
+                { name: "Pediatric Check-up", description: "Routine wellness exam for children", duration: 30 }
+            ];
+        }
+
+        const batch = db.batch();
+        const servicesCollection = db.collection("clinics").doc(clinicId).collection("services");
+
+        servicesToSeed.forEach(service => {
+            const ref = servicesCollection.doc();
+            batch.set(ref, {
+                ...service,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                active: true
+            });
+        });
+
+        await batch.commit();
+        console.log(`Successfully auto-seeded ${servicesToSeed.length} default services for clinic: ${clinicId}`);
+    } catch (err) {
+        console.error("Failed to seed default services for clinic:", clinicId, err);
+    }
+};
+
 const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
 
-    await db.collection("clinics").doc(placeId).set({
+   await db.collection("clinics").doc(placeId).set({
         placeId,
         clinicName,
         city: city || "",
         address: address || "Address not provided",
         operatingHours: {
             monday: { ...defaultHours },
-            tuesday: { ...defaultHours },
-            wednesday: { ...defaultHours },
-            thursday: { ...defaultHours },
-            friday: { ...defaultHours },
-            saturday: { ...defaultHours },
-            sunday: { ...defaultHours }
+            // ...
         },
+        slotCapacity: MAX_CAPACITY_PER_SLOT, 
         adminCode,
         adminUid: null,
         isActive: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+});
 
     return { clinicId: placeId, adminCode };
 };
@@ -442,6 +498,27 @@ const getPendingStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+const getActiveStaffByClinic = async (clinicId) => {
+    const snapshot = await db.collection("staff")
+        .where("clinicId", "==", clinicId)
+        .where("approvalStatus", "==", "approved")
+        .get();
+
+    const staff = [];
+    snapshot.forEach(doc => {
+        staff.push({ uid: doc.id, ...doc.data() });
+    });
+    return staff;
+};
+
+const removeStaffFromClinic = async (staffUid) => {
+    await db.collection("staff").doc(staffUid).update({
+        approvalStatus: "removed",
+        clinicId: null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+};
+
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -472,6 +549,88 @@ async function getPatientProfileById(uid) {
     return doc.exists ? doc.data() : null;
 }
 
+
+const getServiceTemplates = async () => {
+  const snapshot = await db.collection("serviceTemplates").get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const getClinicServices = async (clinicId) => {
+    const snapshot = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .get();
+
+    if (snapshot.empty) {
+        let service = {
+            active: true,
+            createdAt: new Date(),
+            description: "Standard consultation for general health issues",
+            duration: 30,
+            name: "General Outpatient Consultation",
+            updatedAt: new Date()
+        };
+        return [service];
+    }
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+const addClinicService = async (clinicId, data) => {
+  const ref = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .add({
+      ...data,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      active: true,
+    });
+
+  return ref.id;
+};
+
+const updateClinicService = async (clinicId, serviceId, data) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .update({
+      ...data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+};
+
+const deleteClinicService = async (clinicId, serviceId) => {
+  await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .doc(serviceId)
+    .delete();
+};
+
+const serviceExists = async (clinicId, name) => {
+  const snapshot = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("services")
+    .where("name", "==", name)
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
+};
+
 module.exports = {
     createUserProfile,
     createClinic,
@@ -494,5 +653,13 @@ module.exports = {
     getInviteByEmail,
     updateStaffApprovalStatus,
     getPendingStaffByClinic,
-    getPatientProfileById
+    getActiveStaffByClinic,
+    removeStaffFromClinic,
+    getServiceTemplates,
+    getClinicServices,
+    addClinicService,
+    updateClinicService,
+    deleteClinicService,
+    serviceExists
 };
+

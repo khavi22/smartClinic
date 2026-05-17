@@ -3,60 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartClinic | Staff Dashboard (Demo)</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    
+    <title>Staff Dashboard — smartClinic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/global_nav.css">
+    <link rel="stylesheet" href="css/setAvailability.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
 </head>
-<body>
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <span class="logo">SmartClinic</span>
-                <span class="badge">Staff Demo</span>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="active">Overview</a>
-                <a href="#">Patient List</a>
-                <a href="#">Schedule</a>
-            </nav>
-            <div class="sidebar-footer">
-                <button id="logoutBtn" class="btn-logout">Logout</button>
-            </div>
-        </aside>
+<body class="staff-dashboard-page">
 
-        <main class="main-content">
-            <header class="content-header">
-                <h1 id="userGreeting">Loading...</h1>
-                <div class="header-actions">
-                    <span id="clinicNameDisplay" class="clinic-tag">Clinic Access</span>
-                </div>
-            </header>
-
-            <section class="demo-notice">
-                <h2>Welcome to the Staff Portal Demo</h2>
-                <p>This is a placeholder for the SmartClinic Staff experience. Features like real-time queue management and patient check-ins are currently being stylized for a premium feel.</p>
+    <!-- ── NAV ── -->
+    <nav class="global-app-bar" aria-label="Main Navigation">
+        <section class="nav-container">
+            <a href="staffDashboard.html" class="nav-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>smartClinic</span>
+            </a>
+            <section class="nav-user" aria-label="Account">
+                <a href="queue.html" class="nav-queue-link">
+                    <i class='bx bx-list-ol'></i>
+                    <span>Live Queue</span>
+                </a>
+                <img id="userAvatar" class="nav-avatar" src="" alt="Profile" hidden>
+                <span id="userGreeting" class="nav-greeting" hidden></span>
+                <button id="logoutBtn" class="nav-logout-btn" type="button" hidden>
+                    <i class='bx bx-log-out'></i>
+                    Logout
+                </button>
             </section>
+        </section>
+    </nav>
 
-            <div class="dashboard-grid">
-                <div class="card stat-card">
-                    <h3>Today's Load</h3>
-                    <p class="stat-value">12</p>
-                    <p class="stat-desc">Appointments scheduled</p>
-                </div>
-                <div class="card stat-card">
-                    <h3>Avg Wait Time</h3>
-                    <p class="stat-value">15m</p>
-                    <p class="stat-desc">Patient throughput</p>
-                </div>
+    <!-- ── PAGE ── -->
+    <main class="staff-main">
+
+        <!-- Page header -->
+        <header class="staff-page-header">
+            <section class="staff-header-inner">
+                <p class="brand-kicker">Staff Portal</p>
+                <h1>Duty Schedule</h1>
+                <p>Manage your availability and upcoming shifts</p>
+            </section>
+        </header>
+
+        <!-- Content grid -->
+        <section class="staff-grid">
+            
+            <div class="schedule-config-row">
+                <!-- ── DATE PICKER CARD ── -->
+                <article class="staff-card calendar-card">
+                    <header class="card-header">
+                        <span class="card-icon"><i class='bx bx-calendar'></i></span>
+                        <div>
+                            <h2>Select Date</h2>
+                            <p>Pick a day to set your hours</p>
+                        </div>
+                    </header>
+                    
+                    <section id="SetAvailabilitycalendarContainer" class="premium-calendar"></section>
+
+                    <section class="selected-date-display" id="selected-date-display" style="display: none">
+                        <p class="selected-date-label">Schedule for</p>
+                        <p class="selected-date-value" id="selected-date-value"></p>
+                    </section>
+                </article>
+
+                <!-- ── TIME CONFIG CARD ── -->
+                <article class="staff-card time-card">
+                    <header class="card-header">
+                        <span class="card-icon"><i class='bx bx-time-five'></i></span>
+                        <div>
+                            <h2>Set Working Hours</h2>
+                            <p>Define your availability window</p>
+                        </div>
+                    </header>
+
+                    <div class="availability-toggle">
+                        <label class="premium-checkbox-label">
+                            <input type="checkbox" id="available-check" checked>
+                            <span class="checkbox-custom"></span>
+                            <span class="label-text">Available for consultations</span>
+                        </label>
+                    </div>
+
+                    <section class="times-config-grid">
+                        <div class="time-field-group">
+                            <label class="field-label">Start Shift</label>
+                            <div class="select-wrapper">
+                                <select id="Startime" class="premium-time-select">
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00" selected>09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="17:00">05:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="time-field-group">
+                            <label class="field-label">End Shift</label>
+                            <div class="select-wrapper">
+                                <select id="Endtime" class="premium-time-select">
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="17:00" selected>05:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <button id="Add_Availability" class="premium-save-btn">
+                        <i class='bx bx-save'></i>
+                        Update Schedule
+                    </button>
+                    <p class="save-hint-text">Select at least one date on the calendar to save</p>
+                </article>
             </div>
-        </main>
-    </div>
 
-    <script src="js/staffDashboard.js"></script>
+            <!-- ── SUMMARY CARD ── -->
+            <article class="staff-card summary-card">
+                <header class="card-header">
+                    <span class="card-icon"><i class='bx bx-list-ul'></i></span>
+                    <div>
+                        <h2>Upcoming Shifts</h2>
+                        <p>Your confirmed availability overview</p>
+                    </div>
+                </header>
+                <section id="Availability_content" class="availability-list-container">
+                    <div class="empty-state-placeholder">
+                        <i class='bx bx-calendar-x'></i>
+                        <p>No availability set yet. Use the calendar above to schedule your hours.</p>
+                    </div>
+                </section>
+            </article>
+
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 smartClinic &bull; Professional Healthcare Management</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/notifications.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/SetAvailability.js"></script>
 </body>
 </html>

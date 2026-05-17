@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,20 +12,23 @@
     <link rel="stylesheet" href="css/availability_styles.css?v=2">
     <link rel="stylesheet" href="css/global_nav.css?v=1">
     <link rel="stylesheet" href="css/admin.css?v=1">
+    <link rel="stylesheet" href="css/notifications.css">
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
 </head>
+
 <body>
 
     <!-- ── NAV ── -->
     <nav class="global-app-bar" aria-label="Main Navigation">
         <section class="nav-container">
             <a href="adminDashboard.html" class="nav-brand">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                 </svg>
                 <span>smartClinic</span>
             </a>
@@ -79,9 +83,11 @@
                             </label>
                             <fieldset class="time-fields" id="mon-fields">
                                 <legend class="visually-hidden">Monday hours</legend>
-                                <input type="time" id="mon-start" name="mon-start" value="08:00" aria-label="Monday opening time">
+                                <input type="time" id="mon-start" name="mon-start" value="08:00"
+                                    aria-label="Monday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="mon-end" name="mon-end" value="17:00" aria-label="Monday closing time">
+                                <input type="time" id="mon-end" name="mon-end" value="17:00"
+                                    aria-label="Monday closing time">
                             </fieldset>
                         </li>
 
@@ -94,9 +100,11 @@
                             </label>
                             <fieldset class="time-fields" id="tue-fields">
                                 <legend class="visually-hidden">Tuesday hours</legend>
-                                <input type="time" id="tue-start" name="tue-start" value="08:00" aria-label="Tuesday opening time">
+                                <input type="time" id="tue-start" name="tue-start" value="08:00"
+                                    aria-label="Tuesday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="tue-end" name="tue-end" value="17:00" aria-label="Tuesday closing time">
+                                <input type="time" id="tue-end" name="tue-end" value="17:00"
+                                    aria-label="Tuesday closing time">
                             </fieldset>
                         </li>
 
@@ -109,9 +117,11 @@
                             </label>
                             <fieldset class="time-fields" id="wed-fields">
                                 <legend class="visually-hidden">Wednesday hours</legend>
-                                <input type="time" id="wed-start" name="wed-start" value="08:00" aria-label="Wednesday opening time">
+                                <input type="time" id="wed-start" name="wed-start" value="08:00"
+                                    aria-label="Wednesday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="wed-end" name="wed-end" value="17:00" aria-label="Wednesday closing time">
+                                <input type="time" id="wed-end" name="wed-end" value="17:00"
+                                    aria-label="Wednesday closing time">
                             </fieldset>
                         </li>
 
@@ -124,9 +134,11 @@
                             </label>
                             <fieldset class="time-fields" id="thu-fields">
                                 <legend class="visually-hidden">Thursday hours</legend>
-                                <input type="time" id="thu-start" name="thu-start" value="08:00" aria-label="Thursday opening time">
+                                <input type="time" id="thu-start" name="thu-start" value="08:00"
+                                    aria-label="Thursday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="thu-end" name="thu-end" value="17:00" aria-label="Thursday closing time">
+                                <input type="time" id="thu-end" name="thu-end" value="17:00"
+                                    aria-label="Thursday closing time">
                             </fieldset>
                         </li>
 
@@ -139,9 +151,11 @@
                             </label>
                             <fieldset class="time-fields" id="fri-fields">
                                 <legend class="visually-hidden">Friday hours</legend>
-                                <input type="time" id="fri-start" name="fri-start" value="08:00" aria-label="Friday opening time">
+                                <input type="time" id="fri-start" name="fri-start" value="08:00"
+                                    aria-label="Friday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="fri-end" name="fri-end" value="13:00" aria-label="Friday closing time">
+                                <input type="time" id="fri-end" name="fri-end" value="13:00"
+                                    aria-label="Friday closing time">
                             </fieldset>
                         </li>
 
@@ -154,9 +168,11 @@
                             </label>
                             <fieldset class="time-fields" id="sat-fields" disabled>
                                 <legend class="visually-hidden">Saturday hours</legend>
-                                <input type="time" id="sat-start" name="sat-start" value="08:00" aria-label="Saturday opening time">
+                                <input type="time" id="sat-start" name="sat-start" value="08:00"
+                                    aria-label="Saturday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="sat-end" name="sat-end" value="13:00" aria-label="Saturday closing time">
+                                <input type="time" id="sat-end" name="sat-end" value="13:00"
+                                    aria-label="Saturday closing time">
                             </fieldset>
                         </li>
 
@@ -169,9 +185,11 @@
                             </label>
                             <fieldset class="time-fields" id="sun-fields" disabled>
                                 <legend class="visually-hidden">Sunday hours</legend>
-                                <input type="time" id="sun-start" name="sun-start" value="08:00" aria-label="Sunday opening time">
+                                <input type="time" id="sun-start" name="sun-start" value="08:00"
+                                    aria-label="Sunday opening time">
                                 <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="sun-end" name="sun-end" value="13:00" aria-label="Sunday closing time">
+                                <input type="time" id="sun-end" name="sun-end" value="13:00"
+                                    aria-label="Sunday closing time">
                             </fieldset>
                         </li>
 
@@ -187,184 +205,178 @@
                 </form>
             </article>
 
-            <!-- ── STATS SIDEBAR ── -->
-            <aside class="admin-sidebar">
-
-                <article class="admin-card stat-card" aria-label="Clinic status">
-                    <header class="card-header compact">
-                        <span class="card-icon cyan"><i class='bx bx-building-house' aria-hidden="true"></i></span>
-                        <h2>Clinic Status</h2>
-                    </header>
-                    <p class="stat-value" id="clinicStatus">—</p>
-                    <p class="stat-sub">Based on today's hours</p>
-                </article>
-
-                <article class="admin-card stat-card" aria-label="Open days this week">
-                    <header class="card-header compact">
-                        <span class="card-icon"><i class='bx bx-calendar-week' aria-hidden="true"></i></span>
-                        <h2>Open Days</h2>
-                    </header>
-                    <p class="stat-value" id="openDaysCount">—</p>
-                    <p class="stat-sub">Days per week</p>
-                </article>
-
-            </aside>
-
         </section>
-        
-        <!-- ── STAFF MANAGEMENT ── -->
-        <section class="admin-grid staff-section" aria-labelledby="staff-heading">
-            
-            <article class="admin-card staff-card">
+
+        <!-- ── SPLIT GRID: STAFF & SERVICES ── -->
+        <section class="admin-grid-split">
+
+            <!-- STAFF MANAGEMENT (Tabbed) -->
+            <article class="admin-card staff-card" aria-labelledby="staff-heading">
                 <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-user-plus' aria-hidden="true"></i></span>
+                    <span class="card-icon"><i class='bx bx-group' aria-hidden="true"></i></span>
                     <div>
-                        <h2 id="staff-heading">Invite Staff</h2>
-                        <p>Add new staff members to your clinic by email</p>
+                        <h2 id="staff-heading">Staff Management</h2>
+                        <p>Manage your clinic's medical and admin team</p>
                     </div>
                 </header>
-                
-                <div class="card-body">
+
+                <nav class="staff-tabs" role="tablist">
+                    <button class="tab-btn active" data-tab="active-staff" role="tab" aria-selected="true">
+                        <i class='bx bx-user-check'></i> Active
+                    </button>
+                    <button class="tab-btn" data-tab="pending-approvals" role="tab" aria-selected="false">
+                        <i class='bx bx-time'></i> Pending
+                    </button>
+                    <button class="tab-btn" data-tab="invite-new" role="tab" aria-selected="false">
+                        <i class='bx bx-user-plus'></i> Invite
+                    </button>
+                </nav>
+
+                <!-- Active Staff Tab -->
+                <div id="active-staff" class="tab-content active" role="tabpanel">
+                    <div id="activeStaffList" class="active-staff-list">
+                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">Loading staff members...</p>
+                    </div>
+                </div>
+
+                <!-- Pending Approvals Tab -->
+                <div id="pending-approvals" class="tab-content" role="tabpanel">
+                    <div id="pendingStaffList" class="pending-list">
+                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>
+                    </div>
+                </div>
+
+                <!-- Invite Tab -->
+                <div id="invite-new" class="tab-content" role="tabpanel">
                     <form id="inviteStaffForm" class="invite-form">
                         <input type="email" id="inviteEmail" placeholder="staff@example.com" required>
-                        <button type="submit" class="btn-save" id="inviteBtn">Invite</button>
+                        <button type="submit" class="btn-save" id="inviteBtn">Send Invite</button>
                     </form>
                     <p id="inviteStatus" class="save-status" style="margin-top: 10px;"></p>
                 </div>
             </article>
 
-            <article class="admin-card approvals-card">
+        </section>
+
+        <!-- ── MANAGE CLINIC & SERVICES BUTTON ── -->
+        <section class="admin-grid" style="margin-top: 32px; margin-bottom: 32px;padding-bottom:20px">
+            <article class="admin-card">
+                <header class="card-header"
+                    style="display: flex; justify-content: space-between; align-items: center; border: none; padding-bottom: 20px;">
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <span class="card-icon"><i class='bx bx-clinic' aria-hidden="true"></i></span>
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.25rem;">Clinic Settings &amp; Services</h2>
+                            <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Update facility details and
+                                manage bookable services</p>
+                        </div>
+                    </div>
+                    <a href="manageservices.html" class="btn-save"
+                        style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; font-weight: 600; padding: 10px 20px;">
+                        <i class='bx bx-cog'></i> Manage Services
+                    </a>
+                </header>
+            </article>
+        </section>
+        <!-- ── REPORTS CARD ── -->
+        <section class="admin-grid" style="margin-top: 0; margin-bottom: 32px;">
+            <article class="admin-card" aria-labelledby="reports-heading">
                 <header class="card-header">
-                    <span class="card-icon cyan"><i class='bx bx-list-check' aria-hidden="true"></i></span>
+                    <span class="card-icon"><i class='bx bx-bar-chart-alt-2' aria-hidden="true"></i></span>
                     <div>
-                        <h2>Pending Approvals</h2>
-                        <p>Review staff who signed up via invitation</p>
+                        <h2 id="reports-heading">Analytics & Reports</h2>
+                        <p>View operational insights and export clinic performance data</p>
                     </div>
                 </header>
-                
-                <div class="card-body">
-                    <div id="pendingStaffList" class="pending-list">
-                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>
+
+                <div class="reports-list">
+
+                    <div class="report-item">
+                        <div class="report-info">
+                            <span class="report-icon accent-blue"><i class='bx bx-group'></i></span>
+                            <div>
+                                <div class="report-title">Staff Utilisation</div>
+                                <div class="report-desc">Workload distribution, peak hours, and staff activity patterns
+                                </div>
+                            </div>
+                        </div>
+                        <a href="staffReport.html" class="btn-report">
+                            <i class='bx bx-line-chart'></i> View Report
+                        </a>
                     </div>
+
+                    <div class="report-item">
+                        <div class="report-info">
+                            <span class="report-icon accent-green"><i class='bx bx-time-five'></i></span>
+                            <div>
+                                <div class="report-title">Average Patient Wait Times</div>
+                                <div class="report-desc">Queue wait times by time slot, day, and staff member</div>
+                            </div>
+                        </div>
+                        <a href="waitTimesReport.html" class="btn-report">
+                            <i class='bx bx-line-chart'></i> View Report
+                        </a>
+                    </div>
+
+                    <div class="report-item" style="border-bottom: none;">
+                        <div class="report-info">
+                            <span class="report-icon accent-orange"><i class='bx bx-calendar-x'></i></span>
+                            <div>
+                                <div class="report-title">Appointment No-Show Rates</div>
+                                <div class="report-desc">No-show trends by date, time slot, and patient demographics
+                                </div>
+                            </div>
+                        </div>
+                        <a href="noShowReport.html" class="btn-report">
+                            <i class='bx bx-line-chart'></i> View Report
+                        </a>
+                    </div>
+
                 </div>
             </article>
-
         </section>
+        <!-- ── SLOT CAPACITY CARD ── -->
+        <article class="admin-card capacity-card" aria-labelledby="capacity-heading">
+            <header class="card-header">
+                <span class="card-icon"><i class='bx bx-group' aria-hidden="true"></i></span>
+                <div>
+                    <h2 id="capacity-heading">Slot Capacity</h2>
+                    <p>Set the maximum number of patients per time slot</p>
+                </div>
+            </header>
 
+            <div class="capacity-body">
+                <div class="capacity-display" aria-live="polite">
+                    <span id="capacityValue">10</span>
+                    <span class="capacity-unit">patients / slot</span>
+                </div>
 
-        <section class="profile-edit-bar">
-
-            <p class="profile-lock-text">
-                Clinic profile is locked to prevent accidental changes.
-            </p>
-
-            <button
-                type="button"
-                id="toggleClinicEditBtn"
-                class="toggle-edit-btn">
-
-                Enable Editing
-            </button>
-
-        </section>
-
-        <form id="profileForm">
-        <!-- ── CLINIC PROFILE CARD ── -->
-        <section class="admin-grid" aria-labelledby="profile-heading">
-            <article class="admin-card profile-card" aria-labelledby="profile-heading">
-                <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-building-house' aria-hidden="true"></i></span>
-                    <div>
-                        <h2 id="profile-heading">Clinic Profile &amp; Searchability</h2>
-                        <p>Set facility type, services, and location so patients can find your clinic</p>
+                <fieldset class="capacity-fieldset">
+                    <legend class="visually-hidden">Slot capacity slider</legend>
+                    <div class="slider-track-wrap">
+                        <span class="slider-bound" aria-hidden="true">5</span>
+                        <input type="range" id="slotCapacitySlider" name="slotCapacity" min="5" max="50" step="1"
+                            value="10" aria-label="Patients per slot" aria-valuemin="5" aria-valuemax="50"
+                            aria-valuenow="10">
+                        <span class="slider-bound" aria-hidden="true">50</span>
                     </div>
-                </header>
+                </fieldset>
+            </div>
 
-                <form class="profile-form" id="profileForm">
-
-                    <!-- Facility Type -->
-                    <fieldset class="profile-fieldset">
-                        <legend>Facility Type</legend>
-                        <div class="radio-grid">
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Community Health Centre"> Community Health Centre</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="District Hospital"> District Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Regional Hospital"> Regional Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Tertiary Hospital"> Tertiary Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Clinic"> Clinic</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Private Hospital"> Private Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Specialised Hospital"> Specialised Hospital</label>
-                            <label class="radio-chip"><input type="radio" name="facilityType" value="Gateway Clinic"> Gateway Clinic</label>
-                        </div>
-                    </fieldset>
-
-                    <!-- Services -->
-                    <fieldset class="profile-fieldset">
-                        <legend>Services Offered <span class="legend-sub">(select all that apply)</span></legend>
-                        <div class="checkbox-grid">
-                            <label class="check-chip"><input type="checkbox" name="services" value="General Outpatient"> General Outpatient</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Emergency &amp; Casualty"> Emergency &amp; Casualty</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Maternal &amp; Child Health"> Maternal &amp; Child Health</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="HIV/AIDS &amp; TB"> HIV/AIDS &amp; TB</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Mental Health"> Mental Health</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Chronic Disease Management"> Chronic Disease Management</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Dental"> Dental</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Ophthalmology"> Ophthalmology</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Physiotherapy"> Physiotherapy</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Pharmacy"> Pharmacy</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Radiology &amp; Imaging"> Radiology &amp; Imaging</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Laboratory"> Laboratory</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Paediatrics"> Paediatrics</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Surgery"> Surgery</label>
-                            <label class="check-chip"><input type="checkbox" name="services" value="Nutrition &amp; Dietetics"> Nutrition &amp; Dietetics</label>
-                        </div>
-                    </fieldset>
-
-                    <!-- Location -->
-                    <fieldset class="profile-fieldset">
-                        <legend>Location Details</legend>
-                        <div class="location-grid">
-                            <div class="form-field">
-                                <label for="clinicProvince">Province</label>
-                                <select id="clinicProvince" name="province" class="premium-select">
-                                    <option value="">— Select Province —</option>
-                                    <option>Eastern Cape</option>
-                                    <option>Free State</option>
-                                    <option>Gauteng</option>
-                                    <option>KwaZulu-Natal</option>
-                                    <option>Limpopo</option>
-                                    <option>Mpumalanga</option>
-                                    <option>Northern Cape</option>
-                                    <option>North West</option>
-                                    <option>Western Cape</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
-                                <label for="clinicDistrict">District</label>
-                                <input type="text" id="clinicDistrict" name="district" class="premium-input" placeholder="e.g. City of Cape Town">
-                            </div>
-                            <div class="form-field">
-                                <label for="clinicRegion">Region / Sub-district</label>
-                                <input type="text" id="clinicRegion" name="region" class="premium-input" placeholder="e.g. Tygerberg">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <footer class="profile-form-footer">
-                        <span id="profileSaveStatus" class="save-status" aria-live="polite"></span>
-                        <button type="button" id="saveProfileBtn" class="save-btn">
-                            <i class='bx bx-save' aria-hidden="true"></i>
-                            Save Profile
-                        </button>
-                    </footer>
-                </form>
-            </article>
-        </section>
-        </form>
+            <footer class="card-footer">
+                <p id="capacitySaveStatus" class="save-status" role="status" aria-live="polite"></p>
+                <button type="button" class="btn-save" id="capacitySaveBtn">
+                    <i class='bx bx-save' aria-hidden="true"></i>
+                    <span>Save Capacity</span>
+                </button>
+            </footer>
+        </article>
 
         <!-- ── DANGER ZONE ── -->
         <section class="danger-zone" aria-labelledby="danger-heading">
             <h2 id="danger-heading"><i class='bx bx-error-circle' aria-hidden="true"></i> Danger Zone</h2>
-            <p>Permanently deleting your account will remove all your clinic data, operating hours, and admin access. This action cannot be undone.</p>
+            <p>Permanently deleting your account will remove all your clinic data, operating hours, and admin access.
+                This action cannot be undone.</p>
             <button id="deleteAccBtn" class="btn-delete" type="button">
                 <i class='bx bx-trash' aria-hidden="true"></i>
                 Delete My Account
@@ -378,7 +390,8 @@
         <article class="modal-box">
             <span class="modal-icon" aria-hidden="true"><i class='bx bx-trash'></i></span>
             <h3 id="modalTitle">Delete your account?</h3>
-            <p id="modalDesc">This will permanently erase your admin profile, clinic data, and all associated records. You'll need to sign in again to confirm.</p>
+            <p id="modalDesc">This will permanently erase your admin profile, clinic data, and all associated records.
+                You'll need to sign in again to confirm.</p>
             <footer class="modal-actions">
                 <button class="modal-cancel" id="modalCancel" type="button">Cancel</button>
                 <button class="modal-confirm" id="modalConfirm" type="button">
@@ -388,7 +401,10 @@
         </article>
     </dialog>
 
+
+    <script src="js/notifications.js"></script>
     <script src="js/dashboard.js?v=3"></script>
     <script src="js/adminDashboard.js"></script>
 </body>
+
 </html>

@@ -1,35 +1,99 @@
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
-
 require("dotenv").config();
+
 const app = express();
 const port = process.env.PORT || 3000;
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+
+
+
+// Routes
+
+
+
+let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes , patientQueueRoutes;
+
+try {
+  clinicsRoutes = require("./routes/clinics");
+  console.log("✓ Clinics routes loaded");
+} catch (err) {
+  console.error("✗ Error loading clinics routes:", err);
+}
+
+try{
+  patientQueueRoutes = require("./routes/patientQueueRoutes");
+  console.log("✓ Patients Queue  routes loaded");
+}
+catch (err) {
+  console.error("✗ Error loading Patients Queue  routes:", err);
+}
+
+
+try {
+  appointmentRoutes = require("./routes/appointments");
+  console.log("✓ Appointments routes loaded");
+} catch (err) {
+  console.error("✗ Error loading appointments routes:", err);
+}
+
+try {
+  userRoutes = require("./routes/user");
+  console.log("✓ User routes loaded");
+} catch (err) {
+  console.error("✗ Error loading user routes:", err);
+}
+
+try {
+  staffAvailabilityRoutes = require("./routes/StaffAvailability");
+  console.log("✓ Staff availability routes loaded");
+} catch (err) {
+  console.error("✗ Error loading staff availability routes:", err);
+}
+
+try {
+  adminRoutes = require("./routes/admin");
+  console.log("✓ Admin routes loaded");
+} catch (err) {
+  console.error("✗ Error loading admin routes:", err);
+}
+
+try {
+  queueRoutes = require("./routes/Queue");
+  console.log("✓ Queue routes loaded");
+} catch (err) {
+  console.error("✗ Error loading queue routes:", err);
+}
+
+if (clinicsRoutes) app.use("/api/clinics", clinicsRoutes);
+if (appointmentRoutes) app.use("/api", appointmentRoutes); 
+if (userRoutes) app.use("/api/user", userRoutes);
+if (staffAvailabilityRoutes) app.use("/api/staff/availability", staffAvailabilityRoutes);
+if (adminRoutes) app.use("/api/admin", adminRoutes);
+if (queueRoutes) app.use("/api/queue", queueRoutes);
+if (patientQueueRoutes) app.use("/api/patient/queue", patientQueueRoutes);
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-app.use(express.static(path.join(__dirname, "public")));
-app.use(cors());
 
-const clinicsRoutes = require("./routes/clinics");
-app.use("/api/clinics", clinicsRoutes);
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+});
 
-const appointmentRoutes = require("./routes/appointments");
-app.use("/api", appointmentRoutes); 
-
-const userRoutes = require("./routes/user");
-app.use("/api/user", userRoutes);
-
-const adminRoutes = require("./routes/admin");
-app.use("/api/admin", adminRoutes);
+// 404 handler
+app.use((req, res) => {
+    console.log(`404 Not Found: ${req.method} ${req.path}`);
+    res.status(404).json({ error: "Not found" });
+});
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
@@ -37,6 +101,5 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
-app.use(express.static("public"));
-
 module.exports = app;
+

@@ -351,7 +351,10 @@ search_button_ByName.addEventListener("click", async function () {
 
 // ── Search by Location ────────────────────────────────────────────────────────
 search_button_ByLocation.addEventListener("click", async function () {
-    if (!navigator.geolocation) { alert("Geolocation is not supported by your browser"); return; }
+    if (!navigator.geolocation) { 
+        showToast("Geolocation is not supported by your browser", "error"); 
+        return; 
+    }
 
     section_view_clinics.innerHTML = `<article class="empty-state"><p>Requesting location access...</p></article>`;
 

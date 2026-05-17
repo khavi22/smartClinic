@@ -154,6 +154,11 @@ function createAppointmentCard(appointment, past = false) {
       rescheduleDialog.showModal();
     };
 
+    const queueLink = document.createElement("a");
+    queueLink.className = "btn-action queue";
+    queueLink.href = "patientQueue.html";
+    queueLink.textContent = "Queue";
+
     const cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
     cancelBtn.className = "btn-action danger";
@@ -163,6 +168,7 @@ function createAppointmentCard(appointment, past = false) {
       cancelDialog.showModal();
     };
 
+    actions.appendChild(queueLink);
     actions.appendChild(rescheduleBtn);
     actions.appendChild(cancelBtn);
     article.appendChild(actions);
@@ -278,14 +284,15 @@ document.getElementById("cancel-confirm").addEventListener("click", async () => 
         if (appointment) {
             appointment.status = "cancelled";
         }
+        showToast("Appointment cancelled successfully.", "success");
         renderAppointments();
       } else {
         const err = await response.json();
-        alert(`Failed to cancel: ${err.error}`);
+        showToast(`Failed to cancel: ${err.error}`, "error");
       }
     } catch (error) {
     console.error("Cancellation error:", error);
-    alert("Error connecting to server for cancellation.");
+    showToast("Error connecting to server for cancellation.", "error");
     }
   })
 
