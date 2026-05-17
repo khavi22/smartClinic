@@ -46,10 +46,27 @@ async function getPatientQueueInfo(patientId) {
                 return total + (patient.serviceDuration || 0);
             }, 0);
 
-            const estimatedWaitTime = waitBeforeYou;
+            const now = new Date();
+
+            const appointmentStartTime = patient_Queue_Item.appointmentTime
+                .split(" - ")[0];
+
+            const appointmentDateTime = new Date(
+                `${today_date}T${appointmentStartTime}:00`
+            );
+
+            // difference between now and appointment start in minutes
+            const timeUntilAppointment = Math.max(
+                0,
+                Math.floor((appointmentDateTime - now) / 60000)
+            );
+
+            // final estimated wait
+            const estimatedWaitTime =
+                waitBeforeYou + timeUntilAppointment;
             
             await queueItemsSnapshot.docs[0].ref.update({
-                estimatedWaitTime: estimatedWaitTime
+                estimatedWaitTime: estimatedWaitTime 
             });
 
             return {
