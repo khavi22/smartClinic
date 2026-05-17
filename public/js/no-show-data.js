@@ -234,7 +234,11 @@ export async function loadNoShowReport(range) {
 function aggregateData(appointments) {
   const total = appointments.length;
   const missedAppointments = appointments.filter(a => 
-    a.status && (a.status.toLowerCase() === 'missed' || a.status.toLowerCase() === 'no-show')
+    a.status && (
+      a.status.toLowerCase() === 'missed' ||
+      a.status.toLowerCase() === 'no-show' ||
+      a.status.toLowerCase() === 'cancelled'
+    )
   );
   const missed = missedAppointments.length;
   
@@ -245,8 +249,8 @@ function aggregateData(appointments) {
   const patientsWhoMissed = new Set(missedAppointments.map(a => a.patientId || a.patientName));
   patientsWhoMissed.forEach(pKey => {
     const history = appointments.filter(a => (a.patientId === pKey || a.patientName === pKey));
-    if (history.some(a => a.status?.toLowerCase() === 'missed') && 
-        history.some(a => ['scheduled', 'completed', 'attended'].includes(a.status?.toLowerCase()))) {
+    if (history.some(a => ['missed', 'no-show', 'cancelled'].includes(a.status?.toLowerCase())) && 
+        history.some(a => ['scheduled', 'completed', 'attended', 'booked'].includes(a.status?.toLowerCase()))) {
       rescheduledCount++;
     }
   });
@@ -262,7 +266,11 @@ function aggregateData(appointments) {
     const d = getAppointmentDate(a);
     if (!d) return;
 
-    const isMissed = a.status && (a.status.toLowerCase() === 'missed' || a.status.toLowerCase() === 'no-show');
+    const isMissed = a.status && (
+      a.status.toLowerCase() === 'missed' ||
+      a.status.toLowerCase() === 'no-show' ||
+      a.status.toLowerCase() === 'cancelled'
+    );
     const pName = a.providerName || a.doctorName || a.provider || "Unknown Provider";
     const tName = a.appointmentType || a.type || a.serviceType || "General Checkup";
     const monthLabel = d.toLocaleDateString("en-ZA", { month: "short", year: "2-digit" });

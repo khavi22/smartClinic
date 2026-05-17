@@ -10,13 +10,11 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script type="module">
-    // ── import the data layer ──────────────────────────────────────
+    // ── import the data layer
     import { loadNoShowReport, getAppointmentDate } from "./js/no-show-data.js";
 
-    // ─────────────────────────────────────────────────────────────
-    // Render helpers
-    // ─────────────────────────────────────────────────────────────
 
+    // Render helpers
     function rateColor(r) {
       if (r >= 25) return "#ef4444";
       if (r >= 15) return "#f59e0b";

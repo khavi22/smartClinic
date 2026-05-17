@@ -646,9 +646,13 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
 
     const appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Only count appointments that were actually scheduled (exclude cancelled by patient)
-    const scheduled = appointments.filter(a => a.status !== "cancelled");
-    const noShows = scheduled.filter(a => a.status === "no-show");
+    // All booked appointments count as scheduled.
+    // Both "no-show" and "cancelled" are treated as missed —
+    // a patient who cancels did not attend, same outcome for the clinic.
+    const scheduled = appointments;
+    const noShows = scheduled.filter(a =>
+        a.status === "no-show" || a.status === "cancelled"
+    );
 
     // Group no-shows by date for a daily breakdown
     const breakdownMap = {};
@@ -657,7 +661,7 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
             breakdownMap[a.date] = { date: a.date, total: 0, noShows: 0 };
         }
         breakdownMap[a.date].total += 1;
-        if (a.status === "no-show") {
+        if (a.status === "no-show" || a.status === "cancelled") {
             breakdownMap[a.date].noShows += 1;
         }
     });
@@ -685,6 +689,87 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
         totalNoShows,
         noShowRate: overallRate,
         breakdown
+    };
+};
+
+// ---------------------------------------------------------------------------
+// Wait Time Report
+// ---------------------------------------------------------------------------
+// "Wait time" is derived from serviceDuration stored on each appointment.
+// We group by timeSlot (hour of day) to give a "time of day" breakdown.
+// Only completed appointments with a numeric serviceDuration are counted.
+// ---------------------------------------------------------------------------
+const getWaitTimeReport = async (clinicId, startDate, endDate) => {
+    if (!clinicId || !startDate || !endDate) {
+        throw new Error("clinicId, startDate, and endDate are required");
+    }
+
+    const snapshot = await db.collection("appointments")
+        .where("clinicId", "==", clinicId)
+        .where("date", ">=", startDate)
+        .where("date", "<=", endDate)
+        .get();
+
+    const appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Only use completed appointments that have a valid serviceDuration (minutes)
+    const completed = appointments.filter(
+        a => a.status === "completed" && typeof a.serviceDuration === "number" && a.serviceDuration > 0
+    );
+
+    // ── Per-clinic summary ──────────────────────────────────────────────────
+    const totalCompleted = completed.length;
+    const totalDuration = completed.reduce((sum, a) => sum + a.serviceDuration, 0);
+    const overallAvgWait = totalCompleted > 0
+        ? parseFloat((totalDuration / totalCompleted).toFixed(1))
+        : 0;
+
+    // ── Time-of-day breakdown (group by timeSlot hour) ─────────────────────
+    const hourMap = {};
+    completed.forEach(a => {
+        // timeSlot is stored as "09:00", "14:00", etc.
+        const hour = a.timeSlot ? a.timeSlot.split(":")[0] : "unknown";
+        if (!hourMap[hour]) {
+            hourMap[hour] = { timeSlot: hour, count: 0, totalDuration: 0 };
+        }
+        hourMap[hour].count += 1;
+        hourMap[hour].totalDuration += a.serviceDuration;
+    });
+
+    const byTimeOfDay = Object.values(hourMap)
+        .sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
+        .map(entry => ({
+            timeSlot: entry.timeSlot + ":00",
+            appointmentsCompleted: entry.count,
+            avgWaitMinutes: parseFloat((entry.totalDuration / entry.count).toFixed(1))
+        }));
+
+    // ── Daily breakdown ─────────────────────────────────────────────────────
+    const dateMap = {};
+    completed.forEach(a => {
+        if (!dateMap[a.date]) {
+            dateMap[a.date] = { date: a.date, count: 0, totalDuration: 0 };
+        }
+        dateMap[a.date].count += 1;
+        dateMap[a.date].totalDuration += a.serviceDuration;
+    });
+
+    const byDate = Object.values(dateMap)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map(entry => ({
+            date: entry.date,
+            appointmentsCompleted: entry.count,
+            avgWaitMinutes: parseFloat((entry.totalDuration / entry.count).toFixed(1))
+        }));
+
+    return {
+        clinicId,
+        startDate,
+        endDate,
+        totalCompleted,
+        overallAvgWaitMinutes: overallAvgWait,
+        byTimeOfDay,
+        byDate
     };
 };
 
@@ -718,5 +803,6 @@ module.exports = {
     updateClinicService,
     deleteClinicService,
     serviceExists,
-    getNoShowReport
+    getNoShowReport,
+    getWaitTimeReport
 };

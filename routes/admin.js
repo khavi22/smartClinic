@@ -12,5 +12,6 @@ router.get("/active-staff", adminController.getActiveStaff);
 router.post("/process-staff", adminController.processStaffApproval);
 router.post("/remove-staff", adminController.removeStaff);
 router.get("/no-show-report", adminController.getNoShowReport);
+router.get("/wait-time-report", adminController.getWaitTimeReport);
 
 module.exports = router;
