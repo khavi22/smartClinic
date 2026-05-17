@@ -660,6 +660,7 @@ module.exports = {
     addClinicService,
     updateClinicService,
     deleteClinicService,
-    serviceExists
+    serviceExists,
+    getPatientProfileById
 };
 

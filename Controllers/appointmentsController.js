@@ -1,5 +1,5 @@
 const { admin, db } = require('../services/config/firebase');
-const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment } = require("../services/firebaseService");
+const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment,getPatientProfileById } = require("../services/firebaseService");
 
 exports.getAvailability = async (req, res) => {
     try {
@@ -80,7 +80,7 @@ exports.postAppointment = async (req, res) => {
 
         // ✉️ Send confirmation email
         try {
-            const patient = await firebaseService.getUserProfileById(patientId);
+            const patient = await getPatientProfileById(patientId);
 
             // Only send if patient exists and has an email
             if (patient?.email) {
@@ -157,7 +157,7 @@ exports.cancelAppointmentController = async (req, res) => {
         try {
             if (appointmentDoc.exists) {
                 const appt = appointmentDoc.data();
-                const patient = await firebaseService.getPatientProfileById(appt.patientId);
+                const patient = await getPatientProfileById(appt.patientId);
                 if (patient?.email) {
                     await emailService.sendAppointmentCancellation(
                         patient.email,
