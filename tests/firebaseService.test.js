@@ -141,22 +141,35 @@ describe("firebaseService", () => {
         });
 
         it("creates an appointment", async () => {
-            const duplicateQuery = createLoopQuery({ empty: true });
-            const capacityQuery = createLoopQuery({ size: 0 });
-            const add = jest.fn().mockResolvedValue({ id: "appt-1" });
-            const appointmentsRef = {
-                where: jest.fn()
-                    .mockImplementationOnce(() => duplicateQuery)
-                    .mockImplementationOnce(() => capacityQuery),
-                add
-            };
-            db.collection.mockReturnValue(appointmentsRef);
+        const duplicateQuery = createLoopQuery({ empty: true });
+        const capacityQuery = createLoopQuery({ size: 0 });
+        const add = jest.fn().mockResolvedValue({ id: "appt-1" });
+        const appointmentsRef = {
+            where: jest.fn()
+                .mockImplementationOnce(() => duplicateQuery)
+                .mockImplementationOnce(() => capacityQuery),
+            add
+        };
 
-            const result = await createAppointment("clinic-1", "2026-04-20", "09:00 - 10:00", "patient-1", "Smart", "Addr");
-
-            expect(result.id).toBe("appt-1");
-            expect(add).toHaveBeenCalled();
+        db.collection.mockImplementation((name) => {
+            if (name === "clinics") {
+                return {
+                    doc: jest.fn(() => ({
+                        get: jest.fn().mockResolvedValue({
+                            exists: true,
+                            data: () => ({ slotCapacity: 10 })
+                        })
+                    }))
+                };
+            }
+            return appointmentsRef;
         });
+
+        const result = await createAppointment("clinic-1", "2026-04-20", "09:00 - 10:00", "patient-1", "Smart", "Addr");
+
+        expect(result.id).toBe("appt-1");
+        expect(add).toHaveBeenCalled();
+    });
 
         it("returns appointments by patient id", async () => {
             const query = createLoopQuery({
@@ -246,41 +259,64 @@ describe("firebaseService", () => {
                 add: jest.fn()
             };
 
-            db.collection.mockReturnValue(appointmentsRef);
+            db.collection.mockImplementation((name) => {
+                if (name === "clinics") {
+                    return {
+                        doc: jest.fn(() => ({
+                            get: jest.fn().mockResolvedValue({
+                                exists: true,
+                                data: () => ({ slotCapacity: 10 })
+                            })
+                        }))
+                    };
+                }
+                return appointmentsRef;
+            });
 
             await expect(
                 createAppointment("clinic-1", "2026-04-20", "09:00 - 10:00", "patient-1")
             ).rejects.toThrow("This slot is full.");
         });
 
-        it("creates a rescheduled appointment without duplicate check and uses defaults", async () => {
-            const capacityQuery = createLoopQuery({ size: 0 });
-            const add = jest.fn().mockResolvedValue({ id: "appt-2" });
-            const appointmentsRef = {
-                where: jest.fn().mockImplementationOnce(() => capacityQuery),
-                add
-            };
+      it("creates a rescheduled appointment without duplicate check and uses defaults", async () => {
+        const capacityQuery = createLoopQuery({ size: 0 });
+        const add = jest.fn().mockResolvedValue({ id: "appt-2" });
+        const appointmentsRef = {
+            where: jest.fn().mockImplementationOnce(() => capacityQuery),
+            add
+        };
 
-            db.collection.mockReturnValue(appointmentsRef);
-
-            const result = await createAppointment(
-                null,
-                "2026-04-20",
-                "10:00 - 11:00",
-                "patient-1",
-                null,
-                null,
-                true
-            );
-
-            expect(result).toEqual(expect.objectContaining({
-                id: "appt-2",
-                clinicId: "default",
-                clinicName: "Unknown Clinic",
-                clinicAddress: "N/A"
-            }));
-            expect(appointmentsRef.where).toHaveBeenCalledTimes(1);
+        db.collection.mockImplementation((name) => {
+            if (name === "clinics") {
+                return {
+                    doc: jest.fn(() => ({
+                        get: jest.fn().mockResolvedValue({
+                            exists: false
+                        })
+                    }))
+                };
+            }
+            return appointmentsRef;
         });
+
+        const result = await createAppointment(
+            null,
+            "2026-04-20",
+            "10:00 - 11:00",
+            "patient-1",
+            null,
+            null,
+            true
+        );
+
+        expect(result).toEqual(expect.objectContaining({
+            id: "appt-2",
+            clinicId: "default",
+            clinicName: "Unknown Clinic",
+            clinicAddress: "N/A"
+        }));
+        expect(appointmentsRef.where).toHaveBeenCalledTimes(1);
+    });
 
         it("should throw error if db fails during availability check", async () => {
             const clinicGet = jest.fn().mockResolvedValue({ exists: false });

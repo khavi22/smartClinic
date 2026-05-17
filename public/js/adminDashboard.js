@@ -33,7 +33,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
             await loadClinicHours(currentClinicId);
             await loadPendingStaff(currentClinicId);
             await loadActiveStaff(currentClinicId);
-            
+            await loadClinicProfile(currentClinicId);
+            await loadSlotCapacity(currentClinicId); 
         }
 
     } catch (error) {
@@ -453,3 +454,125 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
 });
 
 
+const profileForm = document.getElementById("profileForm");
+const toggleClinicEditBtn = document.getElementById("toggleClinicEditBtn");
+
+let clinicEditingEnabled = false;
+
+function setClinicFormEditable(enabled) {
+
+    clinicEditingEnabled = enabled;
+
+    const fields = profileForm.querySelectorAll(
+        "input, select, textarea"
+    );
+
+    fields.forEach(field => {
+
+        // keep buttons active
+        if (
+            field.type === "button" ||
+            field.type === "submit"
+        ) return;
+
+        field.disabled = !enabled;
+    });
+
+    // Save button
+    const saveBtn = document.getElementById("saveClinicProfileBtn");
+
+    if (saveBtn) {
+        saveBtn.hidden = !enabled;
+    }
+
+    // Toggle button text
+    toggleClinicEditBtn.textContent =
+        enabled ? "Cancel Editing" : "Enable Editing";
+
+    // Styling state
+    profileForm.classList.toggle(
+        "profile-form-locked",
+        !enabled
+    );
+}
+
+// Default = locked
+setClinicFormEditable(false);
+
+toggleClinicEditBtn.addEventListener("click", () => {
+
+    setClinicFormEditable(!clinicEditingEnabled);
+});
+
+// ── SLOT CAPACITY ────────────────────────────────────────────
+const slotCapacitySlider = document.getElementById("slotCapacitySlider");
+const capacityValueDisplay = document.getElementById("capacityValue");
+const capacitySaveBtn = document.getElementById("capacitySaveBtn");
+const capacitySaveStatus = document.getElementById("capacitySaveStatus");
+
+if (slotCapacitySlider) {
+    slotCapacitySlider.addEventListener("input", () => {
+        capacityValueDisplay.textContent = slotCapacitySlider.value;
+        slotCapacitySlider.setAttribute("aria-valuenow", slotCapacitySlider.value);
+    });
+}
+
+async function loadSlotCapacity(clinicId) {
+    try {
+        const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
+        if (!doc.exists) return;
+
+        const capacity = doc.data().slotCapacity;
+        if (capacity && slotCapacitySlider) {
+            slotCapacitySlider.value = capacity;
+            capacityValueDisplay.textContent = capacity;
+            slotCapacitySlider.setAttribute("aria-valuenow", capacity);
+        }
+    } catch (error) {
+        console.error("Error loading slot capacity:", error);
+    }
+}
+
+if (capacitySaveBtn) {
+    capacitySaveBtn.addEventListener("click", async () => {
+        if (!currentClinicId) {
+            showToast("No clinic associated with your account.", "error");
+            return;
+        }
+
+        capacitySaveBtn.disabled = true;
+        capacitySaveBtn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving…`;
+        capacitySaveStatus.textContent = "";
+
+        try {
+            const idToken = await firebase.auth().currentUser.getIdToken();
+            const response = await fetch(`/api/clinics/${currentClinicId}/slot-capacity`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ slotCapacity: Number(slotCapacitySlider.value) })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                capacitySaveStatus.textContent = "✓ Capacity saved successfully";
+                capacitySaveStatus.style.color = "var(--success-green)";
+                showToast("Slot capacity updated successfully.", "success");
+            } else {
+                throw new Error(result.error || "Failed to save capacity");
+            }
+        } catch (error) {
+            console.error("Error saving slot capacity:", error);
+            capacitySaveStatus.textContent = "× Error saving capacity";
+            capacitySaveStatus.style.color = "#ef4444";
+            showToast(error.message || "Failed to save slot capacity.", "error");
+        } finally {
+            capacitySaveBtn.disabled = false;
+            capacitySaveBtn.innerHTML = `<i class='bx bx-save'></i> <span>Save Capacity</span>`;
+            setTimeout(() => { capacitySaveStatus.textContent = ""; }, 4000);
+        }
+    });
+}

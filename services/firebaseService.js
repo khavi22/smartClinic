@@ -13,6 +13,7 @@ const getCollectionNameForRole = (role) => ROLE_COLLECTIONS[role];
 
 const getAvailabilityForDate = async (clinicId, dateStr) => {
     let slots = [];
+    let slotCapacity = MAX_CAPACITY_PER_SLOT;
 
     for (let hour = 0; hour < 24; hour += 1) {
         const start = hour.toString().padStart(2, "0") + ":00";
@@ -33,6 +34,8 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
 
             if (clinicDoc.exists) {
                 const clinicData = clinicDoc.data();
+                slotCapacity = clinicData.slotCapacity ?? MAX_CAPACITY_PER_SLOT;
+
                 const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
                 const dayOfWeek = days[new Date(dateStr).getDay()];
                 const hours = clinicData.operatingHours ? clinicData.operatingHours[dayOfWeek] : null;
@@ -50,6 +53,9 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
                     const slotStart = slot.time.split(" - ")[0];
                     return slotStart >= hours.open && slotStart < closeTime;
                 });
+
+                // Apply clinic-specific capacity to all slots
+                slots = slots.map((slot) => ({ ...slot, total: slotCapacity }));
             }
         }
 
@@ -129,6 +135,10 @@ const createAppointment = async (
         }
 
         const capacitySnapshot = await capacityQuery.get();
+        const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+        const slotCapacity = clinicDoc.exists 
+        ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT) 
+        : MAX_CAPACITY_PER_SLOT;
 
         if (capacitySnapshot.size >= MAX_CAPACITY_PER_SLOT) {
             throw new Error("This slot is full.");
@@ -319,25 +329,21 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
 
-    await db.collection("clinics").doc(placeId).set({
+   await db.collection("clinics").doc(placeId).set({
         placeId,
         clinicName,
         city: city || "",
         address: address || "Address not provided",
         operatingHours: {
             monday: { ...defaultHours },
-            tuesday: { ...defaultHours },
-            wednesday: { ...defaultHours },
-            thursday: { ...defaultHours },
-            friday: { ...defaultHours },
-            saturday: { ...defaultHours },
-            sunday: { ...defaultHours }
+            // ...
         },
+        slotCapacity: MAX_CAPACITY_PER_SLOT, 
         adminCode,
         adminUid: null,
         isActive: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+});
 
     return { clinicId: placeId, adminCode };
 };
