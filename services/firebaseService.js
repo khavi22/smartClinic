@@ -271,6 +271,50 @@ const validateAdminCode = async (adminCode, clinicId) => {
     return !snapshot.empty;
 };
 
+const seedClinicDefaultServices = async (clinicId) => {
+    try {
+        const templatesSnapshot = await db.collection("serviceTemplates").get();
+        let servicesToSeed = [];
+
+        if (!templatesSnapshot.empty) {
+            templatesSnapshot.forEach(doc => {
+                const data = doc.data();
+                servicesToSeed.push({
+                    name: data.name,
+                    description: data.description,
+                    duration: data.duration
+                });
+            });
+        } else {
+            // Fallback standard templates if collection is empty
+            servicesToSeed = [
+                { name: "General Consultation", description: "Initial consultation with a general practitioner", duration: 30 },
+                { name: "Dental Cleaning", description: "Professional teeth cleaning and examination", duration: 45 },
+                { name: "Vaccination", description: "Immunization and vaccine administration", duration: 15 },
+                { name: "Pediatric Check-up", description: "Routine wellness exam for children", duration: 30 }
+            ];
+        }
+
+        const batch = db.batch();
+        const servicesCollection = db.collection("clinics").doc(clinicId).collection("services");
+
+        servicesToSeed.forEach(service => {
+            const ref = servicesCollection.doc();
+            batch.set(ref, {
+                ...service,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                active: true
+            });
+        });
+
+        await batch.commit();
+        console.log(`Successfully auto-seeded ${servicesToSeed.length} default services for clinic: ${clinicId}`);
+    } catch (err) {
+        console.error("Failed to seed default services for clinic:", clinicId, err);
+    }
+};
+
 const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
@@ -302,6 +346,16 @@ const ensureClinicExists = async ({ clinicId, name, address }) => {
     const doc = await db.collection("clinics").doc(clinicId).get();
 
     if (doc.exists) {
+        // Even if clinic exists, check if it has 0 services in subcollection. If so, seed them!
+        const docRef = db.collection("clinics").doc(clinicId);
+        if (typeof docRef.collection === "function") {
+            const servicesSnapshot = await docRef.collection("services").limit(1).get();
+            if (servicesSnapshot.empty) {
+                console.log(`Existing clinic ${clinicId} has 0 services. Auto-seeding default services...`);
+                await seedClinicDefaultServices(clinicId);
+                return { success: true, alreadyExists: true, seededDefaultServices: true };
+            }
+        }
         return { success: true, alreadyExists: true };
     }
 
@@ -310,6 +364,8 @@ const ensureClinicExists = async ({ clinicId, name, address }) => {
         clinicName: name,
         address
     });
+
+    await seedClinicDefaultServices(clinicId);
 
     return { success: true, newlyCreated: true };
 };

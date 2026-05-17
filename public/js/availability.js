@@ -321,11 +321,53 @@ async function fetchAndRenderServices(clinicId) {
                     name: e.target.dataset.name,
                     duration: parseInt(e.target.dataset.duration)
                 };
+                updatePredictedWaitTime();
             });
         });
     } catch (error) {
         console.error('Error loading services:', error);
         servicesContainer.innerHTML = `<div class="service-error">Error: ${error.message}</div>`;
+    }
+}
+
+async function updatePredictedWaitTime() {
+    const container = document.getElementById("mlWaitTimeContainer");
+    const textEl = document.getElementById("mlWaitTimeText");
+    const rangeEl = document.getElementById("mlWaitTimeRange");
+    if (!container || !textEl || !rangeEl) return;
+
+    if (!selectedService || selectedSlotId === null) {
+        container.style.display = "none";
+        return;
+    }
+
+    container.style.display = "block";
+    textEl.innerHTML = `<span style="color: #64748b; font-size: 0.95rem;"><i class='bx bx-loader-alt bx-spin' style="margin-right: 5px;"></i>Calculating AI prediction...</span>`;
+    rangeEl.textContent = "-";
+
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clinicId = urlParams.get('id') || "default_clinic";
+        
+        // Find selected slot details to pass timeSlot
+        const slot = cachedSlots.find(s => s.id === selectedSlotId);
+        const timeSlot = slot ? slot.time.split(" - ")[0] : "09:00";
+
+        const res = await fetch(`/api/queue/${encodeURIComponent(clinicId)}/predict-waittime?date=${selectedDate}&timeSlot=${encodeURIComponent(timeSlot)}&serviceId=${encodeURIComponent(selectedService.id)}`);
+        
+        if (!res.ok) throw new Error("Prediction request failed");
+        
+        const data = await res.json();
+        if (data.success) {
+            textEl.innerHTML = `Wait for <strong>${data.estimatedWaitTime} minutes</strong>`;
+            rangeEl.textContent = `Expected Range: ${data.waitTimeRange || `${Math.max(0, data.estimatedWaitTime - 5)}-${data.estimatedWaitTime + 5} mins`} (${data.fallback ? 'Based on queue statistics' : 'Based on ML wait-time model'})`;
+        } else {
+            throw new Error(data.message || "Unknown prediction error");
+        }
+    } catch (err) {
+        console.warn("Could not get predicted wait time:", err);
+        textEl.textContent = "Wait for ~15-20 minutes";
+        rangeEl.textContent = "Based on typical slot busyness";
     }
 }
 
@@ -336,6 +378,12 @@ window.handleSlotSelection = function (slotId) {
     }
     selectedSlotId = slotId;
     renderSlots();
+
+    // Reset wait time container on new slot selection
+    const waitContainer = document.getElementById("mlWaitTimeContainer");
+    if (waitContainer) {
+        waitContainer.style.display = "none";
+    }
 
     const dialog = document.getElementById('bookingModal');
     const details = document.getElementById('dialogBookingDetails');
