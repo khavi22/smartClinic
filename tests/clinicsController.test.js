@@ -4,9 +4,11 @@ const { admin, db } = require("../services/config/firebase");
 const {
     ensureClinicExistsController,
     updateClinicHoursController,
-    getClinics
+    getClinics,
+    updateSlotCapacity
 } = require("../Controllers/ClinicsController");
-
+const clinicService = require("../services/clinicService");
+jest.mock("../services/clinicService");
 jest.mock("axios");
 jest.mock("../services/firebaseService");
 const mockVerifyIdToken = jest.fn().mockResolvedValue({ uid: "admin-123" });
@@ -64,6 +66,120 @@ describe("ClinicsController", () => {
                 message: "Failed to initialize clinic",
                 error: "Init failed"
             }));
+        });
+    });
+    describe("updateSlotCapacity", () => {
+        beforeEach(() => {
+            req.params = { clinicId: "c1" };
+            req.body = { slotCapacity: 10 };
+        });
+
+        it("should return 401 if no auth header", async () => {
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+        });
+
+        it("should return 401 if token verification fails", async () => {
+            req.headers.authorization = "Bearer token";
+            mockVerifyIdToken.mockRejectedValueOnce(new Error("Bad token"));
+
+            await updateSlotCapacity(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized: Invalid token" });
+        });
+
+        it("should return 404 if clinic does not exist", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                }))
+            });
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ error: "Clinic not found." });
+        });
+
+        it("should return 403 if user is not the clinic admin", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "OTHER" })
+                    })
+                }))
+            });
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
+        });
+
+        it("should return 400 if slotCapacity is missing", async () => {
+            req.headers.authorization = "Bearer token";
+            req.body = {};
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123" })
+                    })
+                }))
+            });
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ error: "Slot capacity is required." });
+        });
+
+        it("should return 200 on success", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123" })
+                    })
+                }))
+            });
+
+            clinicService.updateClinicSlotCapacity.mockResolvedValue({ clinicId: "c1", slotCapacity: 10 });
+
+            await updateSlotCapacity(req, res);
+
+            expect(clinicService.updateClinicSlotCapacity).toHaveBeenCalledWith("c1", 10);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Slot capacity updated successfully.",
+                data: { clinicId: "c1", slotCapacity: 10 }
+            });
+        });
+
+        it("should return 500 if service throws unexpectedly", async () => {
+            req.headers.authorization = "Bearer token";
+
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({ adminUid: "admin-123" })
+                    })
+                }))
+            });
+
+            clinicService.updateClinicSlotCapacity.mockRejectedValue(new Error("Unexpected error"));
+
+            await updateSlotCapacity(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({ error: "Internal server error." });
         });
     });
 
