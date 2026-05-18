@@ -1,10 +1,10 @@
-# 🏥 SmartClinic — Premium Full-Stack Clinic & Queue Management Platform
+# SmartClinic — Premium Full-Stack Clinic & Queue Management Platform
 
 SmartClinic is a state-of-the-art, full-stack clinic management and smart appointment booking application designed to streamline healthcare access. By pairing a robust Node.js backend with an advanced Python Machine Learning wait-time prediction service, SmartClinic enables patients to find local clinics, check live queues, book dynamic appointments, and view real-time, ML-predicted wait times. Simultaneously, it provides clinic admins and medical staff with powerful service, queue triage, and analytical reporting dashboards.
 
 ---
 
-## 🌟 Core Pillars & Features
+## Core Pillars & Features
 
 ```mermaid
 graph TD
@@ -17,25 +17,25 @@ graph TD
     D -->|Real-Time Sync| A
 ```
 
-### 1. 🧑‍⚕️ Patient Portal
+### 1. Patient Portal
 *   **Intelligent Clinic Discovery**: Multi-filter clinic search covering Province, District, Region, and Address coordinates.
 *   **Dynamic Appointment Engine**: Fully dynamic, Firebase-backed availability engine that prevents double-booking and updates calendars in real-time.
 *   **One-Click Context Rescheduling**: Interactive, state-aware calendar allowing patients to seamlessly reschedule appointments while preserving user history and minimizing workflow friction.
 *   **Live Queue Monitor**: Dedicated live patient queue display allowing remote check-ins and progress tracking.
 *   **Authentication & Profile**: Integrated Firebase client auth supporting secure Patient login, registration, and personal dashboard management.
 
-### 2. 🛡️ Clinic Administration
+### 2. Clinic Administration
 *   **Google Places Onboarding**: Multi-step onboarding system capturing clinic operational metadata, administrative codes, and address geolocation.
 *   **Service & Catalog Builder**: Custom service catalogs enabling admins to configure clinic-specific consultations (e.g., General, Dental, Vaccination, Chronic, Mental Health) and assign base durations.
 *   **Dynamic Operations Schedule**: Precision hour configurations allowing clinics to lock in custom opening, closing, and lunch intervals.
 *   **Staff Registry & Approvals**: System to manage staff invitation codes, approve incoming medical profiles, and handle permissions.
 
-### 3. 🩺 Medical Staff & Triage
+### 3. Medical Staff & Triage
 *   **Patient Triage Dashboard**: Active list allowing doctors to check patients in, adjust priority levels, and trigger live consulting states.
 *   **Consultation Queue Controller**: Transitions patients from `WAITING` to `IN_CONSULTATION` and automatically tallies consulting durations upon completion.
 *   **TV Queue Board**: Dedicated aesthetic waiting-room display showing queue slots, active treatments, and estimated time to be called.
 
-### 4. 📊 Workload & Analytics Reports
+### 4. Workload & Analytics Reports
 *   **Clinic Load Forecasts**: Hourly busyness and load tracking across dates.
 *   **Wait-Time Metrics**: Deep analytics showing average actual wait times vs. predicted estimations.
 *   **No-Show Analysis**: Missed-appointment metrics, percentage of unfulfilled bookings, and actionable clinic productivity logs.
@@ -43,15 +43,15 @@ graph TD
 
 ---
 
-## 🧠 Python Machine Learning Service (`ml_service`)
+## Python Machine Learning Service (ml_service)
 
 The ML service is a self-contained Python Flask application dedicated to wait-time and clinic busyness prediction. It utilizes historical Firestore data to train and serve predictive regression models, incorporating advanced feature engineering and real-time state hybridization.
 
 ### 1. Dual-Regression Model Architecture
-*   **Busyness Model (`GradientBoostingRegressor`)**:
+*   **Busyness Model (GradientBoostingRegressor)**:
     *   **Goal**: Predict the expected appointment volume for a specific clinic at any given hour.
     *   **Features**: `clinic_code`, `day_of_week`, `hour`, `day_sin`, `day_cos`, `hour_sin`, `hour_cos`, `is_morning`, `is_afternoon`, `is_weekend`.
-*   **Consultation Duration Model (`GradientBoostingRegressor`)**:
+*   **Consultation Duration Model (GradientBoostingRegressor)**:
     *   **Goal**: Predict the precise duration (in minutes) for a patient's consultation based on case history.
     *   **Features**: `clinic_code`, `service_code`, `day_of_week`, `hour`, `priority` (Triage level), cyclic time mappings, and operational indicators.
 
@@ -69,7 +69,7 @@ Upon startup, the ML service searches for persisted serialization files (`models
 
 ---
 
-## 📂 Comprehensive Project Directory Structure
+## Comprehensive Project Directory Structure
 
 ```text
 smartClinic/
@@ -145,7 +145,7 @@ smartClinic/
 
 ---
 
-## 🔒 Firebase Security Rules
+## Firebase Security Rules
 
 SmartClinic implements strict, granular Firestore security rules in `firestore.rules` to guarantee data privacy and role separation:
 
@@ -162,7 +162,7 @@ SmartClinic implements strict, granular Firestore security rules in `firestore.r
 
 ---
 
-## 🛠️ Getting Started & Local Setup
+## Getting Started & Local Setup
 
 ### 1. Prerequisites
 *   **Node.js**: v18.x or higher recommended.
@@ -211,9 +211,9 @@ SmartClinic implements strict, granular Firestore security rules in `firestore.r
 
 ---
 
-## 🛢️ Seeding Data & Simulating Telemetry
+## Seeding Data & Simulating Telemetry
 
-SmartClinic includes several scripts to seed your Firestore instance with mock metadata, patient records, and past queues. This provides a functional local interface and satisfies the minimum sample requirements (`MIN_QUEUE_SAMPLES = 20`) to train the ML models.
+SmartClinic includes several scripts to seed your Firestore instance with mock metadata, patient records, and past queues. This provides a functional local interface and satisfies the minimum sample requirements (MIN_QUEUE_SAMPLES = 20) to train the ML models.
 
 Run the following commands in the root of the project:
 
@@ -237,7 +237,7 @@ Run the following commands in the root of the project:
 
 ---
 
-## 🚀 Running the Platform
+## Running the Platform
 
 To run the full stack locally, launch both servers concurrently:
 
@@ -258,7 +258,7 @@ python app.py
 
 ---
 
-## 🧪 Jest Test Suite & Code Quality
+## Jest Test Suite & Code Quality
 
 SmartClinic utilizes Jest and Supertest for unit, integration, and flow verification. Code coverage is configured with a strict **80% quality threshold** across Branches, Functions, Lines, and Statements.
 
@@ -275,11 +275,11 @@ The detailed coverage reports will be rendered into the `./coverage` directory, 
 
 ---
 
-## 🌐 Production Deployment Guide
+## Production Deployment Guide
 
 Deploying SmartClinic involves hosting the Node.js Express server and the Python Flask ML service separately, then linking them via environment variables.
 
-### 1. Python ML Service (`ml_service`)
+### 1. Python ML Service (ml_service)
 The Flask service can be hosted on cloud platform providers such as **Render.com** or **Railway.app**.
 
 #### Option A: Render.com
@@ -313,4 +313,4 @@ The Flask service can be hosted on cloud platform providers such as **Render.com
 3.  Start the service. The Express app will now direct wait-time checks and retraining triggers to the production ML pipeline automatically.
 
 ---
-*Developed with ❤️ by the SmartClinic Team. Built for speed, accessibility, and precision.*
+*Developed by the SmartClinic Team. Built for speed, accessibility, and precision.*
