@@ -72,11 +72,11 @@ describe("Appointment Controller", () => {
 
     describe("getAvailability", () => {
 
-        it("should return availability slots", async () => {
+        it("should return availability slots and include ML recommendations", async () => {
 
             getAvailabilityForDate.mockResolvedValue([
                 {
-                    time: "10",
+                    time: "10:00",
                     available: true,
                 },
             ]);
@@ -84,7 +84,12 @@ describe("Appointment Controller", () => {
             fetch.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    predictions: [],
+                    predictions: [
+                        {
+                            timeSlot: "10:00",
+                            recommended: true,
+                        }
+                    ],
                 }),
             });
 
@@ -280,6 +285,64 @@ describe("Appointment Controller", () => {
 
             expect(res.statusCode).toBe(400);
         });
+
+        it("should fail gracefully and log error if confirmation email fails", async () => {
+            createAppointment.mockResolvedValue({
+                id: "appointment1",
+            });
+
+            getPatientProfileById.mockResolvedValue({
+                email: "test@example.com",
+                fullName: "John Doe",
+            });
+
+            emailService.sendAppointmentConfirmation.mockRejectedValue(new Error("Email error"));
+
+            const req = httpMocks.createRequest({
+                body: {
+                    patientId: "patient1",
+                    clinicId: "clinic1",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+        });
+
+        it("should return 500 on generic database failure", async () => {
+            createAppointment.mockRejectedValue(new Error("Generic DB error"));
+
+            const req = httpMocks.createRequest({
+                body: {
+                    patientId: "patient1",
+                    clinicId: "clinic1",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(500);
+        });
     });
 
     // =====================================================
@@ -323,6 +386,22 @@ describe("Appointment Controller", () => {
             await appointmentController.getAppointmentsByPatientId(req, res);
 
             expect(res.statusCode).toBe(400);
+        });
+
+        it("should return 500 if getAppointmentsByPatientId service fails", async () => {
+            getAppointmentsByPatientId.mockRejectedValue(new Error("Fetch failed"));
+
+            const req = httpMocks.createRequest({
+                params: {
+                    patientId: "patient1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getAppointmentsByPatientId(req, res);
+
+            expect(res.statusCode).toBe(500);
         });
     });
 
@@ -442,6 +521,22 @@ describe("Appointment Controller", () => {
 
             expect(res.statusCode).toBe(200);
         });
+
+        it("should return 500 if cancellation service fails", async () => {
+            cancelAppointment.mockRejectedValue(new Error("Cancellation failed"));
+
+            const req = httpMocks.createRequest({
+                params: {
+                    id: "appointment1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.cancelAppointmentController(req, res);
+
+            expect(res.statusCode).toBe(500);
+        });
     });
 
     // =====================================================
@@ -461,7 +556,7 @@ describe("Appointment Controller", () => {
                         "2026-05-18": [
                             {
                                 recommended: true,
-                                timeSlot: "10",
+                                timeSlot: "10:00",
                             },
                         ],
                     },
@@ -479,6 +574,73 @@ describe("Appointment Controller", () => {
             await appointmentController.getSmartSuggestion(req, res);
 
             expect(res.statusCode).toBe(200);
+        });
+
+        it("should return smart suggestions with only future recommendations", async () => {
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            // Force bestFuture match by providing a future date
+            const futureDateStr = "2026-09-09";
+
+            fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    predictionsByDate: {
+                        [futureDateStr]: [
+                            {
+                                recommended: true,
+                                timeSlot: "11:00",
+                            },
+                        ],
+                    },
+                }),
+            });
+
+            const req = httpMocks.createRequest({
+                query: {
+                    clinicId: "clinic1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getSmartSuggestion(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.hasPrediction).toBe(true);
+            expect(res.body.future).toBeDefined();
+        });
+
+        it("should return fallback message if no recommendations are found", async () => {
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    predictionsByDate: {
+                        "2026-05-18": [
+                            {
+                                recommended: false,
+                                timeSlot: "10:00",
+                            },
+                        ],
+                    },
+                }),
+            });
+
+            const req = httpMocks.createRequest({
+                query: {
+                    clinicId: "clinic1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getSmartSuggestion(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.hasPrediction).toBe(false);
+            expect(res.body.suggestion).toContain("Traffic models suggest normal volume");
         });
 
         it("should return fallback suggestion if ML service missing", async () => {
