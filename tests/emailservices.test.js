@@ -177,8 +177,14 @@ describe("Email Service", () => {
                 .toHaveBeenCalledWith(
                     expect.objectContaining({
                         to: "patient@test.com",
+                        subject: "Appointment Confirmed - Clinic A",
+                        html: expect.stringContaining("Appointment Confirmed"),
                     })
                 );
+            expect(mockSendMail.mock.calls[0][0].html)
+                .toContain("border-left:4px solid #2563eb");
+            expect(mockSendMail.mock.calls[0][0].html)
+                .toContain("View My Appointments");
         });
 
         it("should send rescheduled appointment email", async () => {
@@ -195,6 +201,10 @@ describe("Email Service", () => {
 
             expect(mockSendMail)
                 .toHaveBeenCalledTimes(1);
+            expect(mockSendMail.mock.calls[0][0].subject)
+                .toBe("Appointment Rescheduled - Clinic A");
+            expect(mockSendMail.mock.calls[0][0].html)
+                .toContain("Appointment Rescheduled");
         });
     });
 
@@ -222,8 +232,14 @@ describe("Email Service", () => {
                 .toHaveBeenCalledWith(
                     expect.objectContaining({
                         to: "patient@test.com",
+                        subject: "Appointment Cancelled - Clinic A",
+                        html: expect.stringContaining("Appointment Cancelled"),
                     })
                 );
+            expect(mockSendMail.mock.calls[0][0].html)
+                .toContain("border-left:4px solid #dc2626");
+            expect(mockSendMail.mock.calls[0][0].html)
+                .toContain("Book Another Appointment");
         });
     });
 

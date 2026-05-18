@@ -15,6 +15,7 @@ jest.mock("../services/firebaseService", () => ({
     getAppointmentsByPatientId: jest.fn(),
     cancelAppointment: jest.fn(),
     getPatientProfileById: jest.fn(),
+    getUserProfileByEmail: jest.fn(),
 }));
 
 jest.mock("../services/emailService", () => ({
@@ -37,6 +38,7 @@ const {
     getAppointmentsByPatientId,
     cancelAppointment,
     getPatientProfileById,
+    getUserProfileByEmail,
 } = require("../services/firebaseService");
 
 const emailService = require("../services/emailService");
@@ -209,8 +211,103 @@ describe("Appointment Controller", () => {
 
             const req = httpMocks.createRequest({
                 body: {
+                    patientId: "patient1",
                     date: "2026-05-20",
                     timeSlot: "10:00",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(400);
+        });
+
+        it("should create appointment by patient email", async () => {
+
+            getUserProfileByEmail.mockResolvedValue({
+                uid: "patient-email-uid",
+                role: "patient",
+                email: "patient@example.com",
+            });
+
+            createAppointment.mockResolvedValue({
+                id: "appointment-by-email",
+                timeSlot: "10:00",
+            });
+
+            getPatientProfileById.mockResolvedValue({
+                email: "patient@example.com",
+                fullName: "Patient Email",
+            });
+
+            const req = httpMocks.createRequest({
+                body: {
+                    patientEmail: "patient@example.com",
+                    clinicId: "clinic1",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    clinicName: "Clinic A",
+                    clinicAddress: "Address A",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(getUserProfileByEmail).toHaveBeenCalledWith("patient@example.com");
+            expect(createAppointment).toHaveBeenCalledWith(
+                "clinic1",
+                "2026-05-20",
+                "10:00",
+                "patient-email-uid",
+                "Clinic A",
+                "Address A",
+                false,
+                "service1",
+                "Consultation",
+                30
+            );
+        });
+
+        it("should return 404 when patient email has no account", async () => {
+
+            getUserProfileByEmail.mockResolvedValue(null);
+
+            const req = httpMocks.createRequest({
+                body: {
+                    patientEmail: "missing@example.com",
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.postAppointment(req, res);
+
+            expect(res.statusCode).toBe(404);
+            expect(createAppointment).not.toHaveBeenCalled();
+        });
+
+        it("should return 400 when patient id and email are missing", async () => {
+
+            const req = httpMocks.createRequest({
+                body: {
+                    date: "2026-05-20",
+                    timeSlot: "10:00",
+                    serviceId: "service1",
+                    serviceName: "Consultation",
+                    serviceDuration: 30,
                 },
             });
 
