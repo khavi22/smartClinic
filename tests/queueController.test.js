@@ -716,7 +716,8 @@ describe("Queue Controllers", () => {
             await predictWaitTime(req, res);
 
             expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining("http://localhost:5001/predict-waittime")
+                expect.stringContaining("http://localhost:5001/predict-waittime"),
+                expect.any(Object)
             );
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(

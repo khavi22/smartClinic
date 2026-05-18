@@ -11,14 +11,36 @@ exports.getAvailability = async (req, res) => {
         }
 
         let slots = await getAvailabilityForDate(clinicId, dateObj);
-        
-        // Fetch ML recommendations
+        res.json({ date: dateObj, slots });
+    } catch (error) {
+        console.error("Failed to get availability:", error);
+        res.status(500).json({ error: "Failed to fetch availability data." });
+    }
+};
+
+exports.getRecommendations = async (req, res) => {
+    try {
+        const dateObj = req.query.date;
+        const clinicId = req.query.clinicId || "default";
+
+        if (!dateObj) {
+            return res.status(400).json({ error: "Missing date parameter" });
+        }
+
+        const mlBaseUrl = process.env.ML_SERVICE_URL;
+        if (!mlBaseUrl) {
+            return res.json({ recommendations: [] });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+
         try {
-            const mlBaseUrl = process.env.ML_SERVICE_URL;
-            if (!mlBaseUrl) {
-                throw new Error("ML_SERVICE_URL is not defined");
-            }
-            const mlRes = await fetch(`${mlBaseUrl}/predict?date=${dateObj}`);
+            const mlRes = await fetch(`${mlBaseUrl}/predict?date=${dateObj}&clinicId=${encodeURIComponent(clinicId)}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             if (mlRes.ok) {
                 const mlData = await mlRes.json();
                 const predictions = mlData.predictions || [];
@@ -32,26 +54,25 @@ exports.getAvailability = async (req, res) => {
                 const isToday = dateObj === todayStr;
                 const currentHour = localDate.getHours();
 
-                // Merge recommendations into slots
-                slots = slots.map(slot => {
-                    const prediction = predictions.find(p => p.timeSlot === slot.time);
-                    const slotHour = parseInt(slot.time);
-                    const isFuture = !isToday || slotHour > currentHour;
+                const recommendedSlots = predictions
+                    .filter(p => {
+                        const slotHour = parseInt(p.timeSlot);
+                        const isFuture = !isToday || slotHour > currentHour;
+                        return p.recommended && isFuture;
+                    })
+                    .map(p => p.timeSlot);
 
-                    if (prediction && prediction.recommended && isFuture) {
-                        return { ...slot, isRecommended: true };
-                    }
-                    return slot;
-                });
+                return res.json({ recommendations: recommendedSlots });
             }
         } catch (mlError) {
-            console.log("ML service unavailable, proceeding without recommendations");
+            clearTimeout(timeoutId);
+            console.log("ML service unavailable or timed out, proceeding with empty recommendations:", mlError.message);
         }
 
-        res.json({ date: dateObj, slots });
+        res.json({ recommendations: [] });
     } catch (error) {
-        console.error("Failed to get availability:", error);
-        res.status(500).json({ error: "Failed to fetch availability data." });
+        console.error("Failed to get recommendations:", error);
+        res.status(500).json({ error: "Failed to fetch recommendations." });
     }
 };
 
@@ -253,8 +274,21 @@ exports.getSmartSuggestion = async (req, res) => {
         const endDateStr = `${yEnd}-${mEnd}-${dayEnd}`;
 
         const clinicId = req.query.clinicId || '';
-        const mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}&clinicId=${clinicId}`);
-        if (!mlRes.ok) throw new Error("ML service unreachable");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+        let mlRes;
+        try {
+            mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}&clinicId=${clinicId}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+        } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            throw new Error(`ML service unreachable: ${fetchErr.message}`);
+        }
+
+        if (!mlRes.ok) throw new Error("ML service returned an error status");
 
         const mlData = await mlRes.json();
         const predictionsByDate = mlData.predictionsByDate || {};

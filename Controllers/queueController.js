@@ -365,7 +365,13 @@ exports.predictWaitTime = async (req, res) => {
                     priority: priority || "0"
                 });
 
-                const mlRes = await fetch(`${mlBaseUrl}/predict-waittime?${params.toString()}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+                const mlRes = await fetch(`${mlBaseUrl}/predict-waittime?${params.toString()}`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
                 if (mlRes.ok) {
                     const data = await mlRes.json();
                     return res.status(200).json({

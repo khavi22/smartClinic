@@ -76,7 +76,7 @@ describe("Appointment Controller", () => {
 
     describe("getAvailability", () => {
 
-        it("should return availability slots and include ML recommendations", async () => {
+        it("should return availability slots", async () => {
 
             getAvailabilityForDate.mockResolvedValue([
                 {
@@ -84,20 +84,6 @@ describe("Appointment Controller", () => {
                     available: true,
                 },
             ]);
-
-            fetch.mockResolvedValue({
-                ok: true,
-                json: async () => ({
-                    predictions: [
-                        {
-                            timeSlot: "10:00",
-                            recommended: true,
-                        }
-                    ],
-                }),
-            });
-
-            process.env.ML_SERVICE_URL = "http://localhost:5000";
 
             const req = httpMocks.createRequest({
                 query: {
@@ -132,65 +118,6 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
-        it("should continue if ML service fails", async () => {
-
-            getAvailabilityForDate.mockResolvedValue([]);
-
-            fetch.mockRejectedValue(new Error("ML failed"));
-
-            process.env.ML_SERVICE_URL = "http://localhost:5000";
-
-            const req = httpMocks.createRequest({
-                query: {
-                    date: "2026-05-20",
-                },
-            });
-
-            const res = mockResponse();
-
-            await appointmentController.getAvailability(req, res);
-
-            expect(res.statusCode).toBe(200);
-        });
-
-        it("should mark ML recommended future slots", async () => {
-
-            getAvailabilityForDate.mockResolvedValue([
-                {
-                    time: "10:00 - 11:00",
-                    available: true,
-                },
-            ]);
-
-            fetch.mockResolvedValue({
-                ok: true,
-                json: async () => ({
-                    predictions: [
-                        {
-                            timeSlot: "10:00 - 11:00",
-                            recommended: true,
-                        },
-                    ],
-                }),
-            });
-
-            process.env.ML_SERVICE_URL = "http://localhost:5000";
-
-            const req = httpMocks.createRequest({
-                query: {
-                    date: "2099-05-20",
-                    clinicId: "clinic1",
-                },
-            });
-
-            const res = mockResponse();
-
-            await appointmentController.getAvailability(req, res);
-
-            expect(res.statusCode).toBe(200);
-            expect(res.body.slots[0].isRecommended).toBe(true);
-        });
-
         it("should return 500 if availability lookup fails", async () => {
 
             getAvailabilityForDate.mockRejectedValue(new Error("Availability failed"));
@@ -206,6 +133,99 @@ describe("Appointment Controller", () => {
             await appointmentController.getAvailability(req, res);
 
             expect(res.statusCode).toBe(500);
+        });
+    });
+
+    describe("getRecommendations", () => {
+
+        it("should fetch ML predictions and return recommended slots", async () => {
+
+            fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    predictions: [
+                        {
+                            timeSlot: "10:00",
+                            recommended: true,
+                        },
+                        {
+                            timeSlot: "11:00",
+                            recommended: false,
+                        }
+                    ],
+                }),
+            });
+
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            const req = httpMocks.createRequest({
+                query: {
+                    date: "2099-05-20",
+                    clinicId: "clinic1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getRecommendations(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.recommendations).toContain("10:00");
+            expect(res.body.recommendations).not.toContain("11:00");
+            expect(fetch).toHaveBeenCalledWith(
+                expect.stringContaining("clinicId=clinic1"),
+                expect.any(Object)
+            );
+        });
+
+        it("should return 400 if date missing", async () => {
+
+            const req = httpMocks.createRequest({
+                query: {},
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getRecommendations(req, res);
+
+            expect(res.statusCode).toBe(400);
+        });
+
+        it("should continue and return empty if ML service fails", async () => {
+
+            fetch.mockRejectedValue(new Error("ML failed"));
+
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            const req = httpMocks.createRequest({
+                query: {
+                    date: "2026-05-20",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getRecommendations(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.recommendations).toEqual([]);
+        });
+
+        it("should return empty if ML_SERVICE_URL not configured", async () => {
+            delete process.env.ML_SERVICE_URL;
+
+            const req = httpMocks.createRequest({
+                query: {
+                    date: "2026-05-20",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getRecommendations(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.recommendations).toEqual([]);
         });
     });
 
