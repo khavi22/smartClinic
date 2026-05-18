@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartClinic — Interactive Architecture & Sequence Diagrams</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Mermaid CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                background: '#131927',
+                primaryColor: '#1e293b',
+                primaryTextColor: '#f8fafc',
+                primaryBorderColor: '#334155',
+                lineColor: '#38bdf8',
+                secondaryColor: '#0f172a',
+                tertiaryColor: '#1e293b'
+            }
+        });
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(20, 27, 45, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --font-outfit: 'Outfit', sans-serif;
+            --font-inter: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.04) 0%, transparent 50%);
+            color: var(--text-main);
+            font-family: var(--font-inter);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-container h1 {
+            font-family: var(--font-outfit);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-outline {
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #0f172a;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .page-header h2 {
+            font-family: var(--font-outfit);
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* Tabs Navigation */
+        .tabs-header {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.875rem 1.75rem;
+            border-radius: 9999px;
+            font-family: var(--font-outfit);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.05));
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+        }
+
+        /* Dashboard Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 350px 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            backdrop-filter: blur(16px);
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            font-family: var(--font-outfit);
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .step-item {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Diagram Viewport */
+        .diagram-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 500px;
+        }
+
+        .diagram-body {
+            background: #0f131f;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .diagram-tab-panel {
+            display: none;
+        }
+
+        .diagram-tab-panel.active {
+            display: block;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: auto;
+            background: rgba(11, 15, 25, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <h1>SmartClinic</h1>
+        </div>
+        <div class="nav-links">
+            <a href="/index.html" class="btn btn-outline">Back to Home</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Interactive Diagram Dashboard</h2>
+            <p>Explore the end-to-end telemetry and request lifecycles powering the SmartClinic ecosystem.</p>
+        </div>
+
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab('ml-tab')">Machine Learning Service</button>
+            <button class="tab-btn" onclick="switchTab('onboarding-tab')">Admin Onboarding Flow</button>
+        </div>
+
+        <div class="dashboard-grid">
+            
+            <!-- Left Hand Legend / Steps (Switched with JavaScript) -->
+            <div class="card sidebar">
+                <!-- ML Service Sidebar Panel -->
+                <div id="ml-sidebar" class="diagram-tab-panel active">
+                    <h3>ML Prediction Lifecycle</h3>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-number">1</span>
+                            <div class="step-title">Background Training</div>
+                            <div class="step-desc">A continuous daemon thread trains regression models hourly using structured historic Firestore entries.</div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">2</span>
+                            <div class="step-title">Check-in Query</div>
+                            <div class="step-desc">A patient requests availability metrics; the Node Express server routes parameters to the ML Flask service.</div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">3</span>
+                            <div class="step-title">State Hybridization</div>
+                            <div class="step-desc">For same-day requests, the server polls real-time live queues, adjusting forecast wait times based on elapsed duration.</div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">4</span>
+                            <div class="step-title">Model Inference</div>
+                            <div class="step-desc">For future bookings, the GradientBoosting model evaluates clinic load & services to supply wait forecasts.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Admin Onboarding Sidebar Panel -->
+                <div id="onboarding-sidebar" class="diagram-tab-panel">
+                    <h3>Onboarding Milestones</h3>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-number">1</span>
+                            <div class="step-title">Google Places Search</div>
+                            <div class="step-desc">Admin inputs clinic location; Google Places API is queried to fetch coordinates, address details, and location identifiers.</div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">2</span>
+                            <div class="step-title">Operating Schedules</div>
+                            <div class="step-desc">Admin sets standard hours and custom lunch windows, submitting configurations to the node server.</div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">3</span>
+                            <div class="step-title">Database Provisioning</div>
+                            <div class="step-desc">The Express controller constructs standard schemas and establishes database collections in Firestore.</div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">4</span>
+                            <div class="step-title">Services Seeding</div>
+                            <div class="step-desc">Custom service configurations (durations, pricing, triage weight) are seeded and linked to the clinic.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Hand Interactive Diagram Canvas -->
+            <div class="card diagram-container">
+                <!-- ML Service Sequence Diagram -->
+                <div id="ml-tab" class="diagram-tab-panel active">
+                    <div class="diagram-body">
+                        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Patient as Patient (Client Portal)
+    participant Backend as Node.js Express Server
+    participant ML as Python Flask ML Service
+    database Firestore as Firebase Firestore DB
+    participant Disk as Local Saved Models (.pkl)
+
+    Note over ML, Firestore: Continuous Background Learning (Hourly)
+    loop Every 3600 seconds
+        ML->>Firestore: Fetch completed queue history & appointments
+        Firestore-->>ML: Return historical dataset
+        ML->>ML: Run Cyclic Feature Encoding (Sin/Cos day/hour)
+        ML->>ML: Train Gradient Boosting Regressors
+        ML->>Disk: Persist trained models & mappings to disk
+    end
+
+    Note over Patient, Disk: Real-time Wait-Time Prediction request
+    Patient->>Backend: GET /api/availability?clinicId=C1&date=YYYY-MM-DD
+    Backend->>ML: GET /predict-waittime?clinicId=C1&date=YYYY-MM-DD&timeSlot=09:00&serviceId=S1&priority=1
+    
+    alt Target Date is TODAY
+        ML->>Firestore: GET /clinics/C1/queues/today/queueItems
+        Firestore-->>ML: Return active queue list
+        ML->>ML: Calculate live duration bounds (elapsed consult times + waiting queues)
+    else Target Date is in the FUTURE
+        ML->>ML: Load models from cached disk persistence
+        ML->>ML: Predict busyness (hourly clinic load)
+        ML->>ML: Predict consultant duration (department & priority)
+        ML->>ML: Estimate wait-time = predicted_patients * avg_duration
+    end
+    
+    ML->>ML: Apply +/-15% confidence margins and label category
+    ML-->>Backend: Return JSON (estimatedWaitTime, waitTimeRange, waitLabel)
+    Backend-->>Patient: Return aggregated availability & wait-time metrics
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Admin Onboarding Sequence Diagram -->
+                <div id="onboarding-tab" class="diagram-tab-panel">
+                    <div class="diagram-body">
+                        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Admin as Clinic Administrator
+    participant UI as Glassmorphic Onboarding Portal
+    participant Backend as Node.js Express Server
+    participant GoogleAPI as Google Places API
+    database Firestore as Firebase Firestore DB
+
+    Admin->>UI: Enter Clinic Name & Search Location
+    UI->>Backend: GET /api/clinics?search=ClinicName
+    Backend->>GoogleAPI: POST (Query Search Places)
+    GoogleAPI-->>Backend: Return Location Match (address, placeId, coordinates)
+    Backend-->>UI: Return resolved Location Options
+    UI-->>Admin: Display matching locations on Map
+
+    Admin->>UI: Configure Province, District, Region, & Operating Hours
+    Admin->>UI: Click Submit Setup Profile
+    UI->>Backend: POST /api/admin-onboarding (Clinic metadata payload)
+
+    Backend->>Backend: Generate Secure Staff Code (STF-XXXXXX)
+    Backend->>Backend: Standardize administrative codes & schema
+    Backend->>Firestore: Create Clinic Document (/clinics/clinicId)
+    Firestore-->>Backend: Write Success
+    
+    Backend->>Firestore: Map Admin UID to Admin record (/admins/uid)
+    Backend->>Firestore: Update User Custom Claims to role = 'admin'
+    
+    Backend->>Firestore: Seed Clinic Services (General, Chronic, Dental...)
+    Firestore-->>Backend: Seeds Confirmed
+    
+    Backend-->>UI: Return Onboarding Completion Success
+    UI-->>Admin: Redirect to Admin Dashboard (Setup Complete!)
+                        </pre>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>SmartClinic Platform Architecture Viewer. Built for speed, accessibility, and precision.</p>
+    </footer>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab panels
+            document.querySelectorAll('.diagram-container .diagram-tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.sidebar .diagram-tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show requested tab panel
+            document.getElementById(tabId).classList.add('active');
+            
+            // Set active class on active button
+            const activeBtnIndex = tabId === 'ml-tab' ? 0 : 1;
+            document.querySelectorAll('.tab-btn')[activeBtnIndex].classList.add('active');
+            
+            // Show corresponding sidebar legend
+            const sidebarId = tabId === 'ml-tab' ? 'ml-sidebar' : 'onboarding-sidebar';
+            document.getElementById(sidebarId).classList.add('active');
+            
+            // Re-render Mermaid (in case the hidden element caused size calculation issues)
+            mermaid.contentLoaded();
+        }
+    </script>
+</body>
+</html>
