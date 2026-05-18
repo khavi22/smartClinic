@@ -6,6 +6,10 @@ function isActiveQueueItem(queueItem) {
     return ACTIVE_QUEUE_STATUSES.includes(String(queueItem?.status || "WAITING").toUpperCase());
 }
 
+function getQueueItemSlot(queueItem) {
+    return String(queueItem?.timeSlot || queueItem?.appointmentTime || "").trim();
+}
+
 async function getPatientQueueInfo(patientId) {
 
     const today_date = new Date().toISOString().split("T")[0]; // "2026-05-17";
@@ -34,6 +38,7 @@ async function getPatientQueueInfo(patientId) {
             }
 
             const patient_Queue_Item = patientQueueDoc.data();
+            const patientSlot = getQueueItemSlot(patient_Queue_Item);
 
             const allQueueSnapshot = await db
                 .collection("clinics")
@@ -46,7 +51,8 @@ async function getPatientQueueInfo(patientId) {
 
             const all_patients = allQueueSnapshot.docs
                 .map(doc => doc.data())
-                .filter(isActiveQueueItem);
+                .filter(isActiveQueueItem)
+                .filter(patient => getQueueItemSlot(patient) === patientSlot);
 
             const index = all_patients.findIndex(
                 p => p.patientId === patientId

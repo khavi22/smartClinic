@@ -64,21 +64,30 @@ describe("patientQueueService", () => {
         jest.clearAllMocks();
     });
 
-    it("excludes missed and complete patients from queue position and wait calculations", async () => {
+    it("excludes missed, complete, and different-slot patients from queue position and wait calculations", async () => {
         const missedAhead = queueDoc({
             patientId: "missed-patient",
             status: "MISSED",
             serviceDuration: 60,
+            appointmentTime: "00:00 - 01:00",
         });
         const completeAhead = queueDoc({
             patientId: "complete-patient",
             status: "COMPLETE",
             serviceDuration: 45,
+            appointmentTime: "00:00 - 01:00",
+        });
+        const differentSlotAhead = queueDoc({
+            patientId: "different-slot-patient",
+            status: "WAITING",
+            serviceDuration: 90,
+            appointmentTime: "02:00 - 03:00",
         });
         const activeAhead = queueDoc({
             patientId: "active-ahead",
             status: "WAITING",
             serviceDuration: 15,
+            timeSlot: "00:00 - 01:00",
         });
         const currentPatient = queueDoc({
             patientId: "patient1",
@@ -95,6 +104,7 @@ describe("patientQueueService", () => {
             allQueueDocs: [
                 missedAhead,
                 completeAhead,
+                differentSlotAhead,
                 activeAhead,
                 currentPatient,
             ],
