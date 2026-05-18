@@ -76,11 +76,11 @@ describe("Appointment Controller", () => {
 
     describe("getAvailability", () => {
 
-        it("should return availability slots", async () => {
+        it("should return availability slots and include ML recommendations", async () => {
 
             getAvailabilityForDate.mockResolvedValue([
                 {
-                    time: "10",
+                    time: "10:00",
                     available: true,
                 },
             ]);
@@ -88,7 +88,12 @@ describe("Appointment Controller", () => {
             fetch.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    predictions: [],
+                    predictions: [
+                        {
+                            timeSlot: "10:00",
+                            recommended: true,
+                        }
+                    ],
                 }),
             });
 
@@ -884,7 +889,7 @@ describe("Appointment Controller", () => {
                         "2026-05-18": [
                             {
                                 recommended: true,
-                                timeSlot: "10",
+                                timeSlot: "10:00",
                             },
                         ],
                     },
@@ -902,6 +907,73 @@ describe("Appointment Controller", () => {
             await appointmentController.getSmartSuggestion(req, res);
 
             expect(res.statusCode).toBe(200);
+        });
+
+        it("should return smart suggestions with only future recommendations", async () => {
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            // Force bestFuture match by providing a future date
+            const futureDateStr = "2026-09-09";
+
+            fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    predictionsByDate: {
+                        [futureDateStr]: [
+                            {
+                                recommended: true,
+                                timeSlot: "11:00",
+                            },
+                        ],
+                    },
+                }),
+            });
+
+            const req = httpMocks.createRequest({
+                query: {
+                    clinicId: "clinic1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getSmartSuggestion(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.hasPrediction).toBe(true);
+            expect(res.body.future).toBeDefined();
+        });
+
+        it("should return fallback message if no recommendations are found", async () => {
+            process.env.ML_SERVICE_URL = "http://localhost:5000";
+
+            fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    predictionsByDate: {
+                        "2026-05-18": [
+                            {
+                                recommended: false,
+                                timeSlot: "10:00",
+                            },
+                        ],
+                    },
+                }),
+            });
+
+            const req = httpMocks.createRequest({
+                query: {
+                    clinicId: "clinic1",
+                },
+            });
+
+            const res = mockResponse();
+
+            await appointmentController.getSmartSuggestion(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.hasPrediction).toBe(false);
+            expect(res.body.suggestion).toContain("Traffic models suggest normal volume");
         });
 
         it("should return fallback suggestion if ML service missing", async () => {

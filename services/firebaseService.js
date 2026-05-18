@@ -136,9 +136,9 @@ const createAppointment = async (
 
         const capacitySnapshot = await capacityQuery.get();
         const clinicDoc = await db.collection("clinics").doc(clinicId).get();
-        const slotCapacity = clinicDoc.exists 
-        ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT) 
-        : MAX_CAPACITY_PER_SLOT;
+        const slotCapacity = clinicDoc.exists
+            ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT)
+            : MAX_CAPACITY_PER_SLOT;
 
         if (capacitySnapshot.size >= MAX_CAPACITY_PER_SLOT) {
             throw new Error("This slot is full.");
@@ -329,7 +329,7 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
 
-   await db.collection("clinics").doc(placeId).set({
+    await db.collection("clinics").doc(placeId).set({
         placeId,
         clinicName,
         city: city || "",
@@ -338,12 +338,12 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
             monday: { ...defaultHours },
             // ...
         },
-        slotCapacity: MAX_CAPACITY_PER_SLOT, 
+        slotCapacity: MAX_CAPACITY_PER_SLOT,
         adminCode,
         adminUid: null,
         isActive: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-});
+    });
 
     return { clinicId: placeId, adminCode };
 };
@@ -542,7 +542,7 @@ const deleteUserAccount = async (uid) => {
 };
 async function getPatientProfileById(uid) {
     const doc = await admin.firestore()
-        .collection('patients')  // ✅ confirmed from your Firestore screenshot
+        .collection('patients')
         .doc(uid)
         .get();
 
@@ -550,12 +550,12 @@ async function getPatientProfileById(uid) {
 }
 
 const getServiceTemplates = async () => {
-  const snapshot = await db.collection("serviceTemplates").get();
+    const snapshot = await db.collection("serviceTemplates").get();
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
 };
 
 const getClinicServices = async (clinicId) => {
@@ -576,58 +576,58 @@ const getClinicServices = async (clinicId) => {
         };
         return [service];
     }
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
 };
 
 const addClinicService = async (clinicId, data) => {
-  const ref = await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .add({
-      ...data,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      active: true,
-    });
+    const ref = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .add({
+            ...data,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            active: true,
+        });
 
-  return ref.id;
+    return ref.id;
 };
 
 const updateClinicService = async (clinicId, serviceId, data) => {
-  await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .doc(serviceId)
-    .update({
-      ...data,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .doc(serviceId)
+        .update({
+            ...data,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
 };
 
 const deleteClinicService = async (clinicId, serviceId) => {
-  await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .doc(serviceId)
-    .delete();
+    await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .doc(serviceId)
+        .delete();
 };
 
 const serviceExists = async (clinicId, name) => {
-  const snapshot = await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .where("name", "==", name)
-    .limit(1)
-    .get();
+    const snapshot = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .where("name", "==", name)
+        .limit(1)
+        .get();
 
-  return !snapshot.empty;
+    return !snapshot.empty;
 };
 
 /**
@@ -699,13 +699,7 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
     };
 };
 
-// ---------------------------------------------------------------------------
-// Wait Time Report
-// ---------------------------------------------------------------------------
-// "Wait time" is derived from serviceDuration stored on each appointment.
-// We group by timeSlot (hour of day) to give a "time of day" breakdown.
-// Only completed appointments with a numeric serviceDuration are counted.
-// ---------------------------------------------------------------------------
+
 const getWaitTimeReport = async (clinicId, startDate, endDate) => {
     if (!clinicId || !startDate || !endDate) {
         throw new Error("clinicId, startDate, and endDate are required");
