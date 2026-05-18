@@ -71,10 +71,29 @@
                 <form id="addQueueForm" class="premium-queue-form">
                     <div class="form-row">
                         <div class="field-group">
+                            <label for="patientLookupModeInput">Add By</label>
+                            <div class="select-wrapper">
+                                <i class='bx bx-id-card'></i>
+                                <select id="patientLookupModeInput">
+                                    <option value="name">Name</option>
+                                    <option value="email">Account Email</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
                             <label for="patientNameInput">Patient Full Name</label>
                             <div class="input-wrapper">
                                 <i class='bx bx-user'></i>
                                 <input type="text" id="patientNameInput" placeholder="e.g. Sarah Miller" required>
+                            </div>
+                        </div>
+
+                        <div class="field-group" id="patientEmailField" hidden>
+                            <label for="patientEmailInput">Patient Email</label>
+                            <div class="input-wrapper">
+                                <i class='bx bx-envelope'></i>
+                                <input type="email" id="patientEmailInput" placeholder="e.g. sarah@example.com">
                             </div>
                         </div>
 
@@ -112,7 +131,7 @@
 
                         <button type="submit" class="premium-add-btn">
                             <i class='bx bx-plus'></i>
-                            Add to Queue
+                            <span id="addQueueSubmitText">Add to Queue</span>
                         </button>
                     </div>
                 </form>
@@ -197,6 +216,6 @@
 
     <!-- Scripts -->
     <script src="js/notifications.js"></script>
-    <script src="js/queue.js?v=4"></script>
+    <script src="js/queue.js?v=5"></script>
 </body>
 </html>

@@ -1,5 +1,15 @@
 const { db, admin } = require("./config/firebase");
 
+const ACTIVE_QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION"];
+
+function isActiveQueueItem(queueItem) {
+    return ACTIVE_QUEUE_STATUSES.includes(String(queueItem?.status || "WAITING").toUpperCase());
+}
+
+function getQueueItemSlot(queueItem) {
+    return String(queueItem?.timeSlot || queueItem?.appointmentTime || "").trim();
+}
+
 async function getPatientQueueInfo(patientId) {
 
     const today_date = new Date().toISOString().split("T")[0]; // "2026-05-17";
@@ -21,7 +31,14 @@ async function getPatientQueueInfo(patientId) {
 
         if (!queueItemsSnapshot.empty) {
 
-            const patient_Queue_Item = queueItemsSnapshot.docs[0].data();
+            const patientQueueDoc = queueItemsSnapshot.docs.find(doc => isActiveQueueItem(doc.data()));
+
+            if (!patientQueueDoc) {
+                return null;
+            }
+
+            const patient_Queue_Item = patientQueueDoc.data();
+            const patientSlot = getQueueItemSlot(patient_Queue_Item);
 
             const allQueueSnapshot = await db
                 .collection("clinics")
@@ -32,11 +49,18 @@ async function getPatientQueueInfo(patientId) {
                 .orderBy("createdAt")
                 .get();
 
-            const all_patients = allQueueSnapshot.docs.map(doc => doc.data());
+            const all_patients = allQueueSnapshot.docs
+                .map(doc => doc.data())
+                .filter(isActiveQueueItem)
+                .filter(patient => getQueueItemSlot(patient) === patientSlot);
 
             const index = all_patients.findIndex(
                 p => p.patientId === patientId
             );
+
+            if (index === -1) {
+                return null;
+            }
 
             const position = index + 1;
 
@@ -65,7 +89,7 @@ async function getPatientQueueInfo(patientId) {
             const estimatedWaitTime =
                 waitBeforeYou + timeUntilAppointment;
             
-            await queueItemsSnapshot.docs[0].ref.update({
+            await patientQueueDoc.ref.update({
                 estimatedWaitTime: estimatedWaitTime 
             });
 
@@ -74,6 +98,7 @@ async function getPatientQueueInfo(patientId) {
                 clinicName: patient_Queue_Item.clinicName,
                 clinicAddress: patient_Queue_Item.clinicAddress,
                 appointmentTime: patient_Queue_Item.appointmentTime,
+                status: patient_Queue_Item.status || "WAITING",
 
                 position,
                 totalInQueue: all_patients.length,

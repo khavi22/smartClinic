@@ -1,5 +1,5 @@
 const { admin, db } = require('../services/config/firebase');
-const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment,getPatientProfileById } = require("../services/firebaseService");
+const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment, getPatientProfileById, getUserProfileByEmail } = require("../services/firebaseService");
 
 exports.getAvailability = async (req, res) => {
     try {
@@ -57,12 +57,47 @@ exports.getAvailability = async (req, res) => {
 
 const emailService    = require('../services/emailService');
 
+const getClinicMetadata = async (clinicId) => {
+    if (!clinicId || !db?.collection) {
+        return {};
+    }
+
+    const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+
+    if (!clinicDoc.exists) {
+        return {};
+    }
+
+    const clinic = clinicDoc.data() || {};
+
+    return {
+        clinicName: clinic.clinicName || clinic.name,
+        clinicAddress: clinic.address || clinic.formattedAddress
+    };
+};
+
 exports.postAppointment = async (req, res) => {
     try {
-        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
+        const { patientId, patientEmail, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
 
         if (!date || !timeSlot) {
             return res.status(400).json({ error: "Missing date or timeSlot" });
+        }
+
+        let resolvedPatientId = patientId;
+
+        if (!resolvedPatientId && patientEmail) {
+            const patient = await getUserProfileByEmail(patientEmail);
+
+            if (!patient || patient.role !== "patient" || !patient.uid) {
+                return res.status(404).json({ error: "No patient account found for this email" });
+            }
+
+            resolvedPatientId = patient.uid;
+        }
+
+        if (!resolvedPatientId) {
+            return res.status(400).json({ error: "Missing patientId or patientEmail" });
         }
 
         if (!serviceId || !serviceName || !serviceDuration) {
@@ -75,26 +110,32 @@ exports.postAppointment = async (req, res) => {
             await cancelAppointment(oldAppointmentId);
         }
 
-        const newAppointment = await createAppointment(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId, serviceId, serviceName, serviceDuration);
+        const clinicMetadata = (!clinicName || !clinicAddress)
+            ? await getClinicMetadata(clinicId)
+            : {};
+        const resolvedClinicName = clinicName || clinicMetadata.clinicName || "Unknown Clinic";
+        const resolvedClinicAddress = clinicAddress || clinicMetadata.clinicAddress || "N/A";
+
+        const newAppointment = await createAppointment(clinicId, date, timeSlot, resolvedPatientId, resolvedClinicName, resolvedClinicAddress, !!oldAppointmentId, serviceId, serviceName, serviceDuration);
 
         // ✉️ Send confirmation email
         try {
-            const patient = await getPatientProfileById(patientId);
+            const patient = await getPatientProfileById(resolvedPatientId);
 
             // Only send if patient exists and has an email
             if (patient?.email) {
                 await emailService.sendAppointmentConfirmation(
                     patient.email,           
                     patient.fullName,        
-                    clinicName,
-                    clinicAddress,
+                    resolvedClinicName,
+                    resolvedClinicAddress,
                     date,
                     timeSlot,
                     !!oldAppointmentId       
                 );
                 console.log(`✅ Confirmation email sent to ${patient.email}`);
             } else {
-                console.warn(`⚠️ No email found for patientId: ${patientId}`);
+                console.warn(`⚠️ No email found for patientId: ${resolvedPatientId}`);
             }
         } catch (emailError) {
             // Email failure never blocks the appointment saving
