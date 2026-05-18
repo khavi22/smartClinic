@@ -658,7 +658,7 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
     // a patient who cancels did not attend, same outcome for the clinic.
     const scheduled = appointments;
     const noShows = scheduled.filter(a =>
-        a.status === "no-show" || a.status === "cancelled"
+        a.status === "missed" || a.status === "cancelled"
     );
 
     // Group no-shows by date for a daily breakdown
@@ -668,7 +668,7 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
             breakdownMap[a.date] = { date: a.date, total: 0, noShows: 0 };
         }
         breakdownMap[a.date].total += 1;
-        if (a.status === "no-show" || a.status === "cancelled") {
+        if (a.status === "missed" || a.status === "cancelled") {
             breakdownMap[a.date].noShows += 1;
         }
     });
