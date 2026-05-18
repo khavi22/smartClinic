@@ -7,7 +7,7 @@ require('dotenv').config();
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 if (!GOOGLE_API_KEY) {
-    console.warn("⚠️  Warning: GOOGLE_MAPS_API_KEY is not set in environment variables");
+    console.warn("GOOGLE_MAPS_API_KEY is not set in environment variables");
 }
 
 exports.searchClinics = async (query) => {

@@ -11,3 +11,5 @@ serviceAccountKey.json
 copilot-instructions.md
 AGENTS.md
 .vscode/settings.json
+skills-lock.json
+artifacts/
