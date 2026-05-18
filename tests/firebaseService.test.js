@@ -408,7 +408,7 @@ describe("firebaseService", () => {
         it("builds a no-show report with totals and daily breakdown", async () => {
             const query = mockAppointmentsQuery([
                 { date: "2026-05-01", status: "booked" },
-                { date: "2026-05-01", status: "no-show" },
+                { date: "2026-05-01", status: "missed" },
                 { date: "2026-05-02", status: "cancelled" }
             ]);
 
