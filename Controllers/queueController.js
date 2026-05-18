@@ -9,6 +9,37 @@ const {
     removeQueueItem,
     addTodaysAppointmentsToQueue
 } = require("../services/queueService");
+const emailService = require("../services/emailService");
+
+const getQueuePatientEmail = (queueItem) =>
+    queueItem?.patientEmail ||
+    queueItem?.email ||
+    queueItem?.patient?.email ||
+    null;
+
+const getQueuePatientName = (queueItem) =>
+    queueItem?.patientName ||
+    queueItem?.fullName ||
+    queueItem?.name ||
+    "there";
+
+const sendQueueStatusUpdateEmail = async (queueItem) => {
+    const patientEmail = getQueuePatientEmail(queueItem);
+
+    if (!patientEmail) {
+        console.warn(`No email found for queueItemId: ${queueItem?.queueItemId || "unknown"}`);
+        return;
+    }
+
+    await emailService.sendQueueStatusUpdate(
+        patientEmail,
+        getQueuePatientName(queueItem),
+        queueItem.clinicName,
+        queueItem.status,
+        queueItem.date,
+        queueItem.timeSlot || queueItem.appointmentTime
+    );
+};
 
 exports.getQueue = async (req, res) => {
   try {
@@ -162,6 +193,12 @@ exports.updateQueueItemStatus = async (req, res) => {
         }
 
         const queueItem = await updateQueueItemStatus(clinicId, queueItemId, status, updatedBy);
+
+        try {
+            await sendQueueStatusUpdateEmail(queueItem);
+        } catch (emailError) {
+            console.error("Failed to send queue status email:", emailError);
+        }
 
         res.status(200).json({
             success: true,
@@ -328,7 +365,13 @@ exports.predictWaitTime = async (req, res) => {
                     priority: priority || "0"
                 });
 
-                const mlRes = await fetch(`${mlBaseUrl}/predict-waittime?${params.toString()}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+                const mlRes = await fetch(`${mlBaseUrl}/predict-waittime?${params.toString()}`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
                 if (mlRes.ok) {
                     const data = await mlRes.json();
                     return res.status(200).json({

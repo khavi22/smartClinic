@@ -1222,7 +1222,7 @@ footer.modal-actions {
 /* ── PREMIUM QUEUE EXTENSIONS ── */
 .premium-queue-form .form-row {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr auto;
+    grid-template-columns: minmax(120px, 0.8fr) minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr)) auto;
     gap: 20px;
     align-items: flex-end;
 }

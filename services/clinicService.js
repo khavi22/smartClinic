@@ -1,26 +1,31 @@
 const axios = require('axios');
-const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
 const { db, admin } = require("./config/firebase");
 const { v4: uuidv4 } = require("uuid");
 
+require('dotenv').config();
 
-const GOOGLE_API_KEY = defineSecret("GOOGLE_API_KEY");
+const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
+if (!GOOGLE_API_KEY) {
+    console.warn("GOOGLE_MAPS_API_KEY is not set in environment variables");
+}
 
 exports.searchClinics = async (query) => {
+    if (!GOOGLE_API_KEY) {
+        throw new Error("GOOGLE_API_KEY is not configured");
+    }
+
     const response = await axios.post(
         "https://places.googleapis.com/v1/places:searchText",
         { textQuery: query },
         {
             headers: {
                 "Content-Type": "application/json",
-                "X-Goog-Api-Key": GOOGLE_API_KEY.value(),
+                "X-Goog-Api-Key": GOOGLE_API_KEY,
                 "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.id"
             }
         }
     );
-
 
     return response.data.places || [];
 };

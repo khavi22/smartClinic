@@ -181,7 +181,59 @@ function renderSlots() {
     }
 }
 
+async function loadMLRecommendations(dateStr, clinicId) {
+    const headerLeft = document.querySelector('.header-left');
+    let aiLoader = document.getElementById('aiLoader');
+    if (headerLeft) {
+        if (aiLoader) aiLoader.remove();
+        aiLoader = document.createElement('span');
+        aiLoader.id = 'aiLoader';
+        aiLoader.className = 'ai-loader';
+        aiLoader.style.fontSize = '0.75rem';
+        aiLoader.style.color = '#2563eb';
+        aiLoader.style.fontWeight = '600';
+        aiLoader.style.display = 'flex';
+        aiLoader.style.alignItems = 'center';
+        aiLoader.style.gap = '4px';
+        aiLoader.style.marginLeft = '12px';
+        aiLoader.style.background = 'rgba(37, 99, 235, 0.08)';
+        aiLoader.style.padding = '4px 10px';
+        aiLoader.style.borderRadius = '50px';
+        aiLoader.style.transition = 'all 0.3s ease';
+        aiLoader.innerHTML = `<i class='bx bx-loader-alt bx-spin' style="color: #f59e0b;"></i> ✨ AI Optimizing...`;
+        headerLeft.appendChild(aiLoader);
+    }
 
+    try {
+        const res = await fetch(`/api/availability/recommendations?date=${dateStr}&clinicId=${encodeURIComponent(clinicId)}`);
+        if (res.ok) {
+            const data = await res.json();
+            const recommendations = data.recommendations || [];
+            
+            cachedSlots = cachedSlots.map(slot => {
+                const isRec = recommendations.includes(slot.time.split(" - ")[0]);
+                return { ...slot, isRecommended: isRec };
+            });
+            
+            renderSlots();
+
+            if (aiLoader) {
+                aiLoader.innerHTML = `<i class='bx bxs-magic-wand' style="color: #10b981;"></i> ✨ AI Optimized`;
+                aiLoader.style.color = '#10b981';
+                aiLoader.style.background = 'rgba(16, 185, 129, 0.08)';
+                setTimeout(() => {
+                    const currentLoader = document.getElementById('aiLoader');
+                    if (currentLoader) currentLoader.remove();
+                }, 3000);
+            }
+        } else {
+            if (aiLoader) aiLoader.remove();
+        }
+    } catch (err) {
+        console.warn("Could not load ML recommendations:", err);
+        if (aiLoader) aiLoader.remove();
+    }
+}
 
 window.handleDateSelection = async function (dateStr) {
     selectedDate = dateStr;
@@ -213,6 +265,7 @@ window.handleDateSelection = async function (dateStr) {
 
     renderCalendar();
     renderSlots();
+    loadMLRecommendations(dateStr, clinicId);
     // AI Bubble Logic for specific clinic
     const bubble = document.getElementById("smartAISuggestion");
     const textEl = document.getElementById("aiSuggestionText");

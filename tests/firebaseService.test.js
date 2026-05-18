@@ -1,21 +1,22 @@
 const mockServerTimestamp = jest.fn(() => "mock-server-timestamp");
 const mockSetCustomUserClaims = jest.fn().mockResolvedValue();
 const mockDeleteUser = jest.fn().mockResolvedValue();
+const mockDb = {
+    collection: jest.fn()
+};
+const mockFirestore = jest.fn(() => mockDb);
+mockFirestore.FieldValue = {
+    serverTimestamp: mockServerTimestamp
+};
 
 jest.mock("../services/config/firebase", () => ({
-    db: {
-        collection: jest.fn()
-    },
+    db: mockDb,
     admin: {
         auth: jest.fn(() => ({
             setCustomUserClaims: mockSetCustomUserClaims,
             deleteUser: mockDeleteUser
         })),
-        firestore: {
-            FieldValue: {
-                serverTimestamp: mockServerTimestamp
-            }
-        }
+        firestore: mockFirestore
     }
 }));
 
@@ -36,7 +37,10 @@ const {
     getClinicIdFromVerificationCode,
     claimClinic,
     getClinicNameById,
-    deleteUserAccount
+    deleteUserAccount,
+    getPatientProfileById,   // ✅ new
+    getNoShowReport,
+    getWaitTimeReport,
 } = require("../services/firebaseService");
 const { db } = require("../services/config/firebase");
 
@@ -76,11 +80,9 @@ describe("firebaseService", () => {
                 if (name === "clinics") {
                     return { doc: jest.fn(() => ({ get: clinicGet })) };
                 }
-
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -116,7 +118,6 @@ describe("firebaseService", () => {
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -220,11 +221,9 @@ describe("firebaseService", () => {
                 if (name === "clinics") {
                     return { doc: jest.fn(() => ({ get: clinicGet })) };
                 }
-
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -251,7 +250,7 @@ describe("firebaseService", () => {
 
         it("throws when the appointment slot is full", async () => {
             const duplicateQuery = createLoopQuery({ empty: true });
-            const capacityQuery = createLoopQuery({ size: 10 });
+            const capacityQuery  = createLoopQuery({ size: 10 });
             const appointmentsRef = {
                 where: jest.fn()
                     .mockImplementationOnce(() => duplicateQuery)
@@ -327,11 +326,9 @@ describe("firebaseService", () => {
                 if (name === "clinics") {
                     return { doc: jest.fn(() => ({ get: clinicGet })) };
                 }
-
                 if (name === "appointments") {
                     return appointmentsQuery;
                 }
-
                 return {};
             });
 
@@ -344,6 +341,235 @@ describe("firebaseService", () => {
             db.collection.mockReturnValue(query);
 
             await expect(getAppointmentsByPatientId("patient-1")).rejects.toThrow("Patient lookup fail");
+        });
+    });
+
+    // ── getPatientProfileById ─────────────────────────────────────────────────
+    describe("getPatientProfileById", () => {
+        it("returns patient data when patient exists", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({
+                        exists: true,
+                        data: () => ({
+                            uid: "patient-1",
+                            fullName: "Sipho Dlamini",
+                            email: "sipho@gmail.com",
+                            role: "patient"
+                        })
+                    })
+                }))
+            });
+
+            const result = await getPatientProfileById("patient-1");
+
+            expect(db.collection).toHaveBeenCalledWith("patients");
+            expect(result).toEqual({
+                uid: "patient-1",
+                fullName: "Sipho Dlamini",
+                email: "sipho@gmail.com",
+                role: "patient"
+            });
+        });
+
+        it("returns null when patient does not exist", async () => {
+            db.collection.mockReturnValue({
+                doc: jest.fn(() => ({
+                    get: jest.fn().mockResolvedValue({ exists: false })
+                }))
+            });
+
+            const result = await getPatientProfileById("nonexistent-id");
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe("report helpers", () => {
+        function appointmentSnapshot(appointments) {
+            return {
+                docs: appointments.map((appointment, index) => ({
+                    id: `appointment-${index + 1}`,
+                    data: () => appointment
+                }))
+            };
+        }
+
+        function mockAppointmentsQuery(appointments) {
+            const query = {
+                where: jest.fn(),
+                get: jest.fn().mockResolvedValue(appointmentSnapshot(appointments))
+            };
+            query.where.mockReturnValue(query);
+            db.collection.mockReturnValue(query);
+            return query;
+        }
+
+        it("builds a no-show report with totals and daily breakdown", async () => {
+            const query = mockAppointmentsQuery([
+                { date: "2026-05-01", status: "booked" },
+                { date: "2026-05-01", status: "no-show" },
+                { date: "2026-05-02", status: "cancelled" }
+            ]);
+
+            const result = await getNoShowReport("clinic-1", "2026-05-01", "2026-05-31");
+
+            expect(query.where).toHaveBeenCalledWith("clinicId", "==", "clinic-1");
+            expect(query.where).toHaveBeenCalledWith("date", ">=", "2026-05-01");
+            expect(query.where).toHaveBeenCalledWith("date", "<=", "2026-05-31");
+            expect(result).toEqual({
+                clinicId: "clinic-1",
+                startDate: "2026-05-01",
+                endDate: "2026-05-31",
+                totalScheduled: 3,
+                totalNoShows: 2,
+                noShowRate: "66.7%",
+                breakdown: [
+                    {
+                        date: "2026-05-01",
+                        total: 2,
+                        noShows: 1,
+                        noShowRate: "50.0%"
+                    },
+                    {
+                        date: "2026-05-02",
+                        total: 1,
+                        noShows: 1,
+                        noShowRate: "100.0%"
+                    }
+                ]
+            });
+        });
+
+        it("builds an empty no-show report when there are no appointments", async () => {
+            mockAppointmentsQuery([]);
+
+            await expect(
+                getNoShowReport("clinic-1", "2026-05-01", "2026-05-31")
+            ).resolves.toMatchObject({
+                totalScheduled: 0,
+                totalNoShows: 0,
+                noShowRate: "0.0%",
+                breakdown: []
+            });
+        });
+
+        it("requires clinic and date range for no-show reports", async () => {
+            await expect(
+                getNoShowReport("", "2026-05-01", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getNoShowReport("clinic-1", "", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getNoShowReport("clinic-1", "2026-05-01", "")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+        });
+
+        it("builds wait-time report summaries by hour and date", async () => {
+            const query = mockAppointmentsQuery([
+                {
+                    date: "2026-05-01",
+                    status: "completed",
+                    serviceDuration: 30,
+                    timeSlot: "09:00"
+                },
+                {
+                    date: "2026-05-01",
+                    status: "completed",
+                    serviceDuration: 45,
+                    timeSlot: "09:30"
+                },
+                {
+                    date: "2026-05-02",
+                    status: "completed",
+                    serviceDuration: 20
+                },
+                {
+                    date: "2026-05-02",
+                    status: "booked",
+                    serviceDuration: 60,
+                    timeSlot: "10:00"
+                },
+                {
+                    date: "2026-05-02",
+                    status: "completed",
+                    serviceDuration: "30",
+                    timeSlot: "11:00"
+                },
+                {
+                    date: "2026-05-03",
+                    status: "completed",
+                    serviceDuration: 0,
+                    timeSlot: "12:00"
+                }
+            ]);
+
+            const result = await getWaitTimeReport("clinic-1", "2026-05-01", "2026-05-31");
+
+            expect(query.where).toHaveBeenCalledWith("clinicId", "==", "clinic-1");
+            expect(result).toEqual({
+                clinicId: "clinic-1",
+                startDate: "2026-05-01",
+                endDate: "2026-05-31",
+                totalCompleted: 3,
+                overallAvgWaitMinutes: 31.7,
+                byTimeOfDay: [
+                    {
+                        timeSlot: "09:00",
+                        appointmentsCompleted: 2,
+                        avgWaitMinutes: 37.5
+                    },
+                    {
+                        timeSlot: "unknown:00",
+                        appointmentsCompleted: 1,
+                        avgWaitMinutes: 20
+                    }
+                ],
+                byDate: [
+                    {
+                        date: "2026-05-01",
+                        appointmentsCompleted: 2,
+                        avgWaitMinutes: 37.5
+                    },
+                    {
+                        date: "2026-05-02",
+                        appointmentsCompleted: 1,
+                        avgWaitMinutes: 20
+                    }
+                ]
+            });
+        });
+
+        it("builds an empty wait-time report when no appointments completed", async () => {
+            mockAppointmentsQuery([
+                { date: "2026-05-01", status: "booked", serviceDuration: 30, timeSlot: "09:00" }
+            ]);
+
+            await expect(
+                getWaitTimeReport("clinic-1", "2026-05-01", "2026-05-31")
+            ).resolves.toMatchObject({
+                totalCompleted: 0,
+                overallAvgWaitMinutes: 0,
+                byTimeOfDay: [],
+                byDate: []
+            });
+        });
+
+        it("requires clinic and date range for wait-time reports", async () => {
+            await expect(
+                getWaitTimeReport("", "2026-05-01", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getWaitTimeReport("clinic-1", "", "2026-05-31")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
+
+            await expect(
+                getWaitTimeReport("clinic-1", "2026-05-01", "")
+            ).rejects.toThrow("clinicId, startDate, and endDate are required");
         });
     });
 
@@ -542,31 +768,21 @@ describe("firebaseService", () => {
         });
 
         it("gets clinic id from admin code", async () => {
-            const query = createLoopQuery({
-                empty: false,
-                docs: [{ id: "clinic-1" }]
-            });
+            const query = createLoopQuery({ empty: false, docs: [{ id: "clinic-1" }] });
             db.collection.mockReturnValue(query);
 
             await expect(getClinicIdFromAdminCode("ADM-1")).resolves.toBe("clinic-1");
         });
 
         it("returns null when admin code is not found", async () => {
-            const query = createLoopQuery({
-                empty: true,
-                docs: []
-            });
+            const query = createLoopQuery({ empty: true, docs: [] });
             db.collection.mockReturnValue(query);
 
             await expect(getClinicIdFromAdminCode("ADM-MISSING")).resolves.toBeNull();
         });
 
-
         it("gets clinic id and role from admin verification code", async () => {
-            const adminQuery = createLoopQuery({
-                empty: false,
-                docs: [{ id: "clinic-1" }]
-            });
+            const adminQuery = createLoopQuery({ empty: false, docs: [{ id: "clinic-1" }] });
             const adminCollection = { where: jest.fn(() => adminQuery) };
 
             db.collection.mockReturnValue(adminCollection);
@@ -596,10 +812,7 @@ describe("firebaseService", () => {
 
             await claimClinic("clinic-1", "admin-1");
 
-            expect(update).toHaveBeenCalledWith({
-                adminUid: "admin-1",
-                isActive: true
-            });
+            expect(update).toHaveBeenCalledWith({ adminUid: "admin-1", isActive: true });
         });
     });
 
@@ -614,7 +827,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 if (name === "appointments") {
                     return {
                         where: jest.fn(() => ({
@@ -625,7 +837,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 return {
                     doc: jest.fn(() => ({
                         get: jest.fn().mockResolvedValue({ exists: false }),
@@ -650,7 +861,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 if (name === "admins") {
                     return {
                         doc: jest.fn(() => ({
@@ -659,7 +869,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 if (name === "clinics") {
                     return {
                         where: jest.fn(() => ({
@@ -670,7 +879,6 @@ describe("firebaseService", () => {
                         }))
                     };
                 }
-
                 return {
                     doc: jest.fn(() => ({
                         get: jest.fn().mockResolvedValue({ exists: false }),
@@ -681,10 +889,7 @@ describe("firebaseService", () => {
 
             await deleteUserAccount("admin-1");
 
-            expect(clinicUpdate).toHaveBeenCalledWith({
-                adminUid: null,
-                isActive: false
-            });
+            expect(clinicUpdate).toHaveBeenCalledWith({ adminUid: null, isActive: false });
             expect(mockDeleteUser).toHaveBeenCalledWith("admin-1");
         });
 

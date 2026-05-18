@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Onboarding - SmartClinic Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <style>
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded';
+            font-weight: normal;
+            font-style: normal;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary-blue:  #2563eb;
+            --primary-cyan:  #0891b2;
+            --blue-dark:     #1d4ed8;
+            --success-green: #059669;
+            --danger-red:    #dc3545;
+            --text-dark:     #0f172a;
+            --text-muted:    #64748b;
+            --border:        #e2e8f0;
+            --bg-surface:    #f8fafc;
+        }
+
+        html, body {
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(155deg, #f0f4ff 0%, #e8f3fb 50%, #f0fafa 100%);
+            color: var(--text-dark);
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-cyan) 100%);
+            padding: 28px 2rem;
+            color: white;
+        }
+        .page-header-inner { max-width: 900px; margin: 0 auto; }
+        .page-header-inner h1 {
+            font-size: 1.6rem; font-weight: 700; letter-spacing: -0.3px;
+            margin-bottom: 4px; display: flex; align-items: center; gap: 10px;
+        }
+        .page-header-inner p { font-size: 0.9rem; opacity: 0.85; }
+        .header-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            margin-top: 10px; padding: 6px 14px;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px; font-size: 0.88rem; font-weight: 600;
+            color: white; backdrop-filter: blur(4px);
+        }
+
+        /* MAIN */
+        .admin-main { max-width: 900px; margin: 0 auto; padding: 32px 2rem 80px; }
+
+        /* CARD */
+        .admin-card {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 8px 32px rgba(31,38,135,0.07);
+            overflow: hidden; margin-bottom: 28px;
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+        }
+        .admin-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(31,38,135,0.12); }
+
+        .card-header { display: flex; align-items: center; gap: 16px; padding: 28px 28px 12px; }
+        .card-header h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+        .card-header p  { font-size: 0.85rem; color: var(--text-muted); }
+
+        .card-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: var(--primary-blue); display: flex; align-items: center;
+            justify-content: center; font-size: 1.5rem; flex-shrink: 0;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,1);
+        }
+        .card-icon.cyan  { background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); color: var(--primary-cyan); }
+        .card-icon.green { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: var(--success-green); }
+
+        .card-body { padding: 8px 28px 28px; }
+
+        /* SEARCH */
+        .search-group { display: flex; gap: 12px; margin-bottom: 20px; }
+
+        .search-input {
+            flex: 1; padding: 10px 16px; border: 1.5px solid var(--border);
+            border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 0.9rem;
+            background: #fdfdfd; color: var(--text-dark); outline: none;
+            height: 44px; transition: all 0.2s ease;
+        }
+        .search-input::placeholder { color: #94a3b8; }
+        .search-input:focus { border-color: var(--primary-blue); background: white; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 20px; border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; height: 44px; border: none;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1); white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white; box-shadow: 0 8px 16px -8px rgba(37,99,235,0.5);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 25px -10px rgba(37,99,235,0.6); filter: brightness(1.1); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            background: white; color: var(--text-muted);
+            border: 1.5px solid var(--border) !important;
+        }
+        .btn-secondary:hover { background: var(--bg-surface); }
+
+        /* RESULTS */
+        .results-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .clinic-card {
+            display: flex; align-items: center; gap: 16px;
+            padding: 14px 18px; background: var(--bg-surface);
+            border: 1.5px solid var(--border); border-radius: 16px;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .clinic-card:hover {
+            background: white; border-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.08); transform: translateX(3px);
+        }
+        .clinic-card.selected {
+            background: #eff6ff; border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .clinic-card-avatar {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: var(--primary-blue); display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0;
+        }
+        .clinic-name    { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); margin-bottom: 2px; }
+        .clinic-address { font-size: 0.8rem; color: var(--text-muted); }
+        .clinic-place-id { font-size: 0.72rem; color: #94a3b8; font-family: 'Courier New', monospace; }
+        .clinic-select-badge {
+            margin-left: auto; font-size: 0.72rem; font-weight: 600;
+            padding: 4px 10px; border-radius: 20px;
+            background: #eff6ff; color: var(--primary-blue);
+            border: 1px solid #bfdbfe; white-space: nowrap; flex-shrink: 0;
+        }
+
+        /* SELECTED CLINIC */
+        .selected-clinic {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0feff 100%);
+            border: 1.5px solid #bfdbfe; border-radius: 16px;
+            padding: 20px 22px; margin-bottom: 8px;
+        }
+        .selected-clinic-title {
+            font-size: 0.75rem; font-weight: 700; color: var(--primary-blue);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .clinic-detail { display: flex; flex-direction: column; gap: 10px; }
+
+        .detail-row { display: flex; align-items: flex-start; gap: 12px; }
+        .detail-label {
+            font-size: 0.78rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            min-width: 120px; padding-top: 10px; flex-shrink: 0;
+        }
+        .detail-value {
+            flex: 1; font-size: 0.88rem; color: var(--text-dark); font-weight: 500;
+            padding: 9px 14px; background: white; border: 1px solid var(--border);
+            border-radius: 10px; font-family: inherit; word-break: break-all;
+        }
+
+        /* CODE DISPLAY */
+        .code-display { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .code-display span:first-child {
+            flex: 1; font-family: 'Courier New', monospace; font-size: 0.85rem;
+            padding: 9px 14px; background: #0f172a; color: #34d399;
+            border-radius: 10px; border: 1px solid #1e293b;
+            letter-spacing: 0.3px; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .code-copy-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 8px 14px; background: var(--primary-blue); color: white;
+            border: none; border-radius: 8px; font-family: 'Inter', sans-serif;
+            font-size: 0.78rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease; white-space: nowrap;
+        }
+        .code-copy-btn:hover { filter: brightness(1.12); }
+
+        /* INVITE FORM */
+        .admin-invite-form { display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 0.82rem; font-weight: 600; color: #475569; }
+        .form-control {
+            width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+            border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 0.9rem;
+            color: var(--text-dark); background: #fdfdfd; outline: none;
+            height: 44px; transition: all 0.2s ease;
+        }
+        .form-control:focus { border-color: var(--primary-blue); background: white; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+
+        .form-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            padding-top: 16px; border-top: 1px solid #f1f5f9; margin-top: 4px;
+        }
+
+        /* ALERTS */
+        .alert {
+            display: none; align-items: center; gap: 10px;
+            padding: 14px 18px; border-radius: 14px;
+            font-size: 0.87rem; font-weight: 500; margin-bottom: 20px;
+        }
+        .alert.show { display: flex; }
+        .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+        .alert-error   { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
+        .alert-info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+        /* LOADING */
+        .loading { display: none; align-items: center; gap: 12px; padding: 20px 0; color: var(--text-muted); font-size: 0.88rem; font-weight: 500; }
+        .loading.show { display: flex; }
+        .spinner {
+            width: 20px; height: 20px; border: 2.5px solid #e2e8f0;
+            border-top-color: var(--primary-blue); border-radius: 50%;
+            animation: spin 0.75s linear infinite; flex-shrink: 0;
+        }
+
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 48px 20px 32px; color: var(--text-muted); }
+        .empty-state-icon {
+            width: 72px; height: 72px; margin: 0 auto 18px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: var(--primary-blue);
+        }
+        .empty-state h3 { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+        .empty-state p  { font-size: 0.85rem; }
+
+        /* TABS (kept for JS compatibility) */
+        .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+        .tab-btn {
+            padding: 12px 20px; background: none; border: none;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+            color: #94a3b8; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s ease;
+        }
+        .tab-btn.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* SECTION DIVIDER */
+        .section-divider { display: flex; align-items: center; gap: 12px; margin: 4px 0 20px; }
+        .section-divider-line { flex: 1; height: 1px; background: #f1f5f9; }
+        .section-divider-label { font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .admin-main { padding: 20px 1.25rem 60px; }
+            .search-group { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .detail-row { flex-direction: column; gap: 4px; }
+            .detail-label { padding-top: 0; min-width: unset; }
+            .form-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PAGE HEADER -->
+    <header class="page-header">
+        <div class="page-header-inner">
+            <h1>
+                <span class="material-symbols-rounded" style="font-size:1.8rem">admin_panel_settings</span>
+                Admin Onboarding
+            </h1>
+            <p>Support Team Portal — invite clinic administrators to SmartClinic</p>
+            <span class="header-badge">
+                <span class="material-symbols-rounded" style="font-size:1rem">support_agent</span>
+                Support Access
+            </span>
+        </div>
+    </header>
+
+    <!-- AUTH LOADING STATE -->
+    <div id="authLoadingContainer" style="display: flex; align-items: center; justify-content: center; min-height: 60vh; flex-direction: column; gap: 20px;">
+        <div style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.75s linear infinite;"></div>
+        <p style="color: #64748b; font-weight: 500;">Verifying access...</p>
+    </div>
+
+    <!-- PERMISSION DENIED STATE -->
+    <div id="permissionDeniedContainer" style="display: none;">
+        <div style="max-width: 600px; margin: 80px auto; padding: 40px; text-align: center; background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(31,38,135,0.07);">
+            <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, #fee2e2 0%, #fecdd3 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #dc3545;">🔒</div>
+            <h2 style="font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Access Denied</h2>
+            <p style="font-size: 0.95rem; color: #64748b; margin-bottom: 24px; line-height: 1.6;">
+                You don't have permission to access the Admin Onboarding page. Only support team members can access this area.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <a href="dashboard.html" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: white; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; transition: all 0.2s ease;">
+                    ← Go to Dashboard
+                </a>
+                <button onclick="firebase.auth().signOut().then(() => window.location.href = 'login.html')" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="admin-main" id="mainContent" style="display: none;">
+
+        <!-- Alerts — ID unchanged -->
+        <div id="alertContainer"></div>
+
+        <!-- Search Card -->
+        <div class="admin-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <span class="material-symbols-rounded">manage_search</span>
+                </div>
+                <div>
+                    <h2>Search &amp; Invite Clinic Admins</h2>
+                    <p>Search by clinic name to get started</p>
+                </div>
+            </div>
+            <div class="card-body">
+
+                <!-- Search Bar — IDs unchanged -->
+                <div class="search-group">
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="search-input"
+                        placeholder="Enter clinic name (e.g., Sunninghill Hospital, MainCare Clinic)..."
+                    >
+                    <button id="searchBtn" class="btn btn-primary">
+                        <span class="material-symbols-rounded" style="font-size:1.1rem">search</span>
+                        Search Clinics
+                    </button>
+                </div>
+
+                <!-- Loading — ID + class unchanged -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <span>Searching for clinics…</span>
+                </div>
+
+                <!-- Results — ID unchanged -->
+                <div id="resultsContainer"></div>
+
+            </div>
+        </div>
+
+        <!-- Selected Clinic Section — ID + display:none unchanged -->
+        <div id="selectedClinicSection" style="display: none;">
+
+            <!-- Clinic Details Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <div class="card-icon cyan">
+                        <span class="material-symbols-rounded">local_hospital</span>
+                    </div>
+                    <div>
+                        <h2>Selected Clinic</h2>
+                        <p>Confirm the details before sending the invite</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="selected-clinic">
+                        <div class="selected-clinic-title">
+                            <span class="material-symbols-rounded" style="font-size:0.95rem">verified</span>
+                            Clinic Details
+                        </div>
+                        <div class="clinic-detail">
+                            <div class="detail-row">
+                                <span class="detail-label">Clinic Name:</span>
+                                <span class="detail-value" id="displayClinicName"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Address:</span>
+                                <span class="detail-value" id="displayClinicAddress"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Admin Code:</span>
+                                <div class="code-display">
+                                    <span id="displayAdminCode"></span>
+                                    <button class="code-copy-btn" onclick="copyToClipboard('displayAdminCode')">
+                                        <span class="material-symbols-rounded" style="font-size:0.9rem">content_copy</span>
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invite Form Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <div class="card-icon green">
+                        <span class="material-symbols-rounded">forward_to_inbox</span>
+                    </div>
+                    <div>
+                        <h2>Send Admin Invitation</h2>
+                        <p>Enter the admin's email address to dispatch the invite</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="admin-invite-form">
+                        <div class="form-group">
+                            <label class="form-label">Admin Email Address *</label>
+                            <input
+                                type="email"
+                                id="adminEmail"
+                                class="form-control"
+                                placeholder="admin@clinic.com"
+                                required
+                            >
+                        </div>
+                        <div class="form-actions">
+                            <button id="cancelBtn" class="btn btn-secondary" onclick="clearSelection()">
+                                <span class="material-symbols-rounded" style="font-size:1rem">close</span>
+                                Cancel
+                            </button>
+                            <button id="sendInviteBtn" class="btn btn-primary">
+                                <span class="material-symbols-rounded" style="font-size:1.1rem">send</span>
+                                Send Invitation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Support team emails from firestore.rules
+        const SUPPORT_TEAM_EMAILS = [
+            'mahlatseclayton1@gmail.com',
+            '2821750@students.wits.ac.za',
+            '2829538@students.wits.ac.za',
+            '2841214@students.wits.ca.za',
+            '2913455@students.wits.ac.za',
+            'gontsemaledu99@gmail.com',
+            'Nnaki128@gmail.com'
+        ];
+
+        /**
+         * Authentication & Authorization Check
+         * Ensures user is logged in and has support team access
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            firebase.auth().onAuthStateChanged(async (user) => {
+                const authLoadingContainer = document.getElementById('authLoadingContainer');
+                const permissionDeniedContainer = document.getElementById('permissionDeniedContainer');
+                const mainContent = document.getElementById('mainContent');
+
+                if (!user) {
+                    // Not authenticated - redirect to login with return URL
+                    console.log("No active user. Redirecting to login...");
+                    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    return;
+                }
+
+                try {
+                    // Check if user email is in support team list
+                    const userEmail = user.email;
+                    const isSupportTeam = SUPPORT_TEAM_EMAILS.includes(userEmail);
+
+                    console.log("User authenticated:", userEmail, "Support access:", isSupportTeam);
+
+                    // Check if user is in support team
+                    if (!isSupportTeam) {
+                        // User is authenticated but doesn't have permission
+                        console.log("User is not in support team");
+                        authLoadingContainer.style.display = 'none';
+                        permissionDeniedContainer.style.display = 'block';
+                        return;
+                    }
+
+                    // User is authenticated and is support team - show main content
+                    authLoadingContainer.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    
+                    // Initialize the UI
+                    if (typeof initializeAdminOnboardingUI === 'function') {
+                        initializeAdminOnboardingUI();
+                        console.log("AdminOnboarding UI initialized");
+                    }
+                } catch (error) {
+                    console.error("Error verifying user permissions:", error);
+                    authLoadingContainer.style.display = 'none';
+                    permissionDeniedContainer.style.display = 'block';
+                }
+            });
+        });
+    </script>
+
+    <script src="js/adminOnboarding.js"></script>
+</body>
+</html>

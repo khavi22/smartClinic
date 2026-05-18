@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Queue | smartClinic</title>
+  <meta name="description" content="Track your live queue position and estimated wait time for your next clinic appointment.">
+  <link rel="stylesheet" href="css/global_nav.css?v=1" />
+  <link rel="stylesheet" href="css/notifications.css" />
+  <link rel="stylesheet" href="css/patientQueue.css?v=3" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+  <nav class="global-app-bar" aria-label="Main Navigation">
+    <section class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        <span>smartClinic</span>
+      </a>
+      <section class="nav-user">
+        <a href="dashboard.html" class="nav-search-btn">
+          <i class='bx bx-search'></i>
+          Find Clinic
+        </a>
+        <a href="apointments.html" class="nav-search-btn">
+          <i class='bx bx-calendar-event'></i>
+          My Appointments
+        </a>
+        <a href="patientQueue.html" class="nav-appointment-btn active">
+          <i class='bx bx-time-five'></i>
+          My Queue
+        </a>
+      </section>
+    </section>
+  </nav>
+
+  <main class="queue-view">
+    <header class="queue-header">
+      <hgroup>
+        <h1>My Queue</h1>
+        <p>Live position and wait-time details for your next clinic visit</p>
+      </hgroup>
+      <button id="refreshQueue" class="refresh-button" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 0 1-15.3 6.4"/>
+          <path d="M3 12A9 9 0 0 1 18.3 5.6"/>
+          <path d="M3 18v-6h6"/>
+          <path d="M21 6v6h-6"/>
+        </svg>
+        Refresh
+      </button>
+    </header>
+
+    <section id="loadingState" class="queue-state">
+      <span class="loading-ring" aria-hidden="true"></span>
+      <p>Checking your queue position...</p>
+    </section>
+
+    <section id="emptyState" class="queue-state hidden">
+      <span class="state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 2v4"/>
+          <path d="M16 2v4"/>
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M3 10h18"/>
+          <path d="M8 15h.01"/>
+          <path d="M12 15h.01"/>
+          <path d="M16 15h.01"/>
+        </svg>
+      </span>
+      <h2>No active queue yet</h2>
+      <p>Your queue details will appear here when today's appointment is added to the clinic queue.</p>
+      <a href="apointments.html" class="secondary-link">Back to appointments</a>
+    </section>
+
+    <section id="errorState" class="queue-state error hidden">
+      <h2>Queue unavailable</h2>
+      <p id="errorMessage">We could not load your queue right now.</p>
+      <button id="retryQueue" class="secondary-button" type="button">Try Again</button>
+    </section>
+
+    <article id="queueContent" class="queue-dashboard hidden" aria-live="polite">
+      <section class="hero-panel">
+        <section class="patient-summary">
+          <span class="eyebrow">Next in queue</span>
+          <h2 id="patientName">Patient</h2>
+          <p id="clinicName">Clinic</p>
+          <address id="clinicAddress"></address>
+        </section>
+
+        <section class="wait-card" aria-label="Estimated wait time">
+          <span>Estimated wait</span>
+          <strong id="estimatedWait">--</strong>
+          <small id="waitBreakdown">Calculating queue timing</small>
+        </section>
+      </section>
+
+      <section class="queue-progress-panel">
+        <header>
+          <span>Queue position</span>
+          <strong id="positionLabel">--</strong>
+        </header>
+        <section class="progress-track" aria-hidden="true">
+          <span id="progressFill"></span>
+        </section>
+      </section>
+
+      <section class="detail-grid" aria-label="Queue details">
+        <article class="detail-card">
+          <span>Appointment time</span>
+          <strong id="appointmentTime">--</strong>
+        </article>
+        <article class="detail-card">
+          <span>Patients ahead</span>
+          <strong id="patientsAhead">--</strong>
+        </article>
+        <article class="detail-card">
+          <span>Total in queue</span>
+          <strong id="totalInQueue">--</strong>
+        </article>
+        <article class="detail-card">
+          <span>Wait before you</span>
+          <strong id="waitBeforeYou">--</strong>
+        </article>
+      </section>
+
+      <section class="snapshot-panel">
+        <header>
+          <h2>Queue Snapshot</h2>
+          <p id="updatedAt">Updated just now</p>
+        </header>
+        <dl class="snapshot-list">
+          <div>
+            <dt>Patient name</dt>
+            <dd id="snapshotPatientName">--</dd>
+          </div>
+          <div>
+            <dt>Clinic name</dt>
+            <dd id="snapshotClinicName">--</dd>
+          </div>
+          <div>
+            <dt>Clinic address</dt>
+            <dd id="snapshotClinicAddress">--</dd>
+          </div>
+          <div>
+            <dt>Appointment time</dt>
+            <dd id="snapshotAppointmentTime">--</dd>
+          </div>
+          <div>
+            <dt>Queue position</dt>
+            <dd id="snapshotPosition">--</dd>
+          </div>
+          <div>
+            <dt>Active patients</dt>
+            <dd id="snapshotTotal">--</dd>
+          </div>
+          <div>
+            <dt>Wait before you</dt>
+            <dd id="snapshotWaitBefore">--</dd>
+          </div>
+          <div>
+            <dt>Estimated wait</dt>
+            <dd id="snapshotEstimatedWait">--</dd>
+          </div>
+        </dl>
+      </section>
+    </article>
+  </main>
+
+  <script src="js/notifications.js"></script>
+  <script src="js/patientQueue.js?v=3"></script>
+</body>
+</html>

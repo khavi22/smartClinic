@@ -12,10 +12,16 @@ const {
 } = require("../Controllers/queueController");
 
 jest.mock("../services/queueService");
+jest.mock("../services/emailService", () => ({
+    sendQueueStatusUpdate: jest.fn(),
+}));
+
+const emailService = require("../services/emailService");
 
 describe("Queue Controllers", () => {
     let req, res;
     let consoleErrorSpy;
+    let consoleWarnSpy;
 
     beforeEach(() => {
         req = { params: {}, body: {}, query: {} };
@@ -26,10 +32,12 @@ describe("Queue Controllers", () => {
         jest.clearAllMocks();
         // Spy on console to keep test output clean during error tests
         consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
         consoleErrorSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
     });
 
     // ─────────────────────────────────────────────
@@ -502,15 +510,52 @@ describe("Queue Controllers", () => {
         it("should return the updated queue item", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { status: "MISSED", updatedBy: "staff1" };
-            queueService.updateQueueItemStatus.mockResolvedValue({ queueItemId: "q1", status: "MISSED" });
+            queueService.updateQueueItemStatus.mockResolvedValue({
+                queueItemId: "q1",
+                status: "MISSED",
+                patientEmail: "patient@test.com",
+                patientName: "Patient One",
+                clinicName: "Clinic A",
+                date: "2026-05-20",
+                timeSlot: "10:00 - 11:00",
+            });
+            emailService.sendQueueStatusUpdate.mockResolvedValue();
 
             await updateQueueItemStatus(req, res);
 
             expect(queueService.updateQueueItemStatus).toHaveBeenCalledWith("clinic1", "q1", "MISSED", "staff1");
+            expect(emailService.sendQueueStatusUpdate).toHaveBeenCalledWith(
+                "patient@test.com",
+                "Patient One",
+                "Clinic A",
+                "MISSED",
+                "2026-05-20",
+                "10:00 - 11:00"
+            );
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 success: true,
-                queueItem: { queueItemId: "q1", status: "MISSED" }
+                queueItem: expect.objectContaining({ queueItemId: "q1", status: "MISSED" })
+            }));
+        });
+
+        it("should still update status if queue email fails", async () => {
+            req.params = { clinicId: "clinic1", queueItemId: "q1" };
+            req.body = { status: "IN_CONSULTATION", updatedBy: "staff1" };
+            queueService.updateQueueItemStatus.mockResolvedValue({
+                queueItemId: "q1",
+                status: "IN_CONSULTATION",
+                patientEmail: "patient@test.com",
+                patientName: "Patient One",
+            });
+            emailService.sendQueueStatusUpdate.mockRejectedValue(new Error("SMTP down"));
+
+            await updateQueueItemStatus(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                queueItem: expect.objectContaining({ status: "IN_CONSULTATION" })
             }));
         });
 
@@ -671,7 +716,8 @@ describe("Queue Controllers", () => {
             await predictWaitTime(req, res);
 
             expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining("http://localhost:5001/predict-waittime")
+                expect.stringContaining("http://localhost:5001/predict-waittime"),
+                expect.any(Object)
             );
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(

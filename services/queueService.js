@@ -509,6 +509,24 @@ const updateQueueItemStatus = async (clinicId, queueItemId, status, staffId) => 
     updatedBy: staffId || null
   };
 
+  if (status === "MISSED" || status === "missed") {
+    if (queueItem.appointmentId) {
+      await db.collection("appointments").doc(queueItem.appointmentId).update({
+        status:"missed",
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  else if (status === "COMPLETE" || status === "complete") {
+    if (queueItem.appointmentId) {
+      await db.collection("appointments").doc(queueItem.appointmentId).update({
+        status:"completed",
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+
   if (status === "IN_CONSULTATION") {
     updatedFields.consultationStartedAt = admin.firestore.FieldValue.serverTimestamp();
   } else if (status === "COMPLETE") {

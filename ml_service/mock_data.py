@@ -268,7 +268,7 @@ if __name__ == "__main__":
     if not args.skip_queue:
         queue_total = generate_queue_items(args.clinic, args.days)
 
-    print(f"\n✅ Mock data generation complete:")
+    print(f"\n Mock data generation complete:")
     print(f"   Appointments : {appt_total}")
     print(f"   Queue items  : {queue_total}")
     print(f"\nNow retrain the model:")
