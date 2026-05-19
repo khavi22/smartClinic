@@ -1,5 +1,7 @@
 # SmartClinic — Premium Full-Stack Clinic & Queue Management Platform
 
+[![codecov](https://codecov.io/gh/khavi22/smartClinic/branch/main/graph/badge.svg)](https://codecov.io/gh/khavi22/smartClinic)
+
 SmartClinic is a state-of-the-art, full-stack clinic management and smart appointment booking application designed to streamline healthcare access. By pairing a robust Node.js backend with an advanced Python Machine Learning wait-time prediction service, SmartClinic enables patients to find local clinics, check live queues, book dynamic appointments, and view real-time, ML-predicted wait times. Simultaneously, it provides clinic admins and medical staff with powerful service, queue triage, and analytical reporting dashboards.
 
 ---
