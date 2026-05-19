@@ -644,7 +644,8 @@ const addTodaysAppointmentsToQueue = async (clinicId) => {
       serviceId: appointment.serviceId || null,
       serviceName: appointment.serviceName || null,
       serviceDuration: appointment.serviceDuration || null,
-      createdAt: new Date()
+      appointmentCreatedAt: appointment.createdAt || null,
+      createdAt: appointment.createdAt || new Date()
     };
 
     const patientProfile = await getPatientProfile(appointment.patientId);
