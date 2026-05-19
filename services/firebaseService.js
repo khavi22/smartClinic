@@ -140,7 +140,7 @@ const createAppointment = async (
             ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT)
             : MAX_CAPACITY_PER_SLOT;
 
-        if (capacitySnapshot.size >= MAX_CAPACITY_PER_SLOT) {
+        if (capacitySnapshot.size >= slotCapacity) {
             throw new Error("This slot is full.");
         }
 

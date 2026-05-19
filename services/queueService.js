@@ -21,6 +21,7 @@ const getQueueItemsRef = (clinicId, date = getTodayDate()) => {
 
 const getAvailabilityForDate = async (clinicId, dateStr) => {
   let slots = [];
+  let slotCapacity = MAX_CAPACITY_PER_SLOT;
 
   for (let hour = 0; hour < 24; hour += 1) {
     const start = hour.toString().padStart(2, "0") + ":00";
@@ -40,6 +41,7 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
 
     if (clinicDoc.exists) {
       const clinicData = clinicDoc.data();
+      slotCapacity = clinicData.slotCapacity ?? MAX_CAPACITY_PER_SLOT;
       const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
       const dayOfWeek = days[new Date(dateStr).getDay()];
       const hours = clinicData.operatingHours ? clinicData.operatingHours[dayOfWeek] : null;
@@ -57,6 +59,8 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
         const slotStart = slot.time.split(" - ")[0];
         return slotStart >= hours.open && slotStart < closeTime;
       });
+
+      slots = slots.map((slot) => ({ ...slot, total: slotCapacity }));
     }
   }
 

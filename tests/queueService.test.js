@@ -18,6 +18,7 @@ const { db } = require("../services/config/firebase");
 
 const createSnapshot = (docs) => ({
     empty: docs.length === 0,
+    size: docs.length,
     docs,
     forEach: (callback) => docs.forEach(callback)
 });
@@ -226,6 +227,20 @@ describe("queueService", () => {
             ]);
             expect(slots[0]).toEqual(expect.objectContaining({ taken: 2, status: "available" }));
             expect(slots[1]).toEqual(expect.objectContaining({ taken: 8, status: "limited" }));
+        });
+
+        it("uses the clinic slot capacity for queue slot totals", async () => {
+            setupFirestore({
+                clinicData: {
+                    ...mondayHours,
+                    slotCapacity: 5
+                }
+            });
+
+            const slots = await queueService.getAvailableQueueSlots("clinic-1", "2026-05-11");
+
+            expect(slots).toHaveLength(3);
+            expect(slots.every((slot) => slot.total === 5)).toBe(true);
         });
 
         it("filters out stale and full slots", async () => {

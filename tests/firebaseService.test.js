@@ -277,6 +277,35 @@ describe("firebaseService", () => {
             ).rejects.toThrow("This slot is full.");
         });
 
+        it("uses clinic slot capacity when checking appointment fullness", async () => {
+            const duplicateQuery = createLoopQuery({ empty: true });
+            const capacityQuery = createLoopQuery({ size: 5 });
+            const appointmentsRef = {
+                where: jest.fn()
+                    .mockImplementationOnce(() => duplicateQuery)
+                    .mockImplementationOnce(() => capacityQuery),
+                add: jest.fn()
+            };
+
+            db.collection.mockImplementation((name) => {
+                if (name === "clinics") {
+                    return {
+                        doc: jest.fn(() => ({
+                            get: jest.fn().mockResolvedValue({
+                                exists: true,
+                                data: () => ({ slotCapacity: 5 })
+                            })
+                        }))
+                    };
+                }
+                return appointmentsRef;
+            });
+
+            await expect(
+                createAppointment("clinic-1", "2026-04-20", "09:00 - 10:00", "patient-1")
+            ).rejects.toThrow("This slot is full.");
+        });
+
       it("creates a rescheduled appointment without duplicate check and uses defaults", async () => {
         const capacityQuery = createLoopQuery({ size: 0 });
         const add = jest.fn().mockResolvedValue({ id: "appt-2" });

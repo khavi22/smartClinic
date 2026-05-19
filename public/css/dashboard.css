@@ -1220,11 +1220,41 @@ footer.modal-actions {
 }
 
 /* ── PREMIUM QUEUE EXTENSIONS ── */
+.add-patient-card {
+    border-top: 4px solid var(--blue);
+}
+
+.add-patient-card .card-header {
+    align-items: flex-start;
+    margin-bottom: 22px;
+}
+
+.add-patient-card .card-header h2 {
+    letter-spacing: 0;
+    margin-bottom: 4px;
+}
+
+.add-patient-card .card-header p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.premium-queue-form {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px;
+}
+
 .premium-queue-form .form-row {
     display: grid;
-    grid-template-columns: minmax(120px, 0.8fr) minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr)) auto;
-    gap: 20px;
-    align-items: flex-end;
+    grid-template-columns: repeat(3, minmax(190px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+
+.premium-queue-form .field-group {
+    min-width: 0;
 }
 
 @media (max-width: 900px) {
@@ -1235,49 +1265,89 @@ footer.modal-actions {
 
 .field-group label {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.76rem;
     font-weight: 700;
     text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 8px;
+    color: #334155;
+    letter-spacing: 0;
+    line-height: 1.25;
+    margin-bottom: 9px;
 }
 
 .input-wrapper, .select-wrapper {
     position: relative;
     display: flex;
     align-items: center;
+    min-height: 48px;
 }
 
 .input-wrapper i, .select-wrapper i {
     position: absolute;
     left: 14px;
-    color: var(--text-muted);
+    color: var(--blue);
     font-size: 1.1rem;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .input-wrapper input, .select-wrapper select {
+    appearance: none;
     width: 100%;
-    padding: 12px 12px 12px 42px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    font-size: 0.95rem;
+    min-height: 48px;
+    padding: 12px 14px 12px 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.92rem;
+    font-weight: 600;
     background: var(--white);
     transition: all 0.2s;
+}
+
+.select-wrapper select {
+    padding-right: 34px;
+}
+
+.select-wrapper::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    width: 8px;
+    height: 8px;
+    border-bottom: 2px solid #64748b;
+    border-right: 2px solid #64748b;
+    pointer-events: none;
+    transform: rotate(45deg) translateY(-2px);
+}
+
+.input-wrapper input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.input-wrapper input:focus,
+.select-wrapper select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.12);
+    outline: none;
 }
 
 .premium-add-btn {
     background: var(--blue);
     color: white;
     border: none;
-    padding: 14px 24px;
-    border-radius: 12px;
+    min-height: 48px;
+    padding: 14px 22px;
+    border-radius: 8px;
     font-weight: 700;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(0, 123, 255, 0.3);
     transition: all 0.2s;
+    align-self: end;
 }
 
 .premium-add-btn:hover {
