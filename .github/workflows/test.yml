@@ -24,4 +24,4 @@ jobs:
         run: npm install
 
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npm run test:coverage -- --coverageReporters=text --coverageReporters=text-summary
