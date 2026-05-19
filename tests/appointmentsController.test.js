@@ -800,6 +800,7 @@ describe("Appointment Controller", () => {
                 exists: true,
                 data: () => ({
                     patientId: "patient1",
+                    clinicId: "clinic1",
                     clinicName: "Clinic A",
                     clinicAddress: "Address A",
                     date: "2026-05-20",
@@ -827,6 +828,31 @@ describe("Appointment Controller", () => {
             emailService.sendAppointmentCancellation
                 .mockResolvedValue();
 
+            const queueItemDelete = jest.fn().mockResolvedValue();
+            const queueItemGet = jest.fn().mockResolvedValue({ exists: true });
+            const queueItemsDoc = jest.fn(() => ({
+                get: queueItemGet,
+                delete: queueItemDelete,
+            }));
+
+            db.collection.mockImplementation((collectionName) => {
+                if (collectionName === "clinics") {
+                    return {
+                        doc: jest.fn(() => ({
+                            collection: jest.fn(() => ({
+                                doc: jest.fn(() => ({
+                                    collection: jest.fn(() => ({
+                                        doc: queueItemsDoc,
+                                    })),
+                                })),
+                            })),
+                        })),
+                    };
+                }
+
+                return {};
+            });
+
             const req = httpMocks.createRequest({
                 params: {
                     id: "appointment1",
@@ -843,6 +869,13 @@ describe("Appointment Controller", () => {
                 .toHaveBeenCalledWith("appointment1");
 
             expect(emailService.sendAppointmentCancellation)
+                .toHaveBeenCalled();
+
+            expect(queueItemsDoc)
+                .toHaveBeenCalledWith("appointment1");
+            expect(queueItemGet)
+                .toHaveBeenCalled();
+            expect(queueItemDelete)
                 .toHaveBeenCalled();
         });
 

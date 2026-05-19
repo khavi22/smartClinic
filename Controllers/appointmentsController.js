@@ -97,18 +97,23 @@ const getClinicMetadata = async (clinicId) => {
     };
 };
 
-const deleteQueueItemForAppointment = async (appointmentId) => {
+const deleteQueueItemForAppointment = async (appointmentId, appointmentData = null) => {
     if (!appointmentId || !db?.collection) {
         return;
     }
 
-    const appointmentDoc = await db.collection("appointments").doc(appointmentId).get();
+    let appointment = appointmentData;
 
-    if (!appointmentDoc.exists) {
-        return;
+    if (!appointment) {
+        const appointmentDoc = await db.collection("appointments").doc(appointmentId).get();
+
+        if (!appointmentDoc.exists) {
+            return;
+        }
+
+        appointment = appointmentDoc.data() || {};
     }
 
-    const appointment = appointmentDoc.data() || {};
     const queueClinicId = appointment.clinicId;
     const queueDate = appointment.date;
 
@@ -246,12 +251,16 @@ exports.cancelAppointmentController = async (req, res) => {
             .doc(appointmentId)
             .get();
 
+        const appointmentData = appointmentDoc.exists ? appointmentDoc.data() : null;
+
         const result = await cancelAppointment(appointmentId);
+
+        await deleteQueueItemForAppointment(appointmentId, appointmentData);
 
         // ✉️ Send cancellation email
         try {
-            if (appointmentDoc.exists) {
-                const appt = appointmentDoc.data();
+            if (appointmentData) {
+                const appt = appointmentData;
                 const patient = await getPatientProfileById(appt.patientId);
                 if (patient?.email) {
                     await emailService.sendAppointmentCancellation(
