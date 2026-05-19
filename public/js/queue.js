@@ -14,7 +14,8 @@ const appointmentTimeInput = document.getElementById("appointmentTimeInput");
 const priorityInput = document.getElementById("priorityInput");
 const queueActionStatus = document.getElementById("queueActionStatus");
 
-const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED",];
+const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED"];
+const STATUS_UPDATE_OPTIONS = ["WAITING", "COMPLETE", "MISSED"];
 let currentClinicId = null;
 let currentIdToken = null;
 let currentStaffId = null;
@@ -165,19 +166,43 @@ function renderQueue(queue) {
 
         const actionsCell = row.querySelector(".col-actions");
 
+        const actionsWrap = document.createElement("div");
+        actionsWrap.className = "queue-row-actions";
+
+        const primaryActions = document.createElement("div");
+        primaryActions.className = "queue-primary-actions";
+
+        const statusActions = document.createElement("div");
+        statusActions.className = "queue-status-actions";
+
         const startButton = document.createElement("button");
         startButton.type = "button";
-        startButton.className = "action-icon-btn start";
+        startButton.className = "queue-row-btn start";
         startButton.title = "Start Consultation";
-        startButton.innerHTML = "<i class='bx bx-play'></i>";
+        startButton.setAttribute("aria-label", `Start consultation for ${getPatientName(patient)}`);
+        startButton.innerHTML = "<i class='bx bx-play'></i><span>Start</span>";
         startButton.disabled = patientStatus !== "WAITING";
         startButton.addEventListener("click", () => startPatientConsultation(patient));
 
         const statusSelect = document.createElement("select");
         statusSelect.className = "mini-status-select";
+        statusSelect.setAttribute("aria-label", `Choose status for ${getPatientName(patient)}`);
         statusSelect.disabled = statusLocked;
 
-        QUEUE_STATUSES.forEach((status) => {
+        const updateOptions = patientStatus === "IN_CONSULTATION"
+            ? ["COMPLETE", "MISSED"]
+            : STATUS_UPDATE_OPTIONS;
+
+        if (!updateOptions.includes(patientStatus)) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Update to...";
+            placeholder.selected = true;
+            placeholder.disabled = true;
+            statusSelect.appendChild(placeholder);
+        }
+
+        updateOptions.forEach((status) => {
             const option = document.createElement("option");
             option.value = status;
             option.textContent = formatStatus(status);
@@ -187,21 +212,32 @@ function renderQueue(queue) {
 
         const updateButton = document.createElement("button");
         updateButton.type = "button";
-        updateButton.className = "action-icon-btn update";
+        updateButton.className = "queue-row-btn compact update";
         updateButton.title = "Update Status";
-        updateButton.innerHTML = "<i class='bx bx-check'></i>";
-        updateButton.disabled = statusLocked;
+        updateButton.setAttribute("aria-label", `Update status for ${getPatientName(patient)}`);
+        updateButton.innerHTML = "<i class='bx bx-check'></i><span>Update</span>";
         updateButton.addEventListener("click", () => updatePatientStatus(patient, statusSelect.value));
+
+        const syncUpdateButtonState = () => {
+            updateButton.disabled = statusLocked || !statusSelect.value || statusSelect.value === patientStatus;
+        };
+
+        statusSelect.addEventListener("change", syncUpdateButtonState);
+        syncUpdateButtonState();
 
         const rescheduleButton = document.createElement("button");
         rescheduleButton.type = "button";
-        rescheduleButton.className = "action-icon-btn reschedule";
+        rescheduleButton.className = "queue-row-btn reschedule";
         rescheduleButton.title = "Reschedule Slot";
-        rescheduleButton.innerHTML = "<i class='bx bx-redo'></i>";
+        rescheduleButton.setAttribute("aria-label", `Reschedule ${getPatientName(patient)}`);
+        rescheduleButton.innerHTML = "<i class='bx bx-calendar-edit'></i><span>Reschedule</span>";
         rescheduleButton.disabled = patientStatus !== "WAITING";
         rescheduleButton.addEventListener("click", () => showReschedulePicker(patient, actionsCell));
 
-        actionsCell.append(startButton, rescheduleButton, statusSelect, updateButton);
+        primaryActions.append(startButton, rescheduleButton);
+        statusActions.append(statusSelect, updateButton);
+        actionsWrap.append(primaryActions, statusActions);
+        actionsCell.appendChild(actionsWrap);
         queueTableBody.appendChild(row);
     });
 }
