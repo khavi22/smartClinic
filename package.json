@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "jest",
-    "coverage": "jest --coverage",
-    "test:coverage": "jest --coverage"
+    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --coverageReporters=lcov",
+    "test:coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --coverageReporters=lcov"
   },
   "jest": {
     "coverageThreshold": {
