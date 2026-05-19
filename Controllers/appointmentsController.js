@@ -97,6 +97,39 @@ const getClinicMetadata = async (clinicId) => {
     };
 };
 
+const deleteQueueItemForAppointment = async (appointmentId) => {
+    if (!appointmentId || !db?.collection) {
+        return;
+    }
+
+    const appointmentDoc = await db.collection("appointments").doc(appointmentId).get();
+
+    if (!appointmentDoc.exists) {
+        return;
+    }
+
+    const appointment = appointmentDoc.data() || {};
+    const queueClinicId = appointment.clinicId;
+    const queueDate = appointment.date;
+
+    if (!queueClinicId || !queueDate) {
+        return;
+    }
+
+    const queueItemRef = db
+        .collection("clinics")
+        .doc(queueClinicId)
+        .collection("queues")
+        .doc(queueDate)
+        .collection("queueItems")
+        .doc(appointmentId);
+    const queueItemDoc = await queueItemRef.get();
+
+    if (queueItemDoc.exists) {
+        await queueItemRef.delete();
+    }
+};
+
 exports.postAppointment = async (req, res) => {
     try {
         const { patientId, patientEmail, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
@@ -129,6 +162,7 @@ exports.postAppointment = async (req, res) => {
         if (oldAppointmentId) {
             console.log(`Rescheduling: Cancelling old appointment ${oldAppointmentId}`);
             await cancelAppointment(oldAppointmentId);
+            await deleteQueueItemForAppointment(oldAppointmentId);
         }
 
         const clinicMetadata = (!clinicName || !clinicAddress)
