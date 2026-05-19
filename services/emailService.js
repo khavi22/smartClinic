@@ -43,6 +43,20 @@ const escapeHtml = (value) => String(value || "")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const getAppBaseUrl = () => {
+    if (!BASE_URL) {
+        return null;
+    }
+
+    try {
+        return new URL(BASE_URL).origin;
+    } catch (_error) {
+        return BASE_URL
+            .replace(/\/[^/?#]*\.html(?:[?#].*)?$/, "")
+            .replace(/\/$/, "");
+    }
+};
+
 const buildAppointmentEmail = ({
     title,
     greeting,
@@ -55,8 +69,9 @@ const buildAppointmentEmail = ({
     actionLabel = "View My Appointments",
     note = "Please arrive 10 minutes early. Remember to bring your ID and medical aid card if applicable.",
 }) => {
-    const appointmentsUrl = BASE_URL
-        ? `${BASE_URL.replace(/\/$/, "")}/apointments.html`
+    const appBaseUrl = getAppBaseUrl();
+    const appointmentsUrl = appBaseUrl
+        ? `${appBaseUrl}/apointments.html`
         : "#";
 
     return `

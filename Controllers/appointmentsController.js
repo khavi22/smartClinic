@@ -97,6 +97,44 @@ const getClinicMetadata = async (clinicId) => {
     };
 };
 
+const deleteQueueItemForAppointment = async (appointmentId, appointmentData = null) => {
+    if (!appointmentId || !db?.collection) {
+        return;
+    }
+
+    let appointment = appointmentData;
+
+    if (!appointment) {
+        const appointmentDoc = await db.collection("appointments").doc(appointmentId).get();
+
+        if (!appointmentDoc.exists) {
+            return;
+        }
+
+        appointment = appointmentDoc.data() || {};
+    }
+
+    const queueClinicId = appointment.clinicId;
+    const queueDate = appointment.date;
+
+    if (!queueClinicId || !queueDate) {
+        return;
+    }
+
+    const queueItemRef = db
+        .collection("clinics")
+        .doc(queueClinicId)
+        .collection("queues")
+        .doc(queueDate)
+        .collection("queueItems")
+        .doc(appointmentId);
+    const queueItemDoc = await queueItemRef.get();
+
+    if (queueItemDoc.exists) {
+        await queueItemRef.delete();
+    }
+};
+
 exports.postAppointment = async (req, res) => {
     try {
         const { patientId, patientEmail, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
@@ -129,6 +167,7 @@ exports.postAppointment = async (req, res) => {
         if (oldAppointmentId) {
             console.log(`Rescheduling: Cancelling old appointment ${oldAppointmentId}`);
             await cancelAppointment(oldAppointmentId);
+            await deleteQueueItemForAppointment(oldAppointmentId);
         }
 
         const clinicMetadata = (!clinicName || !clinicAddress)
@@ -212,12 +251,16 @@ exports.cancelAppointmentController = async (req, res) => {
             .doc(appointmentId)
             .get();
 
+        const appointmentData = appointmentDoc.exists ? appointmentDoc.data() : null;
+
         const result = await cancelAppointment(appointmentId);
+
+        await deleteQueueItemForAppointment(appointmentId, appointmentData);
 
         // ✉️ Send cancellation email
         try {
-            if (appointmentDoc.exists) {
-                const appt = appointmentDoc.data();
+            if (appointmentData) {
+                const appt = appointmentData;
                 const patient = await getPatientProfileById(appt.patientId);
                 if (patient?.email) {
                     await emailService.sendAppointmentCancellation(

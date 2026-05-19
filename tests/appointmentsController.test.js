@@ -598,7 +598,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
-        it("should cancel old appointment during reschedule", async () => {
+        it("should cancel old appointment and delete its queue item during reschedule", async () => {
 
             cancelAppointment.mockResolvedValue();
 
@@ -607,6 +607,43 @@ describe("Appointment Controller", () => {
             });
 
             getPatientProfileById.mockResolvedValue(null);
+            const queueItemDelete = jest.fn().mockResolvedValue();
+            const queueItemGet = jest.fn().mockResolvedValue({ exists: true });
+            const appointmentsDoc = jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({
+                    exists: true,
+                    data: () => ({
+                        clinicId: "clinic1",
+                        date: "2026-05-19",
+                    }),
+                }),
+            }));
+            const queueItemsDoc = jest.fn(() => ({
+                get: queueItemGet,
+                delete: queueItemDelete,
+            }));
+
+            db.collection.mockImplementation((collectionName) => {
+                if (collectionName === "appointments") {
+                    return { doc: appointmentsDoc };
+                }
+
+                if (collectionName === "clinics") {
+                    return {
+                        doc: jest.fn(() => ({
+                            collection: jest.fn(() => ({
+                                doc: jest.fn(() => ({
+                                    collection: jest.fn(() => ({
+                                        doc: queueItemsDoc,
+                                    })),
+                                })),
+                            })),
+                        })),
+                    };
+                }
+
+                return {};
+            });
 
             const req = httpMocks.createRequest({
                 body: {
@@ -629,6 +666,10 @@ describe("Appointment Controller", () => {
 
             expect(cancelAppointment)
                 .toHaveBeenCalledWith("old123");
+            expect(appointmentsDoc).toHaveBeenCalledWith("old123");
+            expect(queueItemsDoc).toHaveBeenCalledWith("old123");
+            expect(queueItemGet).toHaveBeenCalled();
+            expect(queueItemDelete).toHaveBeenCalled();
         });
 
         it("should return 400 for slot full error", async () => {
@@ -759,6 +800,7 @@ describe("Appointment Controller", () => {
                 exists: true,
                 data: () => ({
                     patientId: "patient1",
+                    clinicId: "clinic1",
                     clinicName: "Clinic A",
                     clinicAddress: "Address A",
                     date: "2026-05-20",
@@ -786,6 +828,31 @@ describe("Appointment Controller", () => {
             emailService.sendAppointmentCancellation
                 .mockResolvedValue();
 
+            const queueItemDelete = jest.fn().mockResolvedValue();
+            const queueItemGet = jest.fn().mockResolvedValue({ exists: true });
+            const queueItemsDoc = jest.fn(() => ({
+                get: queueItemGet,
+                delete: queueItemDelete,
+            }));
+
+            db.collection.mockImplementation((collectionName) => {
+                if (collectionName === "clinics") {
+                    return {
+                        doc: jest.fn(() => ({
+                            collection: jest.fn(() => ({
+                                doc: jest.fn(() => ({
+                                    collection: jest.fn(() => ({
+                                        doc: queueItemsDoc,
+                                    })),
+                                })),
+                            })),
+                        })),
+                    };
+                }
+
+                return {};
+            });
+
             const req = httpMocks.createRequest({
                 params: {
                     id: "appointment1",
@@ -802,6 +869,13 @@ describe("Appointment Controller", () => {
                 .toHaveBeenCalledWith("appointment1");
 
             expect(emailService.sendAppointmentCancellation)
+                .toHaveBeenCalled();
+
+            expect(queueItemsDoc)
+                .toHaveBeenCalledWith("appointment1");
+            expect(queueItemGet)
+                .toHaveBeenCalled();
+            expect(queueItemDelete)
                 .toHaveBeenCalled();
         });
 

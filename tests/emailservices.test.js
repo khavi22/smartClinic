@@ -241,6 +241,33 @@ describe("Email Service", () => {
             expect(mockSendMail.mock.calls[0][0].html)
                 .toContain("Book Another Appointment");
         });
+
+        it("should build appointment links from the site origin when BASE_URL contains a page", async () => {
+            jest.resetModules();
+            process.env.BASE_URL = "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/signUp.html";
+            jest.doMock("nodemailer", () => ({
+                createTransport: jest.fn(() => ({
+                    sendMail: mockSendMail,
+                })),
+            }));
+
+            const pageBaseEmailService = require("../services/emailService");
+
+            await pageBaseEmailService.sendAppointmentCancellation(
+                "patient@test.com",
+                "John Doe",
+                "Clinic A",
+                "123 Main Street",
+                "2026-05-20",
+                "10:00"
+            );
+
+            const html = mockSendMail.mock.calls[0][0].html;
+            expect(html).toContain('href="https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/apointments.html"');
+            expect(html).not.toContain("signUp.html/apointments.html");
+
+            process.env.BASE_URL = "http://localhost:3000";
+        });
     });
 
     // =====================================================
