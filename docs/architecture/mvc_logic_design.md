@@ -6,33 +6,31 @@ SmartClinic utilizes a modular **Model-View-Controller + Services (MVC+S)** loca
 
 ```mermaid
 graph TD
-    classDef view fill:#f8fafc,stroke:#334155,stroke-width:2px,color:#1e293b;
-    classDef controller fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#854d0e;
-    classDef model fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#166534;
-    classDef db fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#991b1b;
-    classDef ext fill:#faf5ff,stroke:#a855f7,stroke-width:2px,color:#6b21a8;
+    classDef bnd fill:#fff,stroke:#000,stroke-width:2px,color:#000;
+    classDef box fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+    classDef dash stroke:#000,stroke-width:1px,stroke-dasharray: 5 5;
 
     %% --- View Layer ---
     subgraph ViewLayer ["View Layer (Browser)"]
-        HTML["HTML Templates (public/*.html)"]:::view
-        UIJS["Client JS & DOM Logic (public/js/*.js)"]:::view
+        HTML["HTML Templates (public/*.html)"]:::box
+        UIJS["Client JS & DOM Logic (public/js/*.js)"]:::box
     end
 
     %% --- Controller Layer ---
     subgraph ControllerLayer ["Controller Layer (Node.js)"]
-        Routes["Express Router (routes/*.js)"]:::controller
-        Controllers["Business Controllers (Controllers/*.js)"]:::controller
+        Routes["Express Router (routes/*.js)"]:::box
+        Controllers["Business Controllers (Controllers/*.js)"]:::box
     end
 
     %% --- Model/Service Layer ---
     subgraph ModelLayer ["Model & Service Layer"]
-        Services["Business Services (services/*.js)"]:::model
-        Models["Data Structures (models/*.js)"]:::model
+        Services["Business Services (services/*.js)"]:::box
+        Models["Data Structures (models/*.js)"]:::box
     end
 
     %% --- Data & External ---
-    Firestore[(Firebase Firestore)]:::db
-    MLService["Python ML Service (Render)"]:::ext
+    Firestore[(Firebase Firestore)]:::box
+    MLService["Python ML Service (Render)"]:::box
 
     %% --- Data Flow ---
     HTML -->|User Interaction| UIJS
@@ -48,6 +46,8 @@ graph TD
     Services -.->|Data| Controllers
     Controllers -.->|JSON| UIJS
     UIJS -.->|Render| HTML
+
+    class ViewLayer,ControllerLayer,ModelLayer bnd;
 ```
 
 ## Component Breakdown

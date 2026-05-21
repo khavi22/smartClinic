@@ -6,9 +6,9 @@ This document describes the production-grade deployment environment for SmartCli
 
 ```mermaid
 graph TD
-    classDef device fill:#f8fafc,stroke:#334155,stroke-width:2px,stroke-dasharray: 5 5,color:#1e293b;
-    classDef env fill:#f0f9ff,stroke:#0ea5e9,stroke-width:1px,color:#0369a1;
-    classDef artifact fill:#ffffff,stroke:#1e293b,stroke-width:1px,color:#1e293b;
+    classDef device fill:#fff,stroke:#000,stroke-width:2px,stroke-dasharray: 5 5,color:#000;
+    classDef env fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+    classDef artifact fill:#fff,stroke:#000,stroke-width:1px,color:#000;
     
     %% --- Client Side ---
     subgraph ClientPC ["<<device>> Client PC"]
