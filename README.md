@@ -19,6 +19,66 @@ graph TD
     D -->|Real-Time Sync| A
 ```
 
+## Documentation 📚
+
+Comprehensive documentation for SmartClinic is available in the [docs](./docs) directory:
+
+- **System Architecture**: [4+1 Architectural View Model](./docs/architecture/4%2B1%20Architectural%20View%20Model.md)
+- **Project Planning**: [Development Roadmap & Plan](./docs/project-plan/project-plan.md)
+- **Agile/Scrum**: [Product Backlog](./docs/scrum/product-backlog.md) and [Sprint Reports](./docs/scrum/)
+
+## System Deployment Topology
+
+The following UML deployment diagram illustrates the production-grade, multi-cloud architecture of the SmartClinic platform.
+
+```mermaid
+graph TD
+    classDef device fill:#f8fafc,stroke:#334155,stroke-width:2px,stroke-dasharray: 5 5,color:#1e293b;
+    classDef env fill:#f0f9ff,stroke:#0ea5e9,stroke-width:1px,color:#0369a1;
+    classDef artifact fill:#ffffff,stroke:#1e293b,stroke-width:1px,color:#1e293b;
+    
+    %% --- Client Side ---
+    subgraph ClientPC ["<<device>> Client PC"]
+        subgraph BrowserEnv ["<<Execution Environment>> Web Browser"]
+            FrontendArtifact["<<artifact>> Frontend Web App"]
+        end
+    end
+
+    %% --- Backend API ---
+    subgraph AzureNode ["<<device>> Microsoft Azure"]
+        subgraph NodeEnv ["<<Execution Environment>> Node.js"]
+            subgraph HTTPServer ["<<Execution Environment>> HTTP Server"]
+                BackendArtifact["<<artifact>> Backend API Code"]
+            end
+        end
+    end
+
+    %% --- ML Service (Render) ---
+    subgraph RenderNode ["<<device>> Render"]
+        subgraph PythonEnv ["<<Execution Environment>> Python 3.x (Flask)"]
+            MLArtifact["<<artifact>> ML Service (Wait-time Predictor)"]
+        end
+    end
+
+    %% --- Database (Google Cloud) ---
+    subgraph GCPNode ["<<device>> Google Cloud"]
+        subgraph FirebaseEnv ["<<Execution Environment>> Firebase Engine"]
+            FirestoreArtifact["<<artifact>> Firestore Collection"]
+        end
+    end
+
+    %% --- Connections ---
+    BrowserEnv -- "HTTP REST / JSON (Port: 3000)" --> HTTPServer
+    BackendArtifact -- "HTTP REST Request (Port: 443)" --> MLArtifact
+    BackendArtifact -- "Firebase SDK (Port: 443)" --> FirestoreArtifact
+    MLArtifact -- "Firebase Admin SDK (Port: 443)" --> FirestoreArtifact
+
+    %% Apply Classes for UML-like styling
+    class ClientPC,AzureNode,RenderNode,GCPNode device;
+    class BrowserEnv,NodeEnv,HTTPServer,PythonEnv,FirebaseEnv env;
+    class FrontendArtifact,BackendArtifact,MLArtifact,FirestoreArtifact artifact;
+```
+
 ### 1. Patient Portal
 *   **Intelligent Clinic Discovery**: Multi-filter clinic search covering Province, District, Region, and Address coordinates.
 *   **Dynamic Appointment Engine**: Fully dynamic, Firebase-backed availability engine that prevents double-booking and updates calendars in real-time.
