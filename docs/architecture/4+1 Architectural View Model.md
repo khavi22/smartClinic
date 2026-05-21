@@ -46,8 +46,7 @@
      <img width="940" height="1169" alt="image" src="https://github.com/user-attachments/assets/8099a52e-fc80-416d-a624-417d4357bec6" />
 <img width="661" height="998" alt="ml_service_sequence drawio" src="https://github.com/user-attachments/assets/b1c66e54-d83f-4ac3-83bb-4a3423e8fc83" />
 
-     <img width="864" height="852" alt="SD On-boarding admin" src="https://github.com/user-attachments/assets/04dbbf57-1d7d-4d6a-8f60-02973ab31d63" />
-  <img width="550" height="994" alt="service_sequence drawio" src="https://github.com/user-attachments/assets/b5f12b33-96bb-4d12-bf32-a04b71888f9a" />
+
 
  <img width="842" height="994" alt="onboarding_sequence drawio (1)" src="https://github.com/user-attachments/assets/7b446c87-802f-48d1-8620-8893f55bf271" />
 
