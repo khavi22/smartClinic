@@ -9,7 +9,9 @@
    Class Diagrams
     + Class Diagram: Smart Clinic
         <img width="940" height="878" alt="image" src="https://github.com/user-attachments/assets/5e6f9e3c-e87c-4bb3-ada7-c6a1649f2896" />
-        <img width="940" height="1333" alt="image" src="https://github.com/user-attachments/assets/156a8f91-6a0d-432f-aa90-4a69f0c67137" />
+     + Class Diagram: Staff onboarding
+<img width="1635" height="4450" alt="class_diagram" src="https://github.com/user-attachments/assets/90e708d7-9364-4239-97f4-3853de02cea9" />
+
 2. Development View
    Component Diagram
    <img width="809" height="902" alt="image" src="https://github.com/user-attachments/assets/a18175a1-4329-4689-b504-5cb262caff6f" />
@@ -37,14 +39,18 @@
        <img width="940" height="564" alt="image" src="https://github.com/user-attachments/assets/d96fc9c2-4806-46ea-9967-9fd875ca2eac" />
        <img width="896" height="932" alt="image" src="https://github.com/user-attachments/assets/17fafc40-cce8-4733-9848-a415454bace1" />
      + Sequence Diagram: Staff Onboarding
-       <img width="940" height="590" alt="image" src="https://github.com/user-attachments/assets/4f9d3dfd-76b5-4ae6-b328-a5150d1b84c1" />
+     <img width="842" height="994" alt="onboarding_sequence drawio (1)" src="https://github.com/user-attachments/assets/e4a373b7-eff1-4db0-9e7a-45819c04e5cd" />
+
      + Sequence diagram: Set Availability
        <img width="940" height="477" alt="image" src="https://github.com/user-attachments/assets/f1576e74-a732-4932-bad3-b7adbe908903" />
      <img width="940" height="1169" alt="image" src="https://github.com/user-attachments/assets/8099a52e-fc80-416d-a624-417d4357bec6" />
-     <img width="8191" height="7798" alt="ml_sequence_diagram" src="https://github.com/user-attachments/assets/646fc3d7-086d-4cf6-ada2-45891c63dd8a" />
+<img width="661" height="998" alt="ml_service_sequence drawio" src="https://github.com/user-attachments/assets/b1c66e54-d83f-4ac3-83bb-4a3423e8fc83" />
+
      <img width="864" height="852" alt="SD On-boarding admin" src="https://github.com/user-attachments/assets/04dbbf57-1d7d-4d6a-8f60-02973ab31d63" />
-     <img width="5125" height="3645" alt="SD Staff Invitation Approval 2" src="https://github.com/user-attachments/assets/70b2700a-4408-42e8-b046-92603379df3b" />
-     <img width="7347" height="4610" alt="SD Staff Invitation Approval" src="https://github.com/user-attachments/assets/5d8ff48f-befb-4fe0-8e42-e0770795b890" />
+  <img width="550" height="994" alt="service_sequence drawio" src="https://github.com/user-attachments/assets/b5f12b33-96bb-4d12-bf32-a04b71888f9a" />
+
+ <img width="842" height="994" alt="onboarding_sequence drawio (1)" src="https://github.com/user-attachments/assets/7b446c87-802f-48d1-8620-8893f55bf271" />
+
      <img width="2921" height="2311" alt="ViewQueue position sequence diagram" src="https://github.com/user-attachments/assets/54186fdf-33d0-4e31-b57c-91526bf1eed0" />
      
 
