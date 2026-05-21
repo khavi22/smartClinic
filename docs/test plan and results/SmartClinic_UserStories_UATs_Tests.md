@@ -43,4 +43,4 @@ The following tables organise each sprint using the structure: User Story, UATs,
 | View clinic performance analytics and reports<br><br>As an admin, I want to view analytics and reports such as average patient wait times by clinic and time of day, appointment no-show rates, and custom report views so that I can monitor clinic performance and improve operational efficiency. | Given I am an admin, when I request analytics for a date range, then I see wait-time and no-show report data. | adminStaffWorkflow.test.js, firebaseService.test.js, clinicService.test.js | Tests cover reports, validation, utilisation, and workload analytics. |
 
 
-<img width="874" height="1137" alt="image" src="https://github.com/user-attachments/docs/test plan and results/asset-screenshots/Screenshot 2026-05-22 001722.png" />
+<img width="874" height="1137" alt="image" src="[https://github.com/user-attachments/docs/test plan and results/asset-screenshots/Screenshot 2026-05-22 001722.png](https://github.com/khavi22/smartClinic/blob/c65b3ee64de0c74ccaecce8396859b1fbc82355b/docs/test%20plan%20and%20results/asset-screenshots/Screenshot%202026-05-22%20001722.png)" />
