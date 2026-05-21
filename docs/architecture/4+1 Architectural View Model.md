@@ -50,7 +50,7 @@
 
  <img width="842" height="994" alt="onboarding_sequence drawio (1)" src="https://github.com/user-attachments/assets/7b446c87-802f-48d1-8620-8893f55bf271" />
 
-     <img width="2921" height="2311" alt="ViewQueue position sequence diagram" src="https://github.com/user-attachments/assets/54186fdf-33d0-4e31-b57c-91526bf1eed0" />
+  <img width="2921" height="2311" alt="ViewQueue position sequence diagram" src="https://github.com/user-attachments/assets/54186fdf-33d0-4e31-b57c-91526bf1eed0" />
      
 
 4. Physical view
