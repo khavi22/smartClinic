@@ -56,7 +56,8 @@
 4. Physical view
    +  Deployment Diagram
      Deployment Diagram: Smart  Clinic
-        <img width="874" height="1137" alt="image" src="https://github.com/user-attachments/assets/a8cefce3-9c78-4f64-9d46-e814d55e03a3" />
+<img width="874" height="901" alt="Deployment_diagram drawio" src="https://github.com/user-attachments/assets/b5371a36-f0da-47d8-9ad9-cb4548aafd2f" />
+
       
 5. Scenario view
   Use Case Diagram
