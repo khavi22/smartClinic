@@ -19,7 +19,7 @@ graph TD
     D -->|Real-Time Sync| A
 ```
 
-## Documentation 📚
+## Documentation 
 
 Comprehensive documentation for SmartClinic is available in the [docs](./docs) directory:
 
