@@ -51,6 +51,6 @@ The following tables organise each sprint using the structure: User Story, UATs,
 
 ![Figure 4: Test log output](asset-screenshots/Screenshot%202026-05-22%20001832.png)
 
-![Figure 5: Additional test evidence](asset-screenshots/Screenshot%202026-05-22%2000183.png)
+![Figure 5: Additional test evidence](asset-screenshots/Screenshot%202026-05-22%20001837.png)
 
-![Figure 6: Additional test evidence](asset-screenshots/Screenshot%202026-05-22%2000193.png)
+![Figure 6: Additional test evidence](asset-screenshots/Screenshot%202026-05-22%20001931.png)
