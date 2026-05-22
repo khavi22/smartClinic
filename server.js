@@ -18,68 +18,68 @@ app.use(express.static(path.join(__dirname, "public")));
 
 
 
-let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes , patientQueueRoutes, adminOnboardingRoutes;
+let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes, patientQueueRoutes, adminOnboardingRoutes;
 
 try {
   clinicsRoutes = require("./routes/clinics");
-  console.log("✓ Clinics routes loaded");
+  console.log("Clinics routes loaded");
 } catch (err) {
-  console.error("✗ Error loading clinics routes:", err);
+  console.error("Error loading clinics routes:", err);
 }
 
 try {
   adminOnboardingRoutes = require("./routes/adminOnboarding");
-  console.log("✓ Admin onboarding routes loaded");
+  console.log("Admin onboarding routes loaded");
 } catch (err) {
-  console.error("✗ Error loading admin onboarding routes:", err);
+  console.error("Error loading admin onboarding routes:", err);
 }
 
-try{
+try {
   patientQueueRoutes = require("./routes/patientQueueRoutes");
-  console.log("✓ Patients Queue  routes loaded");
+  console.log("Patients Queue  routes loaded");
 }
 catch (err) {
-  console.error("✗ Error loading Patients Queue  routes:", err);
+  console.error("Error loading Patients Queue  routes:", err);
 }
 
 
 try {
   appointmentRoutes = require("./routes/appointments");
-  console.log("✓ Appointments routes loaded");
+  console.log("Appointments routes loaded");
 } catch (err) {
-  console.error("✗ Error loading appointments routes:", err);
+  console.error("Error loading appointments routes:", err);
 }
 
 try {
   userRoutes = require("./routes/user");
-  console.log("✓ User routes loaded");
+  console.log("User routes loaded");
 } catch (err) {
-  console.error("✗ Error loading user routes:", err);
+  console.error("Error loading user routes:", err);
 }
 
 try {
   staffAvailabilityRoutes = require("./routes/StaffAvailability");
-  console.log("✓ Staff availability routes loaded");
+  console.log("Staff availability routes loaded");
 } catch (err) {
-  console.error("✗ Error loading staff availability routes:", err);
+  console.error("Error loading staff availability routes:", err);
 }
 
 try {
   adminRoutes = require("./routes/admin");
-  console.log("✓ Admin routes loaded");
+  console.log("Admin routes loaded");
 } catch (err) {
-  console.error("✗ Error loading admin routes:", err);
+  console.error("Error loading admin routes:", err);
 }
 
 try {
   queueRoutes = require("./routes/Queue");
-  console.log("✓ Queue routes loaded");
+  console.log("Queue routes loaded");
 } catch (err) {
-  console.error("✗ Error loading queue routes:", err);
+  console.error("Error loading queue routes:", err);
 }
 
 if (clinicsRoutes) app.use("/api/clinics", clinicsRoutes);
-if (appointmentRoutes) app.use("/api", appointmentRoutes); 
+if (appointmentRoutes) app.use("/api", appointmentRoutes);
 if (userRoutes) app.use("/api/user", userRoutes);
 if (staffAvailabilityRoutes) app.use("/api/staff/availability", staffAvailabilityRoutes);
 if (adminRoutes) app.use("/api/admin", adminRoutes);
@@ -88,25 +88,25 @@ if (patientQueueRoutes) app.use("/api/patient/queue", patientQueueRoutes);
 if (adminOnboardingRoutes) app.use("/api/admin-onboarding", adminOnboardingRoutes);
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`);
-    next();
+  console.log(`${req.method} ${req.path}`);
+  next();
 });
 
 // 404 handler
 app.use((req, res) => {
-    console.log(`404 Not Found: ${req.method} ${req.path}`);
-    res.status(404).json({ error: "Not found" });
+  console.log(`404 Not Found: ${req.method} ${req.path}`);
+  res.status(404).json({ error: "Not found" });
 });
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(port, () => {
-        console.log(`Server running on port ${port}`);
-    });
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
 }
 
 module.exports = app;

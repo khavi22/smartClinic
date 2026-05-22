@@ -7,6 +7,8 @@ const roleCodeHelp = document.getElementById("roleCodeHelp");
 const roleCodeLabel = document.getElementById("roleCodeLabel");
 const roleCodeInput = document.getElementById("roleCode");
 
+// Stores the new user's profile basics after registration so the dashboard can
+// pick up the correct role and patient id.
 function storeUserSession(user, profile = {}) {
     localStorage.setItem("userId", user.uid);
     localStorage.setItem("userEmail", profile.email || user.email || "");
@@ -19,6 +21,8 @@ function storeUserSession(user, profile = {}) {
     }
 }
 
+// Shows and requires the admin verification code field only when the selected
+// signup role is admin.
 function updateRoleCodeField() {
     const role = roleSelect.value;
     const isAdmin = role === "admin";
@@ -44,7 +48,7 @@ roleSelect.addEventListener("change", updateRoleCodeField);
 auth.onAuthStateChanged(user => {
     if (!user) {
         console.warn("No active session found on signUp.html. Redirecting...");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
     }
 });
 
@@ -55,7 +59,7 @@ signupForm.addEventListener("submit", async (e) => {
 
     if (!user) {
         showToast("Session expired. Please log in again.", "error");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 

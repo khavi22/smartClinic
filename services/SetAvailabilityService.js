@@ -2,6 +2,8 @@ const { db, admin } = require("./config/firebase");
 // console.log("DB",db);
 
 
+// Finds the staff profile by uid and writes availability entries under
+// Staff_Availability.<date> for each selected date.
 async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Available){
         //StaffCode="STF-330AFB";
         const snaphshot =  await  db.collection("staff")
@@ -30,6 +32,8 @@ async function SaveAvailability(StaffCode,StartTime,EndTime,selectedDates,Availa
 
 }
 
+// Reads the Staff_Availability map for a staff member. If no profile is found,
+// the controller receives undefined and can respond accordingly.
 async function getAvailability(staffCode){
         //    const staffCode="STF-330AFB";
              const snapshots= await  db.collection("staff")
@@ -45,6 +49,8 @@ async function getAvailability(staffCode){
             return getStaffData.Staff_Availability || {};
 }
 
+// Deletes one date from a staff member's Staff_Availability map using
+// Firestore's field deletion helper.
 async function removeAvailability(staffCode, date){
   const snapshots= await  db.collection("staff")
                     .where("uid" ,"==",staffCode)
@@ -56,6 +62,7 @@ async function removeAvailability(staffCode, date){
             });
     return { success: true };
 }
+// Looks up the staff member's clinicId and returns that clinic's display name.
 async function getClinicName(uid) {
     const staffSnapshot = await db.collection("staff")
         .where("uid", "==", uid)

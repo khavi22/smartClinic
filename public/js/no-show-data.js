@@ -11,6 +11,7 @@ const db = firebaseInstance.firestore();
 // ─────────────────────────────────────────────────────────────
 // Color Coding Metric Status Color
 // ─────────────────────────────────────────────────────────────
+// Chooses a color for no-show rate severity bands.
 function rateColor(r) {
   if (r >= 25) return "#ef4444";
   if (r >= 15) return "#f59e0b";
@@ -20,6 +21,7 @@ function rateColor(r) {
 // ─────────────────────────────────────────────────────────────
 // Rendering Handlers
 // ─────────────────────────────────────────────────────────────
+// Renders the top-level no-show metrics.
 function renderKPIs({ total, missed, noShowRate, avgPerDay, peakWeekday, recoveryRate }) {
   const items = [
     { label: "Total Appointments",  value: total.toLocaleString(), icon: "📅", color: "blue"  },
@@ -40,6 +42,7 @@ function renderKPIs({ total, missed, noShowRate, avgPerDay, peakWeekday, recover
   `).join("");
 }
 
+// Renders monthly no-show rate as a bar chart.
 function renderTrendChart(trend) {
   const fig = document.getElementById("trend-chart");
   if (!trend.length) {
@@ -64,6 +67,7 @@ function renderTrendChart(trend) {
     </ul>`;
 }
 
+// Renders horizontal no-show rate meters for providers or appointment types.
 function renderHBars(containerId, data, emptyMsg) {
   const el = document.getElementById(containerId);
   if (!data.length) {
@@ -88,6 +92,7 @@ function renderHBars(containerId, data, emptyMsg) {
     </dl>`;
 }
 
+// Renders the missed appointment detail table.
 function renderTable(rows) {
   const tbody = document.getElementById("missed-tbody");
   if (!rows.length) {
@@ -113,11 +118,13 @@ function renderTable(rows) {
 // ─────────────────────────────────────────────────────────────
 // Layout States Handler
 // ─────────────────────────────────────────────────────────────
+// Toggles loading visibility for the no-show report.
 function showLoader(on) {
   document.getElementById("loader").hidden      = !on;
   document.getElementById("report-body").hidden =  on;
 }
 
+// Replaces the report body with a readable error message.
 function showError(msg) {
   document.getElementById("loader").hidden      = true;
   document.getElementById("report-body").hidden = false;
@@ -131,6 +138,7 @@ function showError(msg) {
 // ─────────────────────────────────────────────────────────────
 // Export Methods
 // ─────────────────────────────────────────────────────────────
+// Downloads the missed appointment list as CSV.
 function exportCSV() {
   if (!globalReportData) return;
 
@@ -156,6 +164,7 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
+// Uses the browser print dialog to export the report as PDF.
 function exportPDF() {
   window.print();
 }
@@ -163,6 +172,8 @@ function exportPDF() {
 // ─────────────────────────────────────────────────────────────
 // Date Formatter Conversion Helper
 // ─────────────────────────────────────────────────────────────
+// Converts appointment date fields from Firestore timestamps or strings into a
+// JavaScript Date.
 export function getAppointmentDate(appointment) {
   if (!appointment || !appointment.date) return null;
   if (typeof appointment.date.toDate === 'function') {
@@ -174,6 +185,8 @@ export function getAppointmentDate(appointment) {
   return new Date(appointment.date);
 }
 
+// Loads appointments for the current clinic and aggregates no-show metrics for
+// the requested range.
 export async function loadNoShowReport(range) {
   // 1. Ensure a user session is active from Firebase Auth
   const currentUser = firebase.auth().currentUser;
@@ -231,6 +244,7 @@ export async function loadNoShowReport(range) {
 // ─────────────────────────────────────────────────────────────
 // Aggregation Math Logic Engine
 // ─────────────────────────────────────────────────────────────
+// Calculates no-show KPIs, trends, provider/type breakdowns, and missed rows.
 function aggregateData(appointments) {
   const total = appointments.length;
   const missedAppointments = appointments.filter(a => 

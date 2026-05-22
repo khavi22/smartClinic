@@ -11,18 +11,23 @@ const {
 } = require("../services/queueService");
 const emailService = require("../services/emailService");
 
+// Pulls a usable email address from the different queue item shapes that can
+// come from manual queue entries, appointments, or enriched patient profiles.
 const getQueuePatientEmail = (queueItem) =>
     queueItem?.patientEmail ||
     queueItem?.email ||
     queueItem?.patient?.email ||
     null;
 
+// Picks the best display name available for queue notification emails.
 const getQueuePatientName = (queueItem) =>
     queueItem?.patientName ||
     queueItem?.fullName ||
     queueItem?.name ||
     "there";
 
+// Sends a queue status email when the queue item contains a patient email.
+// Missing emails are logged but do not block the queue update.
 const sendQueueStatusUpdateEmail = async (queueItem) => {
     const patientEmail = getQueuePatientEmail(queueItem);
 
@@ -41,6 +46,9 @@ const sendQueueStatusUpdateEmail = async (queueItem) => {
     );
 };
 
+// GET /api/queue/:clinicId
+// Syncs today's booked appointments into the clinic queue, then returns the
+// queue grouped by status for staff dashboards and waiting-room displays.
 exports.getQueue = async (req, res) => {
   try {
     const { clinicId } = req.params;
@@ -67,6 +75,8 @@ exports.getQueue = async (req, res) => {
   }
 };
 
+// POST /api/queue/:clinicId
+// Adds a walk-in/manual patient to today's queue after slot capacity checks.
 exports.addQueueItem = async (req, res) => {
     try {
         const { clinicId } = req.params;
@@ -105,6 +115,9 @@ exports.addQueueItem = async (req, res) => {
     }
 };
 
+// GET /api/queue/:clinicId/available-slots
+// Returns same-day queue slots that are still open, optionally excluding one
+// queue item when calculating reschedule availability.
 exports.getAvailableQueueSlots = async (req, res) => {
     try {
         const { clinicId } = req.params;
@@ -131,6 +144,9 @@ exports.getAvailableQueueSlots = async (req, res) => {
     }
 };
 
+// PATCH /api/queue/:clinicId/:queueItemId/reschedule
+// Moves a waiting queue item to another available slot and keeps the linked
+// appointment time in sync when the queue item came from a booking.
 exports.rescheduleQueueItem = async (req, res) => {
     try {
         const { clinicId, queueItemId } = req.params;
@@ -177,6 +193,9 @@ exports.rescheduleQueueItem = async (req, res) => {
     }
 };
 
+// PATCH /api/queue/:clinicId/:queueItemId
+// Updates a queue item status, mirrors complete/missed states to the linked
+// appointment, and sends a best-effort status email.
 exports.updateQueueItemStatus = async (req, res) => {
     try {
         const { clinicId, queueItemId } = req.params;
@@ -226,6 +245,8 @@ exports.updateQueueItemStatus = async (req, res) => {
     }
 };
 
+// DELETE /api/queue/:clinicId/:queueItemId
+// Deletes a queue item from today's queue.
 exports.removeQueueItem = async (req, res) => {
     try {
         const { clinicId, queueItemId } = req.params;
@@ -261,6 +282,9 @@ exports.removeQueueItem = async (req, res) => {
     }
 };
 
+// POST /api/queue/:clinicId/start-consultation
+// Moves a waiting patient into consultation for a staff member, enforcing that
+// one staff member cannot consult multiple patients at the same time.
 exports.startConsultation = async (req, res) => {
     try {
         const { clinicId } = req.params;
@@ -301,6 +325,9 @@ exports.startConsultation = async (req, res) => {
     }
 };
 
+// POST /api/queue/:clinicId/complete-consultation
+// Completes an active consultation, calculates its duration, and returns the
+// next waiting patient so the UI can guide staff to the next action.
 exports.completeConsultation = async (req, res) => {
     try {
         const { clinicId } = req.params;
@@ -345,6 +372,9 @@ exports.completeConsultation = async (req, res) => {
     }
 };
 
+// GET /api/queue/:clinicId/predict-waittime
+// Gets an ML wait-time estimate when the Python service is available, or falls
+// back to a simple live-queue heuristic when it is not.
 exports.predictWaitTime = async (req, res) => {
     try {
         const { clinicId } = req.params;

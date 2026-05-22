@@ -37,17 +37,20 @@ function loadFirebaseConfig({
     return { adminMock, config };
 }
 
+// Suite: groups related coverage for firebase config.
 describe("firebase config", () => {
     let consoleLogSpy;
     let consoleWarnSpy;
     let consoleErrorSpy;
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
         consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
         consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     });
 
+    // Cleanup: restores mocks so one test cannot leak state into the next.
     afterEach(() => {
         jest.dontMock("firebase-admin");
         jest.resetModules();
@@ -57,6 +60,7 @@ describe("firebase config", () => {
         consoleErrorSpy.mockRestore();
     });
 
+    // Test: checks uses an existing initialized app without initializing again. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("uses an existing initialized app without initializing again", () => {
         const { adminMock, config } = loadFirebaseConfig({
             apps: [{ name: "existing" }],
@@ -68,6 +72,7 @@ describe("firebase config", () => {
         expect(config.db).toEqual({ id: "db" });
     });
 
+    // Test: checks initializes from Firebase credentials JSON. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("initializes from Firebase credentials JSON", () => {
         const serviceAccount = {
             project_id: "smart-clinic",
@@ -88,6 +93,7 @@ describe("firebase config", () => {
         });
     });
 
+    // Test: checks cleans extra wrapping quotes around credentials JSON. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("cleans extra wrapping quotes around credentials JSON", () => {
         const serviceAccount = {
             project_id: "smart-clinic",
@@ -103,12 +109,14 @@ describe("firebase config", () => {
         expect(adminMock.credential.cert).toHaveBeenCalledWith(serviceAccount);
     });
 
+    // Test: checks throws when credentials JSON is invalid. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("throws when credentials JSON is invalid", () => {
         expect(() => loadFirebaseConfig({
             credentialsJson: "{bad-json",
         })).toThrow();
     });
 
+    // Test: checks initializes a test project when credentials are missing in test mode. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("initializes a test project when credentials are missing in test mode", () => {
         const { adminMock } = loadFirebaseConfig();
 
@@ -117,6 +125,7 @@ describe("firebase config", () => {
         });
     });
 
+    // Test: checks throws when credentials are missing outside test mode. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("throws when credentials are missing outside test mode", () => {
         expect(() => loadFirebaseConfig({
             nodeEnv: "production",

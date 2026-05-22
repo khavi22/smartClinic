@@ -1,5 +1,7 @@
 # SmartClinic — Premium Full-Stack Clinic & Queue Management Platform
 
+[![codecov](https://codecov.io/gh/khavi22/smartClinic/branch/main/graph/badge.svg)](https://codecov.io/gh/khavi22/smartClinic)
+
 SmartClinic is a state-of-the-art, full-stack clinic management and smart appointment booking application designed to streamline healthcare access. By pairing a robust Node.js backend with an advanced Python Machine Learning wait-time prediction service, SmartClinic enables patients to find local clinics, check live queues, book dynamic appointments, and view real-time, ML-predicted wait times. Simultaneously, it provides clinic admins and medical staff with powerful service, queue triage, and analytical reporting dashboards.
 
 ---
@@ -15,6 +17,116 @@ graph TD
     E -->|Fetch History & Train| D
     E -->|Save Trained Models| F[(Disk Persistence)]
     D -->|Real-Time Sync| A
+```
+
+## Software Architecture (MVC+S)
+
+The SmartClinic platform follows a modular **Model-View-Controller + Services (MVC+S)** localized architecture, ensuring strict separation of concerns and scalability.
+
+```mermaid
+graph TD
+    classDef bnd fill:#fff,stroke:#000,stroke-width:2px,color:#000;
+    classDef box fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+    classDef dash stroke:#000,stroke-width:1px,stroke-dasharray: 5 5;
+
+    %% --- View Layer ---
+    subgraph ViewLayer ["View Layer (Browser)"]
+        HTML["HTML Templates (public/*.html)"]:::box
+        UIJS["Client JS & DOM Logic (public/js/*.js)"]:::box
+    end
+
+    %% --- Controller Layer ---
+    subgraph ControllerLayer ["Controller Layer (Node.js)"]
+        Routes["Express Router (routes/*.js)"]:::box
+        Controllers["Business Controllers (Controllers/*.js)"]:::box
+    end
+
+    %% --- Model/Service Layer ---
+    subgraph ModelLayer ["Model & Service Layer"]
+        Services["Business Services (services/*.js)"]:::box
+        Models["Data Structures (models/*.js)"]:::box
+    end
+
+    %% --- Data & External ---
+    Firestore[(Firebase Firestore)]:::box
+    MLService["Python ML Service (Render)"]:::box
+
+    %% --- Data Flow ---
+    HTML -->|User Interaction| UIJS
+    UIJS -->|API Requests| Routes
+    Routes -->|Dispatch| Controllers
+    Controllers -->|Invoke| Services
+    Services -->|Validation| Models
+    Services -->|CRUD| Firestore
+    Controllers -->|Predict Requests| MLService
+    
+    %% Return Path
+    Firestore -.->|Sync| Services
+    Services -.->|Data| Controllers
+    Controllers -.->|JSON| UIJS
+    UIJS -.->|Render| HTML
+
+    class ViewLayer,ControllerLayer,ModelLayer bnd;
+```
+
+## Documentation 
+
+Comprehensive documentation for SmartClinic is available in the [docs](./docs) directory:
+
+- **System Architecture**: [4+1 Architectural View Model](./docs/architecture/4%2B1%20Architectural%20View%20Model.md)
+- **Project Planning**: [Development Roadmap & Plan](./docs/project-plan/project-plan.md)
+- **Agile/Scrum**: [Product Backlog](./docs/scrum/product-backlog.md) and [Sprint Reports](./docs/scrum/)
+
+## System Deployment Topology
+
+The following UML deployment diagram illustrates the production-grade, multi-cloud architecture of the SmartClinic platform.
+
+```mermaid
+graph TD
+    classDef device fill:#fff,stroke:#000,stroke-width:2px,stroke-dasharray: 5 5,color:#000;
+    classDef env fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+    classDef artifact fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+    
+    %% --- Client Side ---
+    subgraph ClientPC ["<<device>> Client PC"]
+        subgraph BrowserEnv ["<<Execution Environment>> Web Browser"]
+            FrontendArtifact["<<artifact>> Frontend Web App"]
+        end
+    end
+
+    %% --- Backend API ---
+    subgraph AzureNode ["<<device>> Microsoft Azure"]
+        subgraph NodeEnv ["<<Execution Environment>> Node.js"]
+            subgraph HTTPServer ["<<Execution Environment>> HTTP Server"]
+                BackendArtifact["<<artifact>> Backend API Code"]
+            end
+        end
+    end
+
+    %% --- ML Service (Render) ---
+    subgraph RenderNode ["<<device>> Render"]
+        subgraph PythonEnv ["<<Execution Environment>> Python 3.x (Flask)"]
+            MLArtifact["<<artifact>> ML Service (Wait-time Predictor)"]
+        end
+    end
+
+    %% --- Database (Google Cloud) ---
+    subgraph GCPNode ["<<device>> Google Cloud"]
+        subgraph FirebaseEnv ["<<Execution Environment>> Firebase Engine"]
+            FirestoreArtifact["<<artifact>> Firestore Collection"]
+        end
+    end
+
+    %% --- Connections ---
+    BrowserEnv -- "HTTP REST / JSON (Port: 3000)" --> HTTPServer
+    BackendArtifact -- "HTTP REST Request (Port: 443)" --> MLArtifact
+    BackendArtifact -- "Firebase SDK (Port: 443)" --> FirestoreArtifact
+    MLArtifact -- "Firebase Admin SDK (Port: 443)" --> FirestoreArtifact
+
+    %% Apply Classes for UML-like styling
+    class ClientPC,AzureNode,RenderNode,GCPNode device;
+    class BrowserEnv,NodeEnv,HTTPServer,PythonEnv,FirebaseEnv env;
+    class FrontendArtifact,BackendArtifact,MLArtifact,FirestoreArtifact artifact;
 ```
 
 ### 1. Patient Portal

@@ -17,36 +17,44 @@ const clinicService = jest.requireActual("../services/clinicService");
 const { updateClinicSlotCapacity, getStaffUtilisationData } = require("../services/clinicService");
 const { db } = require("../services/config/firebase");
 
+// Suite: groups related coverage for updateClinicSlotCapacity.
 describe("updateClinicSlotCapacity", () => {
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
+    // Test: checks should throw if clinicId is 'default'. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if clinicId is 'default'", async () => {
         await expect(updateClinicSlotCapacity("default", 10))
             .rejects.toThrow("Invalid clinic ID.");
     });
 
+    // Test: checks should throw if clinicId is empty. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if clinicId is empty", async () => {
         await expect(updateClinicSlotCapacity("", 10))
             .rejects.toThrow("Invalid clinic ID.");
     });
 
+    // Test: checks should throw if slotCapacity is a float. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if slotCapacity is a float", async () => {
         await expect(updateClinicSlotCapacity("c1", 10.5))
             .rejects.toThrow("Slot capacity must be a positive integer.");
     });
 
+    // Test: checks should throw if slotCapacity is 0. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if slotCapacity is 0", async () => {
         await expect(updateClinicSlotCapacity("c1", 0))
             .rejects.toThrow("Slot capacity must be a positive integer.");
     });
 
+    // Test: checks should throw if slotCapacity is negative. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if slotCapacity is negative", async () => {
         await expect(updateClinicSlotCapacity("c1", -5))
             .rejects.toThrow("Slot capacity must be a positive integer.");
     });
 
+    // Test: checks should throw if clinic does not exist. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if clinic does not exist", async () => {
         const mockUpdate = jest.fn();
 
@@ -63,6 +71,7 @@ describe("updateClinicSlotCapacity", () => {
         expect(mockUpdate).not.toHaveBeenCalled();
     });
 
+    // Test: checks should update slotCapacity and return clinicId and slotCapacity on success. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should update slotCapacity and return clinicId and slotCapacity on success", async () => {
         const mockUpdate = jest.fn().mockResolvedValue();
 
@@ -82,6 +91,7 @@ describe("updateClinicSlotCapacity", () => {
         expect(result).toEqual({ clinicId: "c1", slotCapacity: 10 });
     });
 
+    // Test: checks should throw if db update fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should throw if db update fails", async () => {
         db.collection.mockReturnValue({
             doc: jest.fn(() => ({
@@ -94,6 +104,7 @@ describe("updateClinicSlotCapacity", () => {
             .rejects.toThrow("DB write failed");
     });
 });
+// Suite: groups related coverage for getStaffUtilisationData.
 describe("getStaffUtilisationData", () => {
     const clinicId = "clinic1";
     const startDate = "2026-04-01";
@@ -111,6 +122,7 @@ describe("getStaffUtilisationData", () => {
     let mockPatientsGet;
     let mockStaffAvailabilityGet;
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         // Clinic doc
         const mockClinicGet = jest.fn().mockResolvedValue({
@@ -162,12 +174,14 @@ describe("getStaffUtilisationData", () => {
         });
     });
 
+    // Test: checks should return the clinic name from Firestore. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should return the clinic name from Firestore", async () => {
         const result = await clinicService.getStaffUtilisationData(clinicId, startDate, endDate);
 
         expect(result.clinicName).toBe("Test Clinic");
     });
 
+    // Test: checks should fall back to 'Clinic' if clinic doc does not exist. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should fall back to 'Clinic' if clinic doc does not exist", async () => {
         db.collection.mockImplementationOnce(() => ({
             doc: jest.fn().mockReturnValue({
@@ -180,12 +194,14 @@ describe("getStaffUtilisationData", () => {
         expect(result.clinicName).toBe("Clinic");
     });
 
+    // Test: checks should return the correct date range. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should return the correct date range", async () => {
         const result = await clinicService.getStaffUtilisationData(clinicId, startDate, endDate);
 
         expect(result.dateRange).toEqual({ startDate, endDate });
     });
 
+    // Test: checks should return a staffList with one entry per approved staff member. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should return a staffList with one entry per approved staff member", async () => {
         const result = await clinicService.getStaffUtilisationData(clinicId, startDate, endDate);
 
@@ -194,12 +210,14 @@ describe("getStaffUtilisationData", () => {
         expect(result.staffList[1].uid).toBe("staff2");
     });
 
+    // Test: checks should return zero totalPatients when queue is empty. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should return zero totalPatients when queue is empty", async () => {
         const result = await clinicService.getStaffUtilisationData(clinicId, startDate, endDate);
 
         expect(result.totalPatients).toBe(0);
     });
 
+    // Test: checks should count patientsHandled per staff member. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should count patientsHandled per staff member", async () => {
         mockPatientsGet.mockResolvedValue({
             forEach: (cb) => [
@@ -218,6 +236,7 @@ describe("getStaffUtilisationData", () => {
         expect(bob.patientsHandled).toBe(2);   // 2 dates × 1 patient
     });
 
+    // Test: checks should count consultationsCompleted only for COMPLETE status. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should count consultationsCompleted only for COMPLETE status", async () => {
         mockPatientsGet.mockResolvedValue({
             forEach: (cb) => [
@@ -233,6 +252,7 @@ describe("getStaffUtilisationData", () => {
         expect(alice.consultationsCompleted).toBe(2); // 2 dates × 1 COMPLETE
     });
 
+    // Test: checks should increment hourlyActivity at the correct hour from updatedAt. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should increment hourlyActivity at the correct hour from updatedAt", async () => {
         mockPatientsGet.mockResolvedValue({
             forEach: (cb) => [
@@ -248,6 +268,7 @@ describe("getStaffUtilisationData", () => {
         expect(alice.hourlyActivity[10]).toBe(0);
     });
 
+    // Test: checks should skip patients with no matching staff in staffMap. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should skip patients with no matching staff in staffMap", async () => {
         mockPatientsGet.mockResolvedValue({
             forEach: (cb) => [
@@ -260,6 +281,7 @@ describe("getStaffUtilisationData", () => {
         expect(result.totalPatients).toBe(0);
     });
 
+    // Test: checks should use addedBy if updatedBy is not present. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should use addedBy if updatedBy is not present", async () => {
         mockPatientsGet.mockResolvedValue({
             forEach: (cb) => [
@@ -274,6 +296,7 @@ describe("getStaffUtilisationData", () => {
         expect(alice.patientsHandled).toBe(2); // 2 dates × 1 patient
     });
 
+    // Test: checks should calculate workloadShare as a percentage of totalPatients. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should calculate workloadShare as a percentage of totalPatients", async () => {
         mockPatientsGet.mockResolvedValue({
             forEach: (cb) => [
@@ -293,6 +316,7 @@ describe("getStaffUtilisationData", () => {
         expect(bob.workloadShare).toBe(25);
     });
 
+    // Test: checks should set workloadShare to 0 for all staff when totalPatients is 0. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should set workloadShare to 0 for all staff when totalPatients is 0", async () => {
         const result = await clinicService.getStaffUtilisationData(clinicId, startDate, endDate);
 
@@ -301,6 +325,7 @@ describe("getStaffUtilisationData", () => {
         });
     });
 
+    // Test: checks should attach availability entries when staff has availability for a date. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should attach availability entries when staff has availability for a date", async () => {
         mockStaffAvailabilityGet.mockResolvedValue({
             exists: true,
@@ -321,6 +346,7 @@ describe("getStaffUtilisationData", () => {
         expect(alice.availability[1]).toEqual({ date: "2026-04-02", start: "09:00", end: "17:00" });
     });
 
+    // Test: checks should leave availability empty when staff doc does not exist. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("should leave availability empty when staff doc does not exist", async () => {
         mockStaffAvailabilityGet.mockResolvedValue({ exists: false });
 

@@ -9,8 +9,12 @@ const ROLE_COLLECTIONS = {
 };
 const SEARCH_COLLECTIONS = [...Object.values(ROLE_COLLECTIONS), "users"];
 
+// Maps an application role to the Firestore collection that stores that role's
+// profile documents.
 const getCollectionNameForRole = (role) => ROLE_COLLECTIONS[role];
 
+// Builds the appointment slot list for a clinic/date, applies clinic operating
+// hours and slot capacity, then marks slots as available/limited/full.
 const getAvailabilityForDate = async (clinicId, dateStr) => {
     let slots = [];
     let slotCapacity = MAX_CAPACITY_PER_SLOT;
@@ -98,6 +102,8 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
     }
 };
 
+// Creates a booked appointment after preventing same-day duplicate bookings
+// for a patient and enforcing the clinic's per-slot capacity.
 const createAppointment = async (
     clinicId,
     dateStr,
@@ -167,6 +173,7 @@ const createAppointment = async (
     }
 };
 
+// Returns every appointment document linked to a patient id.
 const getAppointmentsByPatientId = async (patientId) => {
     try {
         const snapshot = await db
@@ -191,6 +198,7 @@ const getAppointmentsByPatientId = async (patientId) => {
 };
 
 
+// Searches all role/profile collections for a user document by uid.
 const getUserProfileById = async (userId) => {
     for (const collectionName of SEARCH_COLLECTIONS) {
         const doc = await db.collection(collectionName).doc(userId).get();
@@ -203,6 +211,8 @@ const getUserProfileById = async (userId) => {
     return null;
 };
 
+// Stores a role-specific profile and applies the Firebase custom role claim
+// used by protected backend routes.
 const createUserProfile = async (userData, roleData = {}) => {
     const { uid, role } = userData;
     const collectionName = getCollectionNameForRole(role);
@@ -230,6 +240,8 @@ const createUserProfile = async (userData, roleData = {}) => {
     await db.collection(collectionName).doc(uid).set(profileData);
 };
 
+// Searches all role/profile collections for the first profile matching an
+// email address.
 const getUserProfileByEmail = async (email) => {
     const trimmedEmail = String(email || "").trim();
 
@@ -250,6 +262,7 @@ const getUserProfileByEmail = async (email) => {
     return null;
 };
 
+// Marks an appointment as cancelled without deleting the historical record.
 const cancelAppointment = async (appointmentId) => {
     try {
         const bookingRef = db.collection("appointments").doc(appointmentId);
@@ -271,6 +284,7 @@ const cancelAppointment = async (appointmentId) => {
     }
 };
 
+// Checks whether an unused admin code exists for a specific clinic.
 const validateAdminCode = async (adminCode, clinicId) => {
     const snapshot = await db.collection("adminCodes")
         .where("code", "==", adminCode)
@@ -281,6 +295,8 @@ const validateAdminCode = async (adminCode, clinicId) => {
     return !snapshot.empty;
 };
 
+// Copies global service templates into a clinic's services subcollection when
+// a clinic needs an initial catalog.
 const seedClinicDefaultServices = async (clinicId) => {
     try {
         const templatesSnapshot = await db.collection("serviceTemplates").get();
@@ -325,6 +341,8 @@ const seedClinicDefaultServices = async (clinicId) => {
     }
 };
 
+// Creates a local clinic document from a Google Place id with default hours,
+// capacity, and a generated admin code.
 const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
@@ -348,6 +366,8 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
     return { clinicId: placeId, adminCode };
 };
 
+// Returns early when a clinic document exists; otherwise creates the default
+// clinic record needed by booking/admin flows.
 const ensureClinicExists = async ({ clinicId, name, address }) => {
     const doc = await db.collection("clinics").doc(clinicId).get();
 
@@ -364,6 +384,7 @@ const ensureClinicExists = async ({ clinicId, name, address }) => {
     return { success: true, newlyCreated: true };
 };
 
+// Resolves an unused admin code to the clinic it can claim.
 const getClinicIdFromAdminCode = async (adminCode) => {
     const snapshot = await db.collection("clinics")
         .where("adminCode", "==", adminCode)
@@ -378,10 +399,13 @@ const getClinicIdFromAdminCode = async (adminCode) => {
     return snapshot.docs[0].id;
 };
 
+// Legacy staff-code lookup placeholder kept for older controller/test paths.
 const getStaffAssignmentFromCode = async (staffCode) => {
     return null; // Legacy support removed
 };
 
+// Treats the verification code as an admin code and returns the clinic/role
+// payload expected by registration.
 const getClinicIdFromVerificationCode = async (verificationCode) => {
     const adminClinicId = await getClinicIdFromAdminCode(verificationCode);
 
@@ -395,6 +419,8 @@ const getClinicIdFromVerificationCode = async (verificationCode) => {
     return null;
 };
 
+// Links a clinic to the admin uid and marks it active after successful admin
+// registration.
 const claimClinic = async (clinicId, uid) => {
     await db.collection("clinics").doc(clinicId).update({
         adminUid: uid,
@@ -402,6 +428,7 @@ const claimClinic = async (clinicId, uid) => {
     });
 };
 
+// Saves the weekly operating-hours object used by appointment availability.
 const updateClinicOperatingHours = async (clinicId, operatingHours) => {
     await db.collection("clinics").doc(clinicId).update({
         operatingHours,
@@ -409,11 +436,13 @@ const updateClinicOperatingHours = async (clinicId, operatingHours) => {
     });
 };
 
+// Returns a clinic display name for dashboards/emails, with a safe fallback.
 const getClinicNameById = async (clinicId) => {
     const doc = await db.collection("clinics").doc(clinicId).get();
     return doc.exists ? doc.data().clinicName : "Unknown Clinic";
 };
 
+// Deletes all appointments owned by a patient during account deletion.
 const deleteUserAppointments = async (uid) => {
     const appointmentsSnapshot = await db.collection("appointments")
         .where("patientId", "==", uid)
@@ -428,6 +457,7 @@ const deleteUserAppointments = async (uid) => {
     );
 };
 
+// Unclaims clinics managed by an admin who is deleting their account.
 const releaseAdminClinics = async (uid) => {
     const clinicsSnapshot = await db.collection("clinics")
         .where("adminUid", "==", uid)
@@ -447,6 +477,8 @@ const releaseAdminClinics = async (uid) => {
     );
 };
 
+// Removes a user's profile document from every possible role/search
+// collection.
 const deleteUserRoleDocuments = async (uid) => {
     await Promise.all(
         SEARCH_COLLECTIONS.map((collectionName) =>
@@ -455,6 +487,8 @@ const deleteUserRoleDocuments = async (uid) => {
     );
 };
 
+// Creates a pending invitation keyed by normalized email so staff can later
+// register against the clinic.
 const inviteStaffByEmail = async (adminUid, clinicId, email) => {
     const trimmedEmail = email.toLowerCase().trim();
     const existingInvite = await db.collection("clinicInvites").doc(trimmedEmail).get();
@@ -472,12 +506,14 @@ const inviteStaffByEmail = async (adminUid, clinicId, email) => {
     });
 };
 
+// Fetches a staff invitation by normalized email.
 const getInviteByEmail = async (email) => {
     const trimmedEmail = email.toLowerCase().trim();
     const doc = await db.collection("clinicInvites").doc(trimmedEmail).get();
     return doc.exists ? doc.data() : null;
 };
 
+// Sets a staff profile to approved/rejected/removed style states.
 const updateStaffApprovalStatus = async (staffUid, status) => {
     await db.collection("staff").doc(staffUid).update({
         approvalStatus: status,
@@ -485,6 +521,7 @@ const updateStaffApprovalStatus = async (staffUid, status) => {
     });
 };
 
+// Lists staff accounts for a clinic that are still pending admin approval.
 const getPendingStaffByClinic = async (clinicId) => {
     const snapshot = await db.collection("staff")
         .where("clinicId", "==", clinicId)
@@ -498,6 +535,7 @@ const getPendingStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+// Lists approved staff accounts for a clinic.
 const getActiveStaffByClinic = async (clinicId) => {
     const snapshot = await db.collection("staff")
         .where("clinicId", "==", clinicId)
@@ -511,6 +549,7 @@ const getActiveStaffByClinic = async (clinicId) => {
     return staff;
 };
 
+// Marks a staff profile as removed and clears its clinic link.
 const removeStaffFromClinic = async (staffUid) => {
     await db.collection("staff").doc(staffUid).update({
         approvalStatus: "removed",
@@ -519,6 +558,8 @@ const removeStaffFromClinic = async (staffUid) => {
     });
 };
 
+// Deletes a user end-to-end: role cleanup, appointment/clinic/invite cleanup,
+// profile documents, then the Firebase Auth account.
 const deleteUserAccount = async (uid) => {
     const profile = await getUserProfileById(uid);
 
@@ -540,6 +581,7 @@ const deleteUserAccount = async (uid) => {
 
     return profile;
 };
+// Reads one patient profile by uid for appointment emails and queue enrichment.
 async function getPatientProfileById(uid) {
     const doc = await admin.firestore()
         .collection('patients')
@@ -549,6 +591,7 @@ async function getPatientProfileById(uid) {
     return doc.exists ? doc.data() : null;
 }
 
+// Returns all global service templates.
 const getServiceTemplates = async () => {
     const snapshot = await db.collection("serviceTemplates").get();
 
@@ -558,6 +601,8 @@ const getServiceTemplates = async () => {
     }));
 };
 
+// Returns a clinic's services; if none exist, provides one default outpatient
+// consultation so booking screens still have a selectable service.
 const getClinicServices = async (clinicId) => {
     const snapshot = await db
         .collection("clinics")
@@ -582,6 +627,7 @@ const getClinicServices = async (clinicId) => {
     }));
 };
 
+// Adds a service document under a clinic's services subcollection.
 const addClinicService = async (clinicId, data) => {
     const ref = await db
         .collection("clinics")
@@ -597,6 +643,7 @@ const addClinicService = async (clinicId, data) => {
     return ref.id;
 };
 
+// Updates one clinic service and refreshes its updatedAt timestamp.
 const updateClinicService = async (clinicId, serviceId, data) => {
     await db
         .collection("clinics")
@@ -609,6 +656,7 @@ const updateClinicService = async (clinicId, serviceId, data) => {
         });
 };
 
+// Deletes one service from a clinic's services subcollection.
 const deleteClinicService = async (clinicId, serviceId) => {
     await db
         .collection("clinics")
@@ -618,6 +666,7 @@ const deleteClinicService = async (clinicId, serviceId) => {
         .delete();
 };
 
+// Checks whether a clinic already has a service with the same name.
 const serviceExists = async (clinicId, name) => {
     const snapshot = await db
         .collection("clinics")
@@ -639,6 +688,8 @@ const serviceExists = async (clinicId, name) => {
  * @param {string} endDate    - "YYYY-MM-DD"
  * @returns {{ total: number, noShows: number, noShowRate: string, breakdown: Array }}
  */
+// Summarizes scheduled vs missed/cancelled appointments for a clinic and date
+// range, including daily no-show percentages.
 const getNoShowReport = async (clinicId, startDate, endDate) => {
     if (!clinicId || !startDate || !endDate) {
         throw new Error("clinicId, startDate, and endDate are required");
@@ -700,6 +751,8 @@ const getNoShowReport = async (clinicId, startDate, endDate) => {
 };
 
 
+// Summarizes completed appointments by service duration to produce average
+// wait-time style metrics by hour and date.
 const getWaitTimeReport = async (clinicId, startDate, endDate) => {
     if (!clinicId || !startDate || !endDate) {
         throw new Error("clinicId, startDate, and endDate are required");

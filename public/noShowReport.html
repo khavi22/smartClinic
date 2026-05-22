@@ -358,13 +358,8 @@
       // Monitor Auth state change before requesting analytical reads
       firebase.auth().onAuthStateChanged((user) => {
         if (!user) {
-          console.log("No active user session found. Relocating to login panel...");
-          window.location.href = "login.html";
-          return;
-        }
-        
-        console.log("Session verified for UID:", user.uid);
-        loadReport();
+          console.log("No active user session found. Relocating to home page...");
+          window.location.href = "index.html";
         
         // Setup listener hooks after authentication settles
         document.getElementById("dateRange").addEventListener("change", loadReport);

@@ -14,6 +14,8 @@ const firebaseConfig = {
 // Initialize Firebase only if it hasn't been initialized already
 
 
+// Prevents duplicate Firebase initialization when multiple scripts include
+// this shared config file on the same page.
 if(!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
     console.log("Firebase initialized successfully");

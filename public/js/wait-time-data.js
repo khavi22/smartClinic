@@ -15,6 +15,7 @@ const db = firebaseInstance.firestore();
 // ─────────────────────────────────────────────────────────────
 // Wait-time colour coding helpers
 // ─────────────────────────────────────────────────────────────
+// Chooses a color for wait-time severity bands.
 export function waitColor(minutes) {
   if (minutes >= 45) return "#ef4444";   // red   – long wait
   if (minutes >= 20) return "#f59e0b";   // amber – moderate
@@ -24,6 +25,7 @@ export function waitColor(minutes) {
 // ─────────────────────────────────────────────────────────────
 // Rendering Handlers
 // ─────────────────────────────────────────────────────────────
+// Renders summary metrics for the wait-time report.
 export function renderKPIs({ totalCompleted, overallAvg, peakHour, quietHour, longestDay, shortestDay }) {
   const items = [
     { label: "Appointments Analysed", value: totalCompleted.toLocaleString(), icon: "📋", color: "blue"  },
@@ -43,6 +45,7 @@ export function renderKPIs({ totalCompleted, overallAvg, peakHour, quietHour, lo
   `).join("");
 }
 
+// Renders average wait time by hour as a vertical bar chart.
 export function renderTimeOfDayChart(byTimeOfDay) {
   const fig = document.getElementById("tod-chart");
   if (!byTimeOfDay.length) {
@@ -70,6 +73,7 @@ export function renderTimeOfDayChart(byTimeOfDay) {
     </ul>`;
 }
 
+// Renders average wait time by date as a vertical bar chart.
 export function renderDailyChart(byDate) {
   const fig = document.getElementById("daily-chart");
   if (!byDate.length) {
@@ -97,6 +101,7 @@ export function renderDailyChart(byDate) {
     </ul>`;
 }
 
+// Renders average wait time by service type as horizontal meter bars.
 export function renderServiceBreakdown(byService) {
   const el = document.getElementById("service-bars");
   if (!byService.length) {
@@ -124,6 +129,7 @@ export function renderServiceBreakdown(byService) {
     </dl>`;
 }
 
+// Renders the appointment detail table used below the report charts.
 export function renderAppointmentsTable(appointments) {
   const tbody = document.getElementById("appt-tbody");
   if (!appointments.length) {
@@ -147,11 +153,13 @@ export function renderAppointmentsTable(appointments) {
 // ─────────────────────────────────────────────────────────────
 // Layout States Handler
 // ─────────────────────────────────────────────────────────────
+// Toggles the loading state while report data is being fetched.
 export function showLoader(on) {
   document.getElementById("loader").hidden       = !on;
   document.getElementById("report-body").hidden  =  on;
 }
 
+// Replaces the report body with a readable error message.
 export function showError(msg) {
   document.getElementById("loader").hidden       = true;
   document.getElementById("report-body").hidden  = false;
@@ -165,6 +173,7 @@ export function showError(msg) {
 // ─────────────────────────────────────────────────────────────
 // Export Methods
 // ─────────────────────────────────────────────────────────────
+// Downloads the current wait-time report data as CSV.
 export function exportCSV() {
   if (!globalReportData) return;
 
@@ -216,6 +225,7 @@ export function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
+// Opens a printable HTML version of the wait-time report for PDF export.
 export function exportPDF() {
   if (!globalReportData) { window.print(); return; }
 
@@ -344,6 +354,8 @@ export function exportPDF() {
 // ─────────────────────────────────────────────────────────────
 // Main Load Function  (mirrors loadNoShowReport)
 // ─────────────────────────────────────────────────────────────
+// Loads the current admin's clinic appointments, filters them by range, and
+// aggregates wait-time report data.
 export async function loadWaitTimeReport(range) {
   // 1. Verify user session
   const currentUser = firebase.auth().currentUser;
@@ -419,6 +431,8 @@ export async function loadWaitTimeReport(range) {
 // ─────────────────────────────────────────────────────────────
 // Aggregation Engine
 // ─────────────────────────────────────────────────────────────
+// Turns raw appointment records into report metrics, chart series, and table
+// rows.
 function aggregateWaitData(appointments) {
   const totalCompleted = appointments.length;
 
@@ -503,6 +517,7 @@ function aggregateWaitData(appointments) {
 // ─────────────────────────────────────────────────────────────
 // Utility helpers
 // ─────────────────────────────────────────────────────────────
+// Normalizes Firestore/date/string values into YYYY-MM-DD.
 function normaliseDate(raw) {
   if (!raw) return "";
   if (typeof raw.toDate === "function") return raw.toDate().toISOString().slice(0, 10);
@@ -510,11 +525,13 @@ function normaliseDate(raw) {
   return String(raw).slice(0, 10);
 }
 
+// Formats a YYYY-MM-DD string for table display.
 function formatDate(dateStr) {
   if (!dateStr) return "–";
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-ZA", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+// Converts a 24-hour time slot into a readable 12-hour label.
 function formatHour(timeSlot) {
   if (!timeSlot) return "–";
   const h = parseInt(timeSlot.split(":")[0]);
@@ -524,6 +541,7 @@ function formatHour(timeSlot) {
   return `${hour12}:00 ${suffix}`;
 }
 
+// Escapes dynamic table/export text before inserting it into HTML.
 function escHtml(str) {
   return String(str ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

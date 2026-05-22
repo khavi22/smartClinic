@@ -23,16 +23,20 @@ const {
 } = require("../services/SetAvailabilityService");
 
 //mock request and response of objects
+// Suite: groups related coverage for Set availability Controller.
 describe("Set availability Controller",function(){
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.spyOn(console, "error").mockImplementation(() => {});
     });
 
+    // Cleanup: restores mocks so one test cannot leak state into the next.
     afterEach(() => {
         console.error.mockRestore();
     });
     let mockRes;
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         mockRes = {
             status: jest.fn().mockReturnThis(),
@@ -40,8 +44,10 @@ describe("Set availability Controller",function(){
         };
     });
 
+    // Suite: groups related coverage for set Availability.
     describe("set Availability" ,  function(){
 
+        // Test: checks should save availability with valid data e.g ,date,startTime,endTime. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should save availability with valid data e.g ,date,startTime,endTime",async function(){
 
             SaveAvailability.mockResolvedValue({ success: true });
@@ -60,6 +66,7 @@ describe("Set availability Controller",function(){
 
         })
 
+        // Test: checks should return status 400 if missing dates. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 400 if missing dates",async function(){
              const mockReq = {
                 body : {
@@ -76,6 +83,7 @@ describe("Set availability Controller",function(){
             });
         })
 
+        // Test: checks should return status 400 if missing startTime. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 400 if missing startTime",async function(){
              const mockReq = {
                 body : {
@@ -89,6 +97,7 @@ describe("Set availability Controller",function(){
             expect(mockRes.status).toHaveBeenCalledWith(400);
         });
 
+        // Test: checks should return status 500 if SaveAvailability throws an error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 500 if SaveAvailability throws an error", async function(){
             SaveAvailability.mockRejectedValue(new Error("Database error"));
             const mockReq = {
@@ -104,7 +113,9 @@ describe("Set availability Controller",function(){
             expect(mockRes.json).toHaveBeenCalledWith({ error: "Database error" });
         });
     });
+    // Suite: groups related coverage for fetchAvailability.
     describe("fetchAvailability" , function(){
+         // Test: checks should return availability staff data. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
          it("should return availability staff data  ",async function(){
             getAvailability.mockResolvedValue({
                  "2026-04-27": {
@@ -126,6 +137,7 @@ describe("Set availability Controller",function(){
             });
          });
 
+        // Test: checks should return empty object if no availability set for that staff_uid. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return empty object if no availability set for that staff_uid",async function(){
                 getAvailability.mockResolvedValue({});
 
@@ -136,6 +148,7 @@ describe("Set availability Controller",function(){
                 });
         });
 
+        // Test: checks should return status 500 if getAvailability throws an error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 500 if getAvailability throws an error", async function(){
             getAvailability.mockRejectedValue(new Error("Fetch failed"));
             const mockReq = { params : { staffCode: "STF-330AFB" } };
@@ -148,7 +161,9 @@ describe("Set availability Controller",function(){
 
 
        
+        // Suite: groups related coverage for deleteAvailability.
         describe("deleteAvailability" , function(){
+            // Test: checks should delete availability staff data if staff_uid exists,for specific date. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
             it("should delete availability staff data  if staff_uid exists,for specific date ",async function(){
                 removeAvailability.mockResolvedValue({ success: true });
                   const mockReq = {
@@ -161,6 +176,7 @@ describe("Set availability Controller",function(){
             expect(mockRes.json).toHaveBeenCalledWith({ success: true });
             });
 
+            // Test: checks should not delete availability data set for that staff_uid number that is not found,shoudl return status 500. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
             it("should not delete availability data set for that staff_uid number that is not found,shoudl return status 500",async function(){
                      removeAvailability.mockRejectedValue(
                         new Error("Staff member not found")
@@ -183,7 +199,9 @@ describe("Set availability Controller",function(){
         
        });
 
+    // Suite: groups related coverage for fetchClinicName.
     describe("fetchClinicName", function(){
+        // Test: checks should return status 200 with clinic name if found. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 200 with clinic name if found", async function(){
             getClinicName.mockResolvedValue("Groote Schuur Hospital");
             const mockReq = { params : { uid: "STF-330AFB" } };
@@ -191,6 +209,7 @@ describe("Set availability Controller",function(){
             expect(mockRes.json).toHaveBeenCalledWith({ clinicName: "Groote Schuur Hospital" });
         });
 
+        // Test: checks should return status 404 if clinic not found. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 404 if clinic not found", async function(){
             getClinicName.mockResolvedValue(null);
             const mockReq = { params : { uid: "STF-330AFB" } };
@@ -199,6 +218,7 @@ describe("Set availability Controller",function(){
             expect(mockRes.json).toHaveBeenCalledWith({ error: "Clinic not found" });
         });
 
+        // Test: checks should return status 500 if getClinicName throws an error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return status 500 if getClinicName throws an error", async function(){
             getClinicName.mockRejectedValue(new Error("Clinic fetch error"));
             const mockReq = { params : { uid: "STF-330AFB" } };

@@ -1,6 +1,9 @@
 const firebaseService = require("../services/firebaseService");
 const { admin } = require("../services/config/firebase");
 
+// GET /api/user/login/:userId
+// Looks up the user's stored profile, determines their role, and tells the
+// frontend which dashboard or signup page to open next.
 exports.checkUserLogin = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -70,6 +73,9 @@ exports.checkUserLogin = async (req, res) => {
     }
 };
 
+// POST /api/user/register
+// Creates the role-specific Firestore profile for a patient, admin, or staff
+// user, including admin code validation and staff invitation checks.
 exports.registerUser = async (req, res) => {
     try {
         const {
@@ -185,7 +191,7 @@ exports.registerUser = async (req, res) => {
             }
 
             roleData = { clinicId: invite.clinicId, approvalStatus: "pending" };
-            redirect = "/login.html"; // Redirect to login to show pending message
+            redirect = "/index.html"; // Redirect to home to show pending message
             message = "Staff account created successfully. Awaiting admin approval.";
 
             await firebaseService.createUserProfile(userData, roleData);
@@ -221,6 +227,9 @@ exports.registerUser = async (req, res) => {
 
 exports.createUserProfile = exports.registerUser;
 
+// DELETE /api/user/account
+// Verifies the Firebase token, then removes the user's auth account plus any
+// related role data/appointments/clinic ownership handled by the service.
 exports.deleteUserAccount = async (req, res) => {
     try {
         const authHeader = req.headers.authorization || "";

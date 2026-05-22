@@ -5,10 +5,13 @@ const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED"];
 const LOCKED_QUEUE_STATUSES = ["COMPLETE", "MISSED"];
 const MISSED_GRACE_PERIOD_MINUTES = 15;
 
+// Returns today's date in YYYY-MM-DD format for queue document ids.
 const getTodayDate = () => {
   return new Date().toLocaleDateString("en-CA");
 };
 
+// Builds the Firestore reference for one clinic's queueItems subcollection on
+// a specific date.
 const getQueueItemsRef = (clinicId, date = getTodayDate()) => {
   return db
     .collection("clinics")
@@ -19,6 +22,8 @@ const getQueueItemsRef = (clinicId, date = getTodayDate()) => {
 };
 
 
+// Calculates appointment slot availability for a clinic/date using operating
+// hours, slot capacity, and already-booked appointments.
 const getAvailabilityForDate = async (clinicId, dateStr) => {
   let slots = [];
   let slotCapacity = MAX_CAPACITY_PER_SLOT;
@@ -95,6 +100,7 @@ const getAvailabilityForDate = async (clinicId, dateStr) => {
   return slots;
 };
 
+// Chooses the best human-readable patient name from a profile object.
 const getPatientDisplayName = (patient) => {
   if (!patient) {
     return null;
@@ -107,6 +113,8 @@ const getPatientDisplayName = (patient) => {
     null;
 };
 
+// Reads a patient profile so queue items can show names/emails instead of only
+// patient ids.
 const getPatientProfile = async (patientId) => {
   if (!patientId) {
     return null;
@@ -116,6 +124,8 @@ const getPatientProfile = async (patientId) => {
   return patientDoc.exists ? patientDoc.data() : null;
 };
 
+// Adds patient name/email/phone details to a queue item when the queue item
+// only contains a patientId.
 const enrichQueueItemWithPatient = async (queueItem) => {
   if (queueItem.patientName || queueItem.fullName || !queueItem.patientId) {
     return queueItem;
@@ -132,6 +142,8 @@ const enrichQueueItemWithPatient = async (queueItem) => {
   };
 };
 
+// Parses the queue item's appointment slot into a JavaScript Date for missed
+// appointment and same-day availability checks.
 const getQueueItemStartTime = (queueItem) => {
   const date = queueItem.date || getTodayDate();
   const rawTime = queueItem.appointmentTime || queueItem.timeSlot || queueItem.time || "";
@@ -144,6 +156,7 @@ const getQueueItemStartTime = (queueItem) => {
   return new Date(`${date}T${match[1]}:${match[2]}:00`);
 };
 
+// Determines whether a waiting patient has passed the missed grace period.
 const shouldMarkQueueItemMissed = (queueItem, now = new Date()) => {
   if (queueItem.status !== "WAITING") {
     return false;
@@ -158,6 +171,8 @@ const shouldMarkQueueItemMissed = (queueItem, now = new Date()) => {
   return now.getTime() - startTime.getTime() >= MISSED_GRACE_PERIOD_MINUTES * 60 * 1000;
 };
 
+// Converts inputs like "09:15" or "09:00 - 10:00" into the one-hour slot
+// format used throughout appointment and queue storage.
 const normalizeToHourSlot = (value) => {
   const text = String(value || "").trim();
 
@@ -182,6 +197,8 @@ const normalizeToHourSlot = (value) => {
   return `${start} - ${end}`;
 };
 
+// Keeps staff from booking/rescheduling into a slot that has already passed
+// beyond the missed grace period.
 const isSlotStillUsableToday = (date, slotTime, now = new Date()) => {
   const startTime = getQueueItemStartTime({
     date,
@@ -195,6 +212,8 @@ const isSlotStillUsableToday = (date, slotTime, now = new Date()) => {
   return now.getTime() - startTime.getTime() < MISSED_GRACE_PERIOD_MINUTES * 60 * 1000;
 };
 
+// Counts manual queue entries in a slot so availability includes both booked
+// appointments and walk-ins.
 const getQueueManualCountForSlot = async (clinicId, date, slotTime, excludeQueueItemId = null) => {
   const snapshot = await getQueueItemsRef(clinicId, date)
     .where("timeSlot", "==", slotTime)
@@ -217,6 +236,8 @@ const getQueueManualCountForSlot = async (clinicId, date, slotTime, excludeQueue
   return manualQueueCount;
 };
 
+// Combines appointment availability with manual queue counts to produce the
+// real available capacity for each queue slot.
 const getQueueSlotAvailability = async (clinicId, date, excludeQueueItemId = null) => {
   const slots = await getAvailabilityForDate(clinicId, date);
 
@@ -233,6 +254,7 @@ const getQueueSlotAvailability = async (clinicId, date, excludeQueueItemId = nul
   }));
 };
 
+// Returns only queue slots that still have capacity and are still usable today.
 const getAvailableQueueSlots = async (clinicId, date = getTodayDate(), excludeQueueItemId = null) => {
   const slots = await getQueueSlotAvailability(clinicId, date, excludeQueueItemId);
   const now = new Date();
@@ -244,6 +266,8 @@ const getAvailableQueueSlots = async (clinicId, date = getTodayDate(), excludeQu
   );
 };
 
+// Validates a requested slot or chooses the first open slot when no valid time
+// was requested.
 const resolveAvailableQueueSlot = async (clinicId, date, requestedTime, excludeQueueItemId = null) => {
   const requestedSlot = normalizeToHourSlot(requestedTime);
   const slots = await getQueueSlotAvailability(clinicId, date, excludeQueueItemId);
@@ -275,6 +299,8 @@ const resolveAvailableQueueSlot = async (clinicId, date, requestedTime, excludeQ
   return availableSlots[0].time;
 };
 
+// Automatically marks waiting queue items as MISSED when their appointment
+// time is too far in the past.
 const markOverdueQueueItemsMissed = async (clinicId) => {
   const today = new Date().toISOString().split("T")[0];
   const queueItemsRef = getQueueItemsRef(clinicId, today);
@@ -302,6 +328,8 @@ const markOverdueQueueItemsMissed = async (clinicId) => {
   return updates.length;
 };
 
+// Sorts queue items by priority, appointment time, then queue number so staff
+// see the intended serving order.
 const sortQueueItems = (patients) => {
   patients.sort((a, b) => {
     if ((a.priority || 0) !== (b.priority || 0)) {
@@ -316,6 +344,8 @@ const sortQueueItems = (patients) => {
   });
 };
 
+// Loads today's queue for a clinic, updates overdue missed patients, enriches
+// patient details, sorts the entries, and groups them by status.
 const getQueue = async (clinicId) => {
   const today = getTodayDate();
   await markOverdueQueueItemsMissed(clinicId);
@@ -349,6 +379,8 @@ const getQueue = async (clinicId) => {
   return queue;
 };
 
+// Moves a waiting queue item into IN_CONSULTATION while ensuring the staff
+// member does not already have another active consultation.
 const startConsultation = async (clinicId, queueItemId, staffId) => {
   const today = getTodayDate();
   const queueItemsRef = getQueueItemsRef(clinicId, today);
@@ -388,6 +420,8 @@ const startConsultation = async (clinicId, queueItemId, staffId) => {
   return enrichQueueItemWithPatient({ queueItemId, ...patient, ...updatedFields });
 };
 
+// Completes an in-consultation queue item, calculates actual duration, and
+// returns both the completed patient and the next waiting patient.
 const completeConsultation = async (clinicId, queueItemId, staffId) => {
   const queueItemsRef = getQueueItemsRef(clinicId);
   const queueItemRef = queueItemsRef.doc(queueItemId);
@@ -452,6 +486,7 @@ const completeConsultation = async (clinicId, queueItemId, staffId) => {
   return { completed, nextPatient };
 };
 
+// Adds a manual/walk-in queue item after resolving a valid open slot.
 const addQueueItem = async (clinicId, queueData) => {
   const today = getTodayDate();
   const patientName = String(queueData.patientName || "").trim();
@@ -489,6 +524,8 @@ const addQueueItem = async (clinicId, queueData) => {
   return { queueItemId: docRef.id, ...newQueueItem };
 };
 
+// Updates a queue item status, records consultation timestamps/duration when
+// needed, and mirrors complete/missed states to linked appointments.
 const updateQueueItemStatus = async (clinicId, queueItemId, status, staffId) => {
   if (!QUEUE_STATUSES.includes(status)) {
     throw new Error("Invalid queue status");
@@ -553,6 +590,8 @@ const updateQueueItemStatus = async (clinicId, queueItemId, status, staffId) => 
   return enrichQueueItemWithPatient({ queueItemId, ...queueItem, ...updatedFields });
 };
 
+// Moves a waiting queue item to another open slot and updates the linked
+// appointment time when present.
 const rescheduleQueueItem = async (clinicId, queueItemId, timeSlot, staffId) => {
   const queueItemRef = getQueueItemsRef(clinicId).doc(queueItemId);
   const queueItemDoc = await queueItemRef.get();
@@ -592,6 +631,7 @@ const rescheduleQueueItem = async (clinicId, queueItemId, timeSlot, staffId) => 
   });
 };
 
+// Deletes one queue item from today's queue and returns the removed data.
 const removeQueueItem = async (clinicId, queueItemId) => {
   const queueItemRef = getQueueItemsRef(clinicId).doc(queueItemId);
   const queueItemDoc = await queueItemRef.get();
@@ -604,6 +644,8 @@ const removeQueueItem = async (clinicId, queueItemId) => {
   return { queueItemId, ...queueItemDoc.data() };
 };
 
+// Converts today's booked appointments into queue items, skipping any
+// appointment that already has a queue item.
 const addTodaysAppointmentsToQueue = async (clinicId) => {
   const today = getTodayDate();
 

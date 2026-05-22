@@ -5,7 +5,7 @@ let charts = {};
 
 // ── AUTH ─────────────────────────────────────────────────
 firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) { window.location.href = "login.html"; return; }
+    if (!user) { window.location.href = "index.html"; return; }
 
     try {
         const idToken = await user.getIdToken();
@@ -30,6 +30,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 });
 
 // ── DEFAULTS ─────────────────────────────────────────────
+// Sets the report date range to the last 30 days by default.
 function initDefaultDates() {
     const today = new Date();
     const monthAgo = new Date();
@@ -39,6 +40,7 @@ function initDefaultDates() {
 }
 
 // ── STAFF FILTER DROPDOWN ────────────────────────────────
+// Loads approved staff members into the optional staff filter dropdown.
 async function loadStaffFilter() {
     if (!currentClinicId) return;
     try {
@@ -64,6 +66,8 @@ async function loadStaffFilter() {
 // ── RUN REPORT ───────────────────────────────────────────
 
 
+// Requests the staff utilisation report for the selected date range and
+// applies the optional staff filter before rendering.
 async function runReport() {
   console.log("runReport fired", currentClinicId);
     const startDate = document.getElementById("startDate").value;
@@ -117,6 +121,7 @@ async function runReport() {
 }
 document.getElementById("runBtn").addEventListener("click", runReport);
 // ── RENDER ───────────────────────────────────────────────
+// Reveals the report area and coordinates all report visualizations.
 function renderReport(data, startDate, endDate) {
     document.getElementById("emptyState").style.display = "none";
     document.getElementById("reportContent").style.display = "block";
@@ -132,6 +137,7 @@ function renderReport(data, startDate, endDate) {
 }
 
 // ── KPIs ─────────────────────────────────────────────────
+// Calculates and renders top-level staff workload metrics.
 function renderKPIs(data) {
     const total = data.totalPatients;
     const staff = data.staffList;
@@ -172,6 +178,7 @@ function renderKPIs(data) {
 }
 
 // ── BAR CHART ────────────────────────────────────────────
+// Draws the patients-handled vs completed-consultations bar chart.
 function renderBarChart(data) {
     if (charts.bar) charts.bar.destroy();
     const ctx = document.getElementById("patientsBarChart").getContext("2d");
@@ -211,6 +218,7 @@ function renderBarChart(data) {
 }
 
 // ── DONUT CHART ──────────────────────────────────────────
+// Draws workload share as a donut chart across staff members.
 function renderDonutChart(data) {
     if (charts.donut) charts.donut.destroy();
     const ctx = document.getElementById("workloadDonutChart").getContext("2d");
@@ -241,6 +249,7 @@ function renderDonutChart(data) {
 }
 
 // ── HEATMAP ──────────────────────────────────────────────
+// Renders hourly staff activity as a heatmap grid.
 function renderHeatmap(data) {
     const wrap = document.getElementById("heatmapWrap");
     if (!data.staffList.length) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">No data</p>'; return; }
@@ -267,6 +276,7 @@ function renderHeatmap(data) {
     wrap.innerHTML = html;
 }
 
+// Converts heatmap intensity into an RGB color between low and high activity.
 function interpolateColor(t) {
     if (t === 0) return "#e2e6f0";
     const r = Math.round(37 + (220 - 37) * (1 - t));
@@ -276,6 +286,7 @@ function interpolateColor(t) {
 }
 
 // ── TABLE ────────────────────────────────────────────────
+// Renders the staff table and wires its search filter.
 function renderTable(staffList) {
     buildTableRows(staffList);
 
@@ -286,6 +297,7 @@ function renderTable(staffList) {
     });
 }
 
+// Builds the staff table rows and calculates per-row workload status labels.
 function buildTableRows(staffList) {
     const tbody = document.getElementById("staffTableBody");
 
@@ -339,6 +351,7 @@ function buildTableRows(staffList) {
 // ── CSV EXPORT ───────────────────────────────────────────
 document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
 
+// Downloads the current staff utilisation report as a CSV file.
 function exportCSV() {
     if (!reportData) return;
     const { staffList, dateRange, clinicName } = reportData;
@@ -374,6 +387,7 @@ function exportCSV() {
 // ── PDF EXPORT ───────────────────────────────────────────
 document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
 
+// Generates a landscape PDF version of the current staff utilisation report.
 async function exportPDF() {
     if (!reportData) return;
     const btn = document.getElementById("exportPdfBtn");
@@ -475,6 +489,7 @@ async function exportPDF() {
 }
 
 // ── UTILS ────────────────────────────────────────────────
+// Formats report dates for headings and exported files.
 function formatDate(str) {
     return new Date(str).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
 }

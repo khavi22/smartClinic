@@ -53,17 +53,22 @@ function createLoopQuery(snapshot) {
     return query;
 }
 
+// Suite: groups related coverage for firebaseService.
 describe("firebaseService", () => {
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.clearAllMocks();
         jest.spyOn(console, "error").mockImplementation(() => {});
     });
 
+    // Cleanup: restores mocks so one test cannot leak state into the next.
     afterEach(() => {
         console.error.mockRestore();
     });
 
+    // Suite: groups related coverage for availability and appointments.
     describe("availability and appointments", () => {
+        // Test: checks filters slots by clinic operating hours. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("filters slots by clinic operating hours", async () => {
             const clinicGet = jest.fn()
                 .mockResolvedValueOnce({
@@ -93,6 +98,7 @@ describe("firebaseService", () => {
             expect(result[2].time).toBe("11:00 - 12:00");
         });
 
+        // Test: checks returns empty availability when clinic is closed. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns empty availability when clinic is closed", async () => {
             const clinicGet = jest.fn().mockResolvedValue({
                 exists: true,
@@ -111,6 +117,7 @@ describe("firebaseService", () => {
             expect(result).toEqual([]);
         });
 
+        // Test: checks returns default availability when no clinic filter is applied. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns default availability when no clinic filter is applied", async () => {
             const appointmentsQuery = createLoopQuery({ empty: true, forEach: jest.fn() });
 
@@ -127,6 +134,7 @@ describe("firebaseService", () => {
             expect(appointmentsQuery.where).not.toHaveBeenCalledWith("clinicId", "==", "default");
         });
 
+        // Test: checks updates clinic operating hours. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("updates clinic operating hours", async () => {
             const update = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -141,6 +149,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks creates an appointment. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("creates an appointment", async () => {
         const duplicateQuery = createLoopQuery({ empty: true });
         const capacityQuery = createLoopQuery({ size: 0 });
@@ -172,6 +181,7 @@ describe("firebaseService", () => {
         expect(add).toHaveBeenCalled();
     });
 
+        // Test: checks returns appointments by patient id. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns appointments by patient id", async () => {
             const query = createLoopQuery({
                 forEach: (callback) => {
@@ -185,6 +195,7 @@ describe("firebaseService", () => {
             expect(result).toEqual([{ id: "appt-1", patientId: "patient-1" }]);
         });
 
+        // Test: checks cancels an appointment. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("cancels an appointment", async () => {
             const update = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -201,6 +212,7 @@ describe("firebaseService", () => {
             }));
         });
 
+        // Test: checks marks a slot as limited and ignores unmatched appointments. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("marks a slot as limited and ignores unmatched appointments", async () => {
             const clinicGet = jest.fn().mockResolvedValue({ exists: false });
             const appointmentsQuery = createLoopQuery({
@@ -234,6 +246,7 @@ describe("firebaseService", () => {
             expect(slot.status).toBe("limited");
         });
 
+        // Test: checks throws when a duplicate appointment already exists. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("throws when a duplicate appointment already exists", async () => {
             const duplicateQuery = createLoopQuery({ empty: false });
             const appointmentsRef = {
@@ -248,6 +261,7 @@ describe("firebaseService", () => {
             ).rejects.toThrow("You already have a booking for this day.");
         });
 
+        // Test: checks throws when the appointment slot is full. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("throws when the appointment slot is full", async () => {
             const duplicateQuery = createLoopQuery({ empty: true });
             const capacityQuery  = createLoopQuery({ size: 10 });
@@ -277,6 +291,7 @@ describe("firebaseService", () => {
             ).rejects.toThrow("This slot is full.");
         });
 
+        // Test: checks uses clinic slot capacity when checking appointment fullness. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("uses clinic slot capacity when checking appointment fullness", async () => {
             const duplicateQuery = createLoopQuery({ empty: true });
             const capacityQuery = createLoopQuery({ size: 5 });
@@ -306,6 +321,7 @@ describe("firebaseService", () => {
             ).rejects.toThrow("This slot is full.");
         });
 
+      // Test: checks creates a rescheduled appointment without duplicate check and uses defaults. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
       it("creates a rescheduled appointment without duplicate check and uses defaults", async () => {
         const capacityQuery = createLoopQuery({ size: 0 });
         const add = jest.fn().mockResolvedValue({ id: "appt-2" });
@@ -346,6 +362,7 @@ describe("firebaseService", () => {
         expect(appointmentsRef.where).toHaveBeenCalledTimes(1);
     });
 
+        // Test: checks should throw error if db fails during availability check. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should throw error if db fails during availability check", async () => {
             const clinicGet = jest.fn().mockResolvedValue({ exists: false });
             const appointmentsQuery = createLoopQuery({ empty: true, forEach: jest.fn() });
@@ -364,6 +381,7 @@ describe("firebaseService", () => {
             await expect(getAvailabilityForDate("c1", "d1")).rejects.toThrow("Avail Fail");
         });
 
+        // Test: checks throws if getting appointments by patient id fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("throws if getting appointments by patient id fails", async () => {
             const query = createLoopQuery({ forEach: jest.fn() });
             query.get.mockRejectedValue(new Error("Patient lookup fail"));
@@ -374,7 +392,9 @@ describe("firebaseService", () => {
     });
 
     // ── getPatientProfileById ─────────────────────────────────────────────────
+    // Suite: groups related coverage for getPatientProfileById.
     describe("getPatientProfileById", () => {
+        // Test: checks returns patient data when patient exists. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns patient data when patient exists", async () => {
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({
@@ -401,6 +421,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks returns null when patient does not exist. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns null when patient does not exist", async () => {
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({
@@ -414,6 +435,7 @@ describe("firebaseService", () => {
         });
     });
 
+    // Suite: groups related coverage for report helpers.
     describe("report helpers", () => {
         function appointmentSnapshot(appointments) {
             return {
@@ -434,6 +456,7 @@ describe("firebaseService", () => {
             return query;
         }
 
+        // Test: checks builds a no-show report with totals and daily breakdown. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("builds a no-show report with totals and daily breakdown", async () => {
             const query = mockAppointmentsQuery([
                 { date: "2026-05-01", status: "booked" },
@@ -470,6 +493,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks builds an empty no-show report when there are no appointments. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("builds an empty no-show report when there are no appointments", async () => {
             mockAppointmentsQuery([]);
 
@@ -483,6 +507,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks requires clinic and date range for no-show reports. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("requires clinic and date range for no-show reports", async () => {
             await expect(
                 getNoShowReport("", "2026-05-01", "2026-05-31")
@@ -497,6 +522,7 @@ describe("firebaseService", () => {
             ).rejects.toThrow("clinicId, startDate, and endDate are required");
         });
 
+        // Test: checks builds wait-time report summaries by hour and date. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("builds wait-time report summaries by hour and date", async () => {
             const query = mockAppointmentsQuery([
                 {
@@ -572,6 +598,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks builds an empty wait-time report when no appointments completed. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("builds an empty wait-time report when no appointments completed", async () => {
             mockAppointmentsQuery([
                 { date: "2026-05-01", status: "booked", serviceDuration: 30, timeSlot: "09:00" }
@@ -587,6 +614,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks requires clinic and date range for wait-time reports. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("requires clinic and date range for wait-time reports", async () => {
             await expect(
                 getWaitTimeReport("", "2026-05-01", "2026-05-31")
@@ -602,7 +630,9 @@ describe("firebaseService", () => {
         });
     });
 
+    // Suite: groups related coverage for profile helpers.
     describe("profile helpers", () => {
+        // Test: checks creates a patient profile and custom claim. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("creates a patient profile and custom claim", async () => {
             const set = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -626,6 +656,7 @@ describe("firebaseService", () => {
             }));
         });
 
+        // Test: checks creates a staff profile. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("creates a staff profile", async () => {
             const set = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -655,6 +686,7 @@ describe("firebaseService", () => {
             }));
         });
 
+        // Test: checks returns unsupported role error for unknown role. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns unsupported role error for unknown role", async () => {
             await expect(createUserProfile({
                 uid: "u1",
@@ -665,6 +697,7 @@ describe("firebaseService", () => {
             })).rejects.toThrow("Unsupported role");
         });
 
+        // Test: checks gets user profile by id across collections. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("gets user profile by id across collections", async () => {
             db.collection.mockImplementation((name) => ({
                 doc: jest.fn(() => ({
@@ -682,6 +715,7 @@ describe("firebaseService", () => {
             expect(result).toEqual({ uid: "u1", role: "admin" });
         });
 
+        // Test: checks returns null when no user profile exists by id. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns null when no user profile exists by id", async () => {
             db.collection.mockImplementation(() => ({
                 doc: jest.fn(() => ({
@@ -692,6 +726,7 @@ describe("firebaseService", () => {
             await expect(getUserProfileById("missing")).resolves.toBeNull();
         });
 
+        // Test: checks gets user profile by email across collections. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("gets user profile by email across collections", async () => {
             db.collection.mockImplementation((name) => ({
                 where: jest.fn(() => ({
@@ -707,10 +742,12 @@ describe("firebaseService", () => {
             expect(result).toEqual({ uid: "u2", role: "staff" });
         });
 
+        // Test: checks returns null when email is empty. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns null when email is empty", async () => {
             await expect(getUserProfileByEmail("")).resolves.toBeNull();
         });
 
+        // Test: checks returns null when no profile exists for email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns null when no profile exists for email", async () => {
             db.collection.mockImplementation(() => ({
                 where: jest.fn(() => ({
@@ -721,6 +758,7 @@ describe("firebaseService", () => {
             await expect(getUserProfileByEmail("missing@example.com")).resolves.toBeNull();
         });
 
+        // Test: checks gets clinic name by id. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("gets clinic name by id", async () => {
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({
@@ -731,6 +769,7 @@ describe("firebaseService", () => {
             await expect(getClinicNameById("clinic-1")).resolves.toBe("Smart Clinic");
         });
 
+        // Test: checks returns unknown clinic name when clinic is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns unknown clinic name when clinic is missing", async () => {
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({
@@ -742,7 +781,9 @@ describe("firebaseService", () => {
         });
     });
 
+    // Suite: groups related coverage for clinic helpers.
     describe("clinic helpers", () => {
+        // Test: checks validates an admin code. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("validates an admin code", async () => {
             const query = createLoopQuery({ empty: false });
             db.collection.mockReturnValue(query);
@@ -750,6 +791,7 @@ describe("firebaseService", () => {
             await expect(validateAdminCode("ADM-1", "clinic-1")).resolves.toBe(true);
         });
 
+        // Test: checks returns false when admin code is invalid. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns false when admin code is invalid", async () => {
             const query = createLoopQuery({ empty: true });
             db.collection.mockReturnValue(query);
@@ -757,6 +799,7 @@ describe("firebaseService", () => {
             await expect(validateAdminCode("ADM-BAD", "clinic-1")).resolves.toBe(false);
         });
 
+        // Test: checks creates a clinic with admin code. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("creates a clinic with admin code", async () => {
             const set = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -772,6 +815,7 @@ describe("firebaseService", () => {
             expect(set).toHaveBeenCalled();
         });
 
+        // Test: checks ensures a clinic exists without recreating it. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("ensures a clinic exists without recreating it", async () => {
             db.collection.mockReturnValue({
                 doc: jest.fn(() => ({
@@ -783,6 +827,7 @@ describe("firebaseService", () => {
             expect(result).toEqual({ success: true, alreadyExists: true });
         });
 
+        // Test: checks creates a clinic when ensureClinicExists cannot find one. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("creates a clinic when ensureClinicExists cannot find one", async () => {
             const set = jest.fn().mockResolvedValue();
             db.collection.mockImplementation(() => ({
@@ -796,6 +841,7 @@ describe("firebaseService", () => {
             expect(result).toEqual({ success: true, newlyCreated: true });
         });
 
+        // Test: checks gets clinic id from admin code. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("gets clinic id from admin code", async () => {
             const query = createLoopQuery({ empty: false, docs: [{ id: "clinic-1" }] });
             db.collection.mockReturnValue(query);
@@ -803,6 +849,7 @@ describe("firebaseService", () => {
             await expect(getClinicIdFromAdminCode("ADM-1")).resolves.toBe("clinic-1");
         });
 
+        // Test: checks returns null when admin code is not found. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns null when admin code is not found", async () => {
             const query = createLoopQuery({ empty: true, docs: [] });
             db.collection.mockReturnValue(query);
@@ -810,6 +857,7 @@ describe("firebaseService", () => {
             await expect(getClinicIdFromAdminCode("ADM-MISSING")).resolves.toBeNull();
         });
 
+        // Test: checks gets clinic id and role from admin verification code. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("gets clinic id and role from admin verification code", async () => {
             const adminQuery = createLoopQuery({ empty: false, docs: [{ id: "clinic-1" }] });
             const adminCollection = { where: jest.fn(() => adminQuery) };
@@ -823,6 +871,7 @@ describe("firebaseService", () => {
             });
         });
 
+        // Test: checks returns null when verification code does not match admin. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("returns null when verification code does not match admin", async () => {
             const adminQuery = createLoopQuery({ empty: true, docs: [] });
             const adminCollection = { where: jest.fn(() => adminQuery) };
@@ -833,6 +882,7 @@ describe("firebaseService", () => {
             await expect(getClinicIdFromVerificationCode("NONE")).resolves.toBeNull();
         });
 
+        // Test: checks claims a clinic for an admin. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("claims a clinic for an admin", async () => {
             const update = jest.fn().mockResolvedValue();
             db.collection.mockReturnValue({
@@ -845,7 +895,9 @@ describe("firebaseService", () => {
         });
     });
 
+    // Suite: groups related coverage for deleteUserAccount.
     describe("deleteUserAccount", () => {
+        // Test: checks deletes a patient account and appointments. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("deletes a patient account and appointments", async () => {
             db.collection.mockImplementation((name) => {
                 if (name === "patients") {
@@ -878,6 +930,7 @@ describe("firebaseService", () => {
             expect(mockDeleteUser).toHaveBeenCalledWith("patient-1");
         });
 
+        // Test: checks deletes an admin account and releases owned clinics. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("deletes an admin account and releases owned clinics", async () => {
             const clinicUpdate = jest.fn().mockResolvedValue();
 
@@ -922,6 +975,7 @@ describe("firebaseService", () => {
             expect(mockDeleteUser).toHaveBeenCalledWith("admin-1");
         });
 
+        // Test: checks deletes an unknown account without role-specific cleanup. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("deletes an unknown account without role-specific cleanup", async () => {
             db.collection.mockImplementation(() => ({
                 doc: jest.fn(() => ({

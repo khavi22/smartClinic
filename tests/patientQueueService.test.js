@@ -60,17 +60,21 @@ function mockQueueFirestore({
     return { queueDateDoc };
 }
 
+// Suite: groups related coverage for patientQueueService.
 describe("patientQueueService", () => {
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.clearAllMocks();
         jest.useFakeTimers();
         jest.setSystemTime(new Date("2026-05-11T08:00:00Z"));
     });
 
+    // Cleanup: restores mocks so one test cannot leak state into the next.
     afterEach(() => {
         jest.useRealTimers();
     });
 
+    // Test: checks excludes missed, complete, and different-slot patients from queue position and wait calculations. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("excludes missed, complete, and different-slot patients from queue position and wait calculations", async () => {
         const missedAhead = queueDoc({
             patientId: "missed-patient",
@@ -131,6 +135,7 @@ describe("patientQueueService", () => {
         }));
     });
 
+    // Test: checks estimates wait from patients booked earlier in the same slot. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("estimates wait from patients booked earlier in the same slot", async () => {
         const bookedFirst = queueDoc({
             patientId: "booked-first",
@@ -166,6 +171,7 @@ describe("patientQueueService", () => {
         });
     });
 
+    // Test: checks returns null when the patient's queue item is complete or missed. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
     it("returns null when the patient's queue item is complete or missed", async () => {
         mockQueueFirestore({
             patientDocs: [

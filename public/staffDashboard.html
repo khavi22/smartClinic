@@ -58,15 +58,15 @@
         <!-- Content grid -->
         <section class="staff-grid">
             
-            <div class="schedule-config-row">
+            <section class="schedule-config-row">
                 <!-- ── DATE PICKER CARD ── -->
                 <article class="staff-card calendar-card">
                     <header class="card-header">
                         <span class="card-icon"><i class='bx bx-calendar'></i></span>
-                        <div>
+                        <hgroup>
                             <h2>Select Date</h2>
                             <p>Pick a day to set your hours</p>
-                        </div>
+                        </hgroup>
                     </header>
                     
                     <section id="SetAvailabilitycalendarContainer" class="premium-calendar"></section>
@@ -81,24 +81,24 @@
                 <article class="staff-card time-card">
                     <header class="card-header">
                         <span class="card-icon"><i class='bx bx-time-five'></i></span>
-                        <div>
+                        <hgroup>
                             <h2>Set Working Hours</h2>
                             <p>Define your availability window</p>
-                        </div>
+                        </hgroup>
                     </header>
 
-                    <div class="availability-toggle">
+                    <section class="availability-toggle">
                         <label class="premium-checkbox-label">
                             <input type="checkbox" id="available-check" checked>
                             <span class="checkbox-custom"></span>
                             <span class="label-text">Available for consultations</span>
                         </label>
-                    </div>
+                    </section>
 
                     <section class="times-config-grid">
-                        <div class="time-field-group">
+                        <section class="time-field-group">
                             <label class="field-label">Start Shift</label>
-                            <div class="select-wrapper">
+                            <section class="select-wrapper">
                                 <select id="Startime" class="premium-time-select">
                                     <option value="08:00">08:00 AM</option>
                                     <option value="09:00" selected>09:00 AM</option>
@@ -111,12 +111,12 @@
                                     <option value="16:00">04:00 PM</option>
                                     <option value="17:00">05:00 PM</option>
                                 </select>
-                            </div>
-                        </div>
+                            </section>
+                        </section>
 
-                        <div class="time-field-group">
+                        <section class="time-field-group">
                             <label class="field-label">End Shift</label>
-                            <div class="select-wrapper">
+                            <section class="select-wrapper">
                                 <select id="Endtime" class="premium-time-select">
                                     <option value="08:00">08:00 AM</option>
                                     <option value="09:00">09:00 AM</option>
@@ -129,8 +129,8 @@
                                     <option value="16:00">04:00 PM</option>
                                     <option value="17:00" selected>05:00 PM</option>
                                 </select>
-                            </div>
-                        </div>
+                            </section>
+                        </section>
                     </section>
 
                     <button id="Add_Availability" class="premium-save-btn">
@@ -139,22 +139,22 @@
                     </button>
                     <p class="save-hint-text">Select at least one date on the calendar to save</p>
                 </article>
-            </div>
+            </section>
 
             <!-- ── SUMMARY CARD ── -->
             <article class="staff-card summary-card">
                 <header class="card-header">
                     <span class="card-icon"><i class='bx bx-list-ul'></i></span>
-                    <div>
+                    <hgroup>
                         <h2>Upcoming Shifts</h2>
                         <p>Your confirmed availability overview</p>
-                    </div>
+                    </hgroup>
                 </header>
                 <section id="Availability_content" class="availability-list-container">
-                    <div class="empty-state-placeholder">
+                    <section class="empty-state-placeholder">
                         <i class='bx bx-calendar-x'></i>
                         <p>No availability set yet. Use the calendar above to schedule your hours.</p>
-                    </div>
+                    </section>
                 </section>
             </article>
 
