@@ -484,6 +484,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            text-decoration: none;
         }
 
         .badge {
@@ -519,6 +520,32 @@
             border-radius: 99px;
             background: var(--primary);
             transition: width 0.4s ease;
+        }
+
+        .workload-progress {
+            flex: 1;
+            height: 6px;
+            min-width: 60px;
+            border: none;
+            border-radius: 99px;
+            background: var(--border);
+            overflow: hidden;
+            appearance: none;
+        }
+
+        .workload-progress::-webkit-progress-bar {
+            background: var(--border);
+            border-radius: 99px;
+        }
+
+        .workload-progress::-webkit-progress-value {
+            background: var(--primary);
+            border-radius: 99px;
+        }
+
+        .workload-progress::-moz-progress-bar {
+            background: var(--primary);
+            border-radius: 99px;
         }
 
         .workload-pct {
@@ -558,78 +585,78 @@
 <main class="main">
 
     <header class="page-header">
-        <div>
+        <section>
             <h1 class="page-title">Staff Utilisation Dashboard</h1>
             <p class="page-subtitle" id="reportSubtitle">Select a date range and run the report to begin</p>
-        </div>
-        <div class="export-group" id="exportGroup" style="display:none;">
+        </section>
+        <nav class="export-group" id="exportGroup" style="display:none;" aria-label="Report export actions">
             <button class="btn btn-outline" id="exportCsvBtn">
                 <i class='bx bx-spreadsheet'></i> Export CSV
             </button>
             <button class="btn btn-primary" id="exportPdfBtn">
                 <i class='bx bx-file-pdf'></i> Export PDF
             </button>
-        </div>
+        </nav>
     </header>
 
     <!-- Filters -->
-    <div class="filters-bar">
-        <div class="filter-group">
-            <span class="filter-label">From</span>
+    <form class="filters-bar" aria-label="Report filters">
+        <section class="filter-group">
+            <label class="filter-label" for="startDate">From</label>
             <input type="date" class="filter-input" id="startDate">
-        </div>
-        <div class="filter-group">
-            <span class="filter-label">To</span>
+        </section>
+        <section class="filter-group">
+            <label class="filter-label" for="endDate">To</label>
             <input type="date" class="filter-input" id="endDate">
-        </div>
-        <div class="filter-group">
-            <span class="filter-label">Staff Member</span>
+        </section>
+        <section class="filter-group">
+            <label class="filter-label" for="staffFilter">Staff Member</label>
             <select class="filter-input" id="staffFilter">
                 <option value="all">All Staff</option>
             </select>
-        </div>
-        <button class="btn-run" id="runBtn">
+        </section>
+        <button class="btn-run" id="runBtn" type="button">
             <i class='bx bx-play'></i> Run Report
         </button>
-    </div>
+    </form>
 
     <!-- Initial empty state -->
-    <div class="state-box" id="emptyState">
+    <aside class="state-box" id="emptyState">
         <i class='bx bx-bar-chart-alt-2'></i>
         <p>Configure your filters above and click <strong>Run Report</strong> to load staff utilisation data.</p>
-    </div>
+    </aside>
 
     <!-- Report content (hidden until loaded) -->
-    <div id="reportContent" style="display:none;">
+    <section id="reportContent" style="display:none;">
 
         <!-- KPI Cards -->
-        <div class="kpi-grid" id="kpiGrid"></div>
+        <section class="kpi-grid" id="kpiGrid" aria-label="Key performance indicators"></section>
 
         <!-- Charts row -->
-        <div class="charts-grid">
-            <div class="chart-card">
-                <div class="chart-title">Patients Handled per Staff</div>
-                <div class="chart-subtitle">Total patients attributed to each staff member</div>
-                <div class="chart-wrap"><canvas id="patientsBarChart"></canvas></div>
-            </div>
-            <div class="chart-card">
-                <div class="chart-title">Workload Share</div>
-                <div class="chart-subtitle">Percentage of total consultations per staff member</div>
-                <div class="chart-wrap"><canvas id="workloadDonutChart"></canvas></div>
-            </div>
-            <div class="chart-card full-width">
-                <div class="chart-title">Peak Activity Heatmap</div>
-                <div class="chart-subtitle">Patient interactions by hour of day per staff member</div>
-                <div class="heatmap-wrap" id="heatmapWrap"></div>
-            </div>
-        </div>
+        <section class="charts-grid" aria-label="Staff utilisation charts">
+            <article class="chart-card">
+                <h2 class="chart-title">Patients Handled per Staff</h2>
+                <p class="chart-subtitle">Total patients attributed to each staff member</p>
+                <figure class="chart-wrap"><canvas id="patientsBarChart"></canvas></figure>
+            </article>
+            <article class="chart-card">
+                <h2 class="chart-title">Workload Share</h2>
+                <p class="chart-subtitle">Percentage of total consultations per staff member</p>
+                <figure class="chart-wrap"><canvas id="workloadDonutChart"></canvas></figure>
+            </article>
+            <article class="chart-card full-width">
+                <h2 class="chart-title">Peak Activity Heatmap</h2>
+                <p class="chart-subtitle">Patient interactions by hour of day per staff member</p>
+                <figure class="heatmap-wrap" id="heatmapWrap"></figure>
+            </article>
+        </section>
 
         <!-- Staff Table -->
-        <div class="table-card">
-            <div class="table-header">
-                <span class="table-title">Staff Summary</span>
+        <section class="table-card" aria-labelledby="staffSummaryTitle">
+            <header class="table-header">
+                <h2 class="table-title" id="staffSummaryTitle">Staff Summary</h2>
                 <input type="text" class="staff-filter-input" id="tableSearch" placeholder="Search staff…">
-            </div>
+            </header>
             <table>
                 <thead>
                     <tr>
@@ -643,9 +670,9 @@
                 </thead>
                 <tbody id="staffTableBody"></tbody>
             </table>
-        </div>
+        </section>
 
-    </div>
+    </section>
 </main>
 
 

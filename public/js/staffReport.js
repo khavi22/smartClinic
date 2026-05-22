@@ -149,31 +149,31 @@ function renderKPIs(data) {
         : 0;
 
     document.getElementById("kpiGrid").innerHTML = `
-        <div class="kpi-card accent-blue">
-            <div class="kpi-label">Total Patients</div>
-            <div class="kpi-value">${total}</div>
-            <div class="kpi-sub">Across all staff in period</div>
-        </div>
-        <div class="kpi-card accent-green">
-            <div class="kpi-label">Active Staff</div>
-            <div class="kpi-value">${active}<span style="font-size:1rem;color:var(--text-muted)"> / ${staff.length}</span></div>
-            <div class="kpi-sub">Staff with patient activity</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Avg Patients / Staff</div>
-            <div class="kpi-value">${avgPatients}</div>
-            <div class="kpi-sub">Average workload per member</div>
-        </div>
-        <div class="kpi-card accent-orange">
-            <div class="kpi-label">Completion Rate</div>
-            <div class="kpi-value">${completionRate}%</div>
-            <div class="kpi-sub">Consultations marked completed</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Top Performer</div>
-            <div class="kpi-value" style="font-size:1.2rem;font-family:'DM Sans',sans-serif;">${topStaff.fullName.split(" ")[0]}</div>
-            <div class="kpi-sub">${topStaff.patientsHandled} patients handled</div>
-        </div>
+        <article class="kpi-card accent-blue">
+            <p class="kpi-label">Total Patients</p>
+            <output class="kpi-value">${total}</output>
+            <p class="kpi-sub">Across all staff in period</p>
+        </article>
+        <article class="kpi-card accent-green">
+            <p class="kpi-label">Active Staff</p>
+            <output class="kpi-value">${active}<small style="font-size:1rem;color:var(--text-muted)"> / ${staff.length}</small></output>
+            <p class="kpi-sub">Staff with patient activity</p>
+        </article>
+        <article class="kpi-card">
+            <p class="kpi-label">Avg Patients / Staff</p>
+            <output class="kpi-value">${avgPatients}</output>
+            <p class="kpi-sub">Average workload per member</p>
+        </article>
+        <article class="kpi-card accent-orange">
+            <p class="kpi-label">Completion Rate</p>
+            <output class="kpi-value">${completionRate}%</output>
+            <p class="kpi-sub">Consultations marked completed</p>
+        </article>
+        <article class="kpi-card">
+            <p class="kpi-label">Top Performer</p>
+            <output class="kpi-value" style="font-size:1.2rem;font-family:'DM Sans',sans-serif;">${topStaff.fullName.split(" ")[0]}</output>
+            <p class="kpi-sub">${topStaff.patientsHandled} patients handled</p>
+        </article>
     `;
 }
 
@@ -256,23 +256,23 @@ function renderHeatmap(data) {
 
     const maxVal = Math.max(...data.staffList.flatMap(s => s.hourlyActivity));
 
-    let html = '<div class="heatmap-hours">';
+    let html = '<section class="heatmap-hours" aria-label="Hours of day">';
     for (let h = 0; h < 24; h++) {
-        html += `<div class="heatmap-hour-label">${String(h).padStart(2,"0")}</div>`;
+        html += `<time class="heatmap-hour-label" datetime="${String(h).padStart(2,"0")}:00">${String(h).padStart(2,"0")}</time>`;
     }
-    html += '</div><div class="heatmap-grid">';
+    html += '</section><section class="heatmap-grid" aria-label="Hourly patient activity by staff member">';
 
     data.staffList.forEach(s => {
-        html += `<div class="heatmap-row"><div class="heatmap-label" title="${s.fullName}">${s.fullName.split(" ")[0]}</div>`;
+        html += `<section class="heatmap-row"><p class="heatmap-label" title="${s.fullName}">${s.fullName.split(" ")[0]}</p>`;
         s.hourlyActivity.forEach((val, h) => {
             const intensity = maxVal > 0 ? val / maxVal : 0;
             const bg = interpolateColor(intensity);
-            html += `<div class="heatmap-cell" style="background:${bg}" data-tip="${s.fullName.split(" ")[0]} · ${String(h).padStart(2,"0")}:00 · ${val} patients"></div>`;
+            html += `<output class="heatmap-cell" style="background:${bg}" data-tip="${s.fullName.split(" ")[0]} · ${String(h).padStart(2,"0")}:00 · ${val} patients" aria-label="${s.fullName.split(" ")[0]} ${String(h).padStart(2,"0")}:00 ${val} patients"></output>`;
         });
-        html += '</div>';
+        html += '</section>';
     });
 
-    html += '</div>';
+    html += '</section>';
     wrap.innerHTML = html;
 }
 
@@ -315,31 +315,29 @@ function buildTableRows(staffList) {
             : "—";
 
         const status = s.patientsHandled === 0
-            ? `<span class="badge badge-red">Inactive</span>`
+            ? `<mark class="badge badge-red">Inactive</mark>`
             : s.patientsHandled > avgPatients * 1.3
-            ? `<span class="badge badge-orange">High Load</span>`
-            : `<span class="badge badge-green">Active</span>`;
+            ? `<mark class="badge badge-orange">High Load</mark>`
+            : `<mark class="badge badge-green">Active</mark>`;
 
         return `
             <tr>
                 <td>
-                    <div class="staff-name-cell">
-                        <div class="avatar">${s.fullName[0].toUpperCase()}</div>
-                        <div>
-                            <div style="font-weight:600;">${s.fullName}</div>
-                            <div style="font-size:0.78rem;color:var(--text-muted);">${s.email}</div>
-                        </div>
-                    </div>
+                    <section class="staff-name-cell">
+                        <abbr class="avatar" title="${s.fullName}">${s.fullName[0].toUpperCase()}</abbr>
+                        <address style="font-style:normal;">
+                            <strong style="font-weight:600;">${s.fullName}</strong>
+                            <a href="mailto:${s.email}" style="display:block;font-size:0.78rem;color:var(--text-muted);text-decoration:none;">${s.email}</a>
+                        </address>
+                    </section>
                 </td>
                 <td style="font-family:'DM Mono',monospace;font-weight:600;">${s.patientsHandled}</td>
                 <td style="font-family:'DM Mono',monospace;">${s.consultationsCompleted}</td>
                 <td>
-                    <div class="workload-bar-wrap">
-                        <div class="workload-bar-bg">
-                            <div class="workload-bar-fill" style="width:${s.workloadShare}%"></div>
-                        </div>
-                        <span class="workload-pct">${s.workloadShare}%</span>
-                    </div>
+                    <section class="workload-bar-wrap">
+                        <progress class="workload-progress" value="${s.workloadShare}" max="100" aria-label="${s.fullName} workload share"></progress>
+                        <output class="workload-pct">${s.workloadShare}%</output>
+                    </section>
                 </td>
                 <td style="font-family:'DM Mono',monospace;font-size:0.82rem;">${peakLabel}</td>
                 <td>${status}</td>
@@ -496,3 +494,4 @@ function formatDate(str) {
 
 
 });
+
