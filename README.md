@@ -142,6 +142,68 @@ graph TD
 *   **Dynamic Operations Schedule**: Precision hour configurations allowing clinics to lock in custom opening, closing, and lunch intervals.
 *   **Staff Registry & Approvals**: System to manage staff invitation codes, approve incoming medical profiles, and handle permissions.
 
+#### Admin Onboarding Portal
+
+The **Admin Onboarding Portal** is a secured support-team interface for inviting and registering clinic administrators into the SmartClinic platform. It bridges the gap between clinic discovery (Google Places) and admin account creation, ensuring only authorized support staff can provision new admins.
+
+**Portal URL**: [https://smartclinic-11971.web.app](https://smartclinic-11971.web.app)
+
+##### Access Control
+*   **Who Can Access**: Only pre-authorized SmartClinic support team members.
+*   **Authorization Method**: Firebase authentication with Firestore security rules (`isSupportTeam()` function) that checks against an allowlist of verified support team emails.
+*   **Enforcement**: Firestore security rules enforce role-based access at the database level; unauthorized users attempting to access the API will receive a `403 Forbidden` response.
+
+##### Support Team Workflow
+
+1. **Search & Select Clinic**
+   *   Support staff visit the Admin Onboarding Portal and authenticate with Google
+   *   Search for a clinic by name using Google Places API integration
+   *   Select the target clinic from search results
+   *   System automatically generates a unique **Admin Code** for that clinic
+
+2. **Generate Admin Invitation**
+   *   Enter the email address of the clinic administrator to be invited
+   *   Click **"Send Invitation"**
+   *   System sends a formatted email containing:
+     - Clinic name and address
+     - Unique **Admin Code** (required for registration)
+     - Direct link to signup page
+
+3. **Invitation Delivery**
+   *   Email is sent via Nodemailer using Gmail SMTP
+   *   Email contains a professional HTML template with clinic details and admin code
+   *   Admin Code is a unique identifier that links the invitation to the specific clinic
+
+##### Admin Registration Flow (Recipient Side)
+
+Once an admin receives the invitation email, they complete the following steps:
+
+1. **Visit Signup Page**: Navigate to [https://smartclinic-11971.web.app/signUp.html](https://smartclinic-11971.web.app/signUp.html)
+2. **Authenticate with Google**: Sign in using their email account
+3. **Select "Admin" Role**: Choose "Admin" during the role selection step
+4. **Enter Admin Code**: Paste the unique Admin Code from the invitation email
+5. **Complete Registration**: System validates the code against the clinic record and provisions admin access
+6. **Access Admin Dashboard**: Admin is redirected to the full Admin Dashboard to configure services, schedules, and staff
+
+##### Technical Implementation
+
+*   **Support Portal Stack**:
+    - Frontend: Firebase Hosting (`support-site/` directory)
+    - Backend: Cloud Functions (`functions/adminOnboardingApp.js`) running Express.js
+    - Database: Firestore collection `adminInvitations` (restricted to support team)
+    - API Routes: POST `/api/admin-onboarding/search`, POST `/api/admin-onboarding/clinic-code`, POST `/api/admin-onboarding/send-invite`
+
+*   **Security Layers**:
+    - Firebase ID token verification on every request
+    - Support team email allowlist validation (`lib/supportTeam.js`)
+    - Firestore rules prevent non-support users from reading/writing invitations
+    - Admin codes are auto-generated UUIDs and cannot be reused
+
+*   **Code Generation**:
+    - Each clinic receives a unique, immutable admin code format: `ADM-[6-char-UUID]`
+    - Codes are persisted in the `clinics/{clinicId}` document
+    - Codes prevent unauthorized admin account creation for clinics they don't manage
+
 ### 3. Medical Staff & Triage
 *   **Patient Triage Dashboard**: Active list allowing doctors to check patients in, adjust priority levels, and trigger live consulting states.
 *   **Consultation Queue Controller**: Transitions patients from `WAITING` to `IN_CONSULTATION` and automatically tallies consulting durations upon completion.
