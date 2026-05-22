@@ -18,11 +18,13 @@ jest.mock("../services/emailService", () => ({
 
 const emailService = require("../services/emailService");
 
+// Suite: groups related coverage for Queue Controllers.
 describe("Queue Controllers", () => {
     let req, res;
     let consoleErrorSpy;
     let consoleWarnSpy;
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         req = { params: {}, body: {}, query: {} };
         res = {
@@ -35,6 +37,7 @@ describe("Queue Controllers", () => {
         consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     });
 
+    // Cleanup: restores mocks so one test cannot leak state into the next.
     afterEach(() => {
         consoleErrorSpy.mockRestore();
         consoleWarnSpy.mockRestore();
@@ -43,7 +46,9 @@ describe("Queue Controllers", () => {
     // ─────────────────────────────────────────────
     // getQueue
     // ─────────────────────────────────────────────
+    // Suite: groups related coverage for getQueue.
     describe("getQueue", () => {
+        // Test: checks should return 400 if clinicId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId is missing", async () => {
             req.params = {};
 
@@ -55,6 +60,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 200 with queue data when service succeeds. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 200 with queue data when service succeeds", async () => {
             req.params = { clinicId: "clinic1" };
 
@@ -80,6 +86,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 500 when service throws. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 when service throws", async () => {
             req.params = { clinicId: "clinic1" };
             queueService.getQueue.mockRejectedValue(new Error("Firestore error"));
@@ -99,7 +106,9 @@ describe("Queue Controllers", () => {
     // ─────────────────────────────────────────────
     // startConsultation
     // ─────────────────────────────────────────────
+    // Suite: groups related coverage for startConsultation.
     describe("startConsultation", () => {
+        // Test: checks should return 400 if clinicId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId is missing", async () => {
             req.params = {};
             req.body = { queueItemId: "q1", staffId: "staff1" };
@@ -112,6 +121,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 400 if queueItemId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if queueItemId is missing", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { staffId: "staff1" };
@@ -124,6 +134,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 400 if staffId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if staffId is missing", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1" };
@@ -136,6 +147,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 200 when patient is moved to IN_CONSULTATION. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 200 when patient is moved to IN_CONSULTATION", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
@@ -161,6 +173,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 400 if patient is not in WAITING status. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if patient is not in WAITING status", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
@@ -180,6 +193,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 500 when service throws an unexpected error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 when service throws an unexpected error", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
@@ -201,7 +215,9 @@ describe("Queue Controllers", () => {
     // ─────────────────────────────────────────────
     // completeConsultation
     // ─────────────────────────────────────────────
+    // Suite: groups related coverage for completeConsultation.
     describe("completeConsultation", () => {
+        // Test: checks should return 400 if clinicId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId is missing", async () => {
             req.params = {};
             req.body = { queueItemId: "q1", staffId: "staff1" };
@@ -214,6 +230,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 400 if queueItemId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if queueItemId is missing", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { staffId: "staff1" };
@@ -226,6 +243,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 400 if staffId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if staffId is missing", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1" };
@@ -237,6 +255,7 @@ describe("Queue Controllers", () => {
                 expect.objectContaining({ message: "staffId is required" })
             );
         });
+        // Test: checks should return 400 if staff already has a patient IN_CONSULTATION. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if staff already has a patient IN_CONSULTATION", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q1", staffId: "staff1" };
@@ -256,6 +275,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 200 and include the next patient when one exists. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 200 and include the next patient when one exists", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q2", staffId: "staff1" };
@@ -283,6 +303,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 200 with null nextPatient when queue is empty. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 200 with null nextPatient when queue is empty", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q2", staffId: "staff1" };
@@ -305,6 +326,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 400 if patient is not IN_CONSULTATION. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if patient is not IN_CONSULTATION", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q2", staffId: "staff1" };
@@ -324,6 +346,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return 500 when service throws an unexpected error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 when service throws an unexpected error", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { queueItemId: "q2", staffId: "staff1" };
@@ -342,7 +365,9 @@ describe("Queue Controllers", () => {
         });
     });
 
+    // Suite: groups related coverage for addQueueItem.
     describe("addQueueItem", () => {
+        // Test: checks should return 400 if clinicId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId is missing", async () => {
             await addQueueItem(req, res);
 
@@ -350,6 +375,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "clinicId is required" }));
         });
 
+        // Test: checks should return 201 when queue item is added. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 201 when queue item is added", async () => {
             req.params = { clinicId: "clinic1" };
             req.body = { patientName: "Alice" };
@@ -365,6 +391,7 @@ describe("Queue Controllers", () => {
             }));
         });
 
+        // Test: checks should return 400 for known validation errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 for known validation errors", async () => {
             req.params = { clinicId: "clinic1" };
             queueService.addQueueItem.mockRejectedValue(new Error("This slot is full."));
@@ -375,6 +402,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "This slot is full." }));
         });
 
+        // Test: checks should return 500 for unexpected add errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 for unexpected add errors", async () => {
             req.params = { clinicId: "clinic1" };
             queueService.addQueueItem.mockRejectedValue(new Error("Firestore error"));
@@ -389,7 +417,9 @@ describe("Queue Controllers", () => {
         });
     });
 
+    // Suite: groups related coverage for getAvailableQueueSlots.
     describe("getAvailableQueueSlots", () => {
+        // Test: checks should return 400 if clinicId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId is missing", async () => {
             await getAvailableQueueSlots(req, res);
 
@@ -397,6 +427,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "clinicId is required" }));
         });
 
+        // Test: checks should return slots from the service. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return slots from the service", async () => {
             req.params = { clinicId: "clinic1" };
             req.query = { date: "2026-05-11", queueItemId: "q1" };
@@ -412,6 +443,7 @@ describe("Queue Controllers", () => {
             }));
         });
 
+        // Test: checks should return 500 if slot lookup fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if slot lookup fails", async () => {
             req.params = { clinicId: "clinic1" };
             queueService.getAvailableQueueSlots.mockRejectedValue(new Error("Firestore error"));
@@ -426,7 +458,9 @@ describe("Queue Controllers", () => {
         });
     });
 
+    // Suite: groups related coverage for rescheduleQueueItem.
     describe("rescheduleQueueItem", () => {
+        // Test: checks should validate required request values. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should validate required request values", async () => {
             await rescheduleQueueItem(req, res);
             expect(res.status).toHaveBeenLastCalledWith(400);
@@ -446,6 +480,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "timeSlot is required" }));
         });
 
+        // Test: checks should return the rescheduled queue item. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return the rescheduled queue item", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { timeSlot: "10:00 - 11:00", staffId: "staff1" };
@@ -461,6 +496,7 @@ describe("Queue Controllers", () => {
             }));
         });
 
+        // Test: checks should return 400 for known reschedule errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 for known reschedule errors", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { timeSlot: "10:00 - 11:00" };
@@ -472,6 +508,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Queue item not found" }));
         });
 
+        // Test: checks should return 500 for unexpected reschedule errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 for unexpected reschedule errors", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { timeSlot: "10:00 - 11:00" };
@@ -487,7 +524,9 @@ describe("Queue Controllers", () => {
         });
     });
 
+    // Suite: groups related coverage for updateQueueItemStatus.
     describe("updateQueueItemStatus", () => {
+        // Test: checks should validate required request values. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should validate required request values", async () => {
             await updateQueueItemStatus(req, res);
             expect(res.status).toHaveBeenLastCalledWith(400);
@@ -507,6 +546,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "status is required" }));
         });
 
+        // Test: checks should return the updated queue item. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return the updated queue item", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { status: "MISSED", updatedBy: "staff1" };
@@ -539,6 +579,7 @@ describe("Queue Controllers", () => {
             }));
         });
 
+        // Test: checks should still update status if queue email fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should still update status if queue email fails", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { status: "IN_CONSULTATION", updatedBy: "staff1" };
@@ -559,6 +600,7 @@ describe("Queue Controllers", () => {
             }));
         });
 
+        // Test: checks should return 400 for known status errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 for known status errors", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { status: "UNKNOWN" };
@@ -570,6 +612,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Invalid queue status" }));
         });
 
+        // Test: checks should return 500 for unexpected status errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 for unexpected status errors", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             req.body = { status: "WAITING" };
@@ -585,7 +628,9 @@ describe("Queue Controllers", () => {
         });
     });
 
+    // Suite: groups related coverage for removeQueueItem.
     describe("removeQueueItem", () => {
+        // Test: checks should validate required request values. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should validate required request values", async () => {
             await removeQueueItem(req, res);
             expect(res.status).toHaveBeenLastCalledWith(400);
@@ -598,6 +643,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenLastCalledWith(expect.objectContaining({ message: "queueItemId is required" }));
         });
 
+        // Test: checks should remove a queue item. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should remove a queue item", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             queueService.removeQueueItem.mockResolvedValue({ queueItemId: "q1" });
@@ -612,6 +658,7 @@ describe("Queue Controllers", () => {
             }));
         });
 
+        // Test: checks should return 404 for missing queue items. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 404 for missing queue items", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             queueService.removeQueueItem.mockRejectedValue(new Error("Queue item not found"));
@@ -622,6 +669,7 @@ describe("Queue Controllers", () => {
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Queue item not found" }));
         });
 
+        // Test: checks should return 500 for unexpected remove errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 for unexpected remove errors", async () => {
             req.params = { clinicId: "clinic1", queueItemId: "q1" };
             queueService.removeQueueItem.mockRejectedValue(new Error("Firestore error"));
@@ -636,7 +684,9 @@ describe("Queue Controllers", () => {
         });
     });
 
+    // Suite: groups related coverage for predictWaitTime.
     describe("predictWaitTime", () => {
+        // Test: checks should return 400 if clinicId is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId is missing", async () => {
             req.params = {};
 
@@ -648,6 +698,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should calculate wait time using DB fallback heuristics if ML service is down. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should calculate wait time using DB fallback heuristics if ML service is down", async () => {
             req.params = { clinicId: "clinic1" };
             req.query = { date: "2026-05-11", timeSlot: "09:00" };
@@ -675,6 +726,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should handle error in getQueue gracefully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should handle error in getQueue gracefully", async () => {
             req.params = { clinicId: "clinic1" };
             queueService.getQueue.mockRejectedValue(new Error("Database down"));
@@ -691,6 +743,7 @@ describe("Queue Controllers", () => {
             );
         });
 
+        // Test: checks should return predictions from ML service if it is running. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return predictions from ML service if it is running", async () => {
             const originalMlUrl = process.env.ML_SERVICE_URL;
             const originalFetch = global.fetch;
@@ -732,6 +785,7 @@ describe("Queue Controllers", () => {
             global.fetch = originalFetch;
         });
 
+        // Test: checks should fallback to DB heuristics if ML service returns not ok. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fallback to DB heuristics if ML service returns not ok", async () => {
             const originalMlUrl = process.env.ML_SERVICE_URL;
             const originalFetch = global.fetch;

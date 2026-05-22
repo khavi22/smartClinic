@@ -189,18 +189,23 @@ const mondayHours = {
     }
 };
 
+// Suite: groups related coverage for queueService.
 describe("queueService", () => {
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.clearAllMocks();
         jest.useFakeTimers();
         jest.setSystemTime(new Date("2026-05-11T07:50:00"));
     });
 
+    // Cleanup: restores mocks so one test cannot leak state into the next.
     afterEach(() => {
         jest.useRealTimers();
     });
 
+    // Suite: groups related coverage for slot availability.
     describe("slot availability", () => {
+        // Test: checks combines operating hours, appointments, and manual queue counts. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("combines operating hours, appointments, and manual queue counts", async () => {
             setupFirestore({
                 clinicData: mondayHours,
@@ -229,6 +234,7 @@ describe("queueService", () => {
             expect(slots[1]).toEqual(expect.objectContaining({ taken: 8, status: "limited" }));
         });
 
+        // Test: checks uses the clinic slot capacity for queue slot totals. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("uses the clinic slot capacity for queue slot totals", async () => {
             setupFirestore({
                 clinicData: {
@@ -243,6 +249,7 @@ describe("queueService", () => {
             expect(slots.every((slot) => slot.total === 5)).toBe(true);
         });
 
+        // Test: checks filters out stale and full slots. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("filters out stale and full slots", async () => {
             jest.setSystemTime(new Date("2026-05-11T08:20:00"));
             setupFirestore({
@@ -263,7 +270,9 @@ describe("queueService", () => {
         });
     });
 
+    // Suite: groups related coverage for addQueueItem.
     describe("addQueueItem", () => {
+        // Test: checks adds a queue item with a normalized requested time. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("adds a queue item with a normalized requested time", async () => {
             const { queueItemsRef } = setupFirestore({ clinicData: mondayHours });
 
@@ -288,6 +297,7 @@ describe("queueService", () => {
             }));
         });
 
+        // Test: checks requires either patientName or patientId. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("requires either patientName or patientId", async () => {
             setupFirestore({ clinicData: mondayHours });
 
@@ -296,6 +306,7 @@ describe("queueService", () => {
             ).rejects.toThrow("patientName or patientId is required");
         });
 
+        // Test: checks includes service metadata when provided. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("includes service metadata when provided", async () => {
             const { queueItemsRef } = setupFirestore({ clinicData: mondayHours });
 
@@ -320,6 +331,7 @@ describe("queueService", () => {
             }));
         });
 
+        // Test: checks rejects requested slots outside operating hours. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("rejects requested slots outside operating hours", async () => {
             setupFirestore({ clinicData: mondayHours });
 
@@ -331,6 +343,7 @@ describe("queueService", () => {
             ).rejects.toThrow("Selected time is outside clinic operating hours.");
         });
 
+        // Test: checks rejects full requested slots. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("rejects full requested slots", async () => {
             setupFirestore({
                 clinicData: mondayHours,
@@ -348,6 +361,7 @@ describe("queueService", () => {
             ).rejects.toThrow("This slot is full.");
         });
 
+        // Test: checks rejects walk-ins when there are no available slots. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("rejects walk-ins when there are no available slots", async () => {
             setupFirestore({
                 clinicData: {
@@ -363,7 +377,9 @@ describe("queueService", () => {
         });
     });
 
+    // Suite: groups related coverage for consultation transitions.
     describe("consultation transitions", () => {
+        // Test: checks prevents a staff member from starting a second active consultation. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("prevents a staff member from starting a second active consultation", async () => {
             setupFirestore({
                 queueItems: [
@@ -376,6 +392,7 @@ describe("queueService", () => {
             ).rejects.toThrow("Staff member already has a patient IN_CONSULTATION");
         });
 
+        // Test: checks starts a waiting consultation and enriches the patient details. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("starts a waiting consultation and enriches the patient details", async () => {
             const { queueRefs } = setupFirestore({
                 queueItems: [
@@ -403,6 +420,7 @@ describe("queueService", () => {
             }));
         });
 
+        // Test: checks requires the queue item to be waiting before starting. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("requires the queue item to be waiting before starting", async () => {
             setupFirestore({
                 queueItems: [
@@ -415,6 +433,7 @@ describe("queueService", () => {
             ).rejects.toThrow("Patient is not in WAITING status");
         });
 
+        // Test: checks completes a consultation and returns the highest priority next patient. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("completes a consultation and returns the highest priority next patient", async () => {
             const startTime = new Date("2026-05-11T07:35:00");
             const { queueRefs } = setupFirestore({
@@ -440,6 +459,7 @@ describe("queueService", () => {
             expect(result.nextPatient).toEqual(expect.objectContaining({ queueItemId: "next" }));
         });
 
+        // Test: checks requires an active consultation before completing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("requires an active consultation before completing", async () => {
             setupFirestore({
                 queueItems: [
@@ -453,7 +473,9 @@ describe("queueService", () => {
         });
     });
 
+    // Suite: groups related coverage for status, reschedule, and removal.
     describe("status, reschedule, and removal", () => {
+        // Test: checks validates queue statuses. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("validates queue statuses", async () => {
             setupFirestore();
 
@@ -462,6 +484,7 @@ describe("queueService", () => {
             ).rejects.toThrow("Invalid queue status");
         });
 
+        // Test: checks does not update locked queue items. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("does not update locked queue items", async () => {
             setupFirestore({
                 queueItems: [
@@ -474,6 +497,7 @@ describe("queueService", () => {
             ).rejects.toThrow("Cannot update a missed or complete queue item");
         });
 
+        // Test: checks updates a queue item status and enriches missing names. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("updates a queue item status and enriches missing names", async () => {
             const { queueRefs } = setupFirestore({
                 queueItems: [
@@ -501,6 +525,7 @@ describe("queueService", () => {
             }));
         });
 
+        // Test: checks reschedules a queue item and syncs the linked appointment. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("reschedules a queue item and syncs the linked appointment", async () => {
             const { appointmentRefs, queueRefs } = setupFirestore({
                 clinicData: mondayHours,
@@ -529,6 +554,7 @@ describe("queueService", () => {
             expect(result).toEqual(expect.objectContaining({ timeSlot: "10:00 - 11:00" }));
         });
 
+        // Test: checks does not reschedule locked queue items. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("does not reschedule locked queue items", async () => {
             setupFirestore({
                 queueItems: [
@@ -541,6 +567,7 @@ describe("queueService", () => {
             ).rejects.toThrow("Cannot reschedule a missed or complete queue item");
         });
 
+        // Test: checks removes queue items. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("removes queue items", async () => {
             const { queueRefs, queueItemMap } = setupFirestore({
                 queueItems: [
@@ -555,6 +582,7 @@ describe("queueService", () => {
             expect(result).toEqual(expect.objectContaining({ queueItemId: "queue-1", patientName: "Alice" }));
         });
 
+        // Test: checks throws when removing a missing queue item. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("throws when removing a missing queue item", async () => {
             setupFirestore();
 
@@ -564,7 +592,9 @@ describe("queueService", () => {
         });
     });
 
+    // Suite: groups related coverage for queue loading and appointment sync.
     describe("queue loading and appointment sync", () => {
+        // Test: checks marks overdue waiting patients as missed and groups the queue. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("marks overdue waiting patients as missed and groups the queue", async () => {
             jest.setSystemTime(new Date("2026-05-11T09:00:00"));
             const { queueRefs } = setupFirestore({
@@ -594,6 +624,7 @@ describe("queueService", () => {
             expect(queue.COMPLETE).toEqual([]);
         });
 
+        // Test: checks adds today's booked appointments to the queue and skips existing queue docs. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("adds today's booked appointments to the queue and skips existing queue docs", async () => {
             jest.setSystemTime(new Date("2026-05-11T07:50:00"));
             const { queueRefs } = setupFirestore({
@@ -633,7 +664,9 @@ describe("queueService", () => {
         });
     });
 
+    // Suite: groups related coverage for edge cases for branch coverage.
     describe("edge cases for branch coverage", () => {
+        // Test: checks handles appointments with unrecognized timeSlots gracefully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("handles appointments with unrecognized timeSlots gracefully", async () => {
             setupFirestore({
                 clinicData: mondayHours,
@@ -645,6 +678,7 @@ describe("queueService", () => {
             expect(slots).toBeDefined();
         });
 
+        // Test: checks handles enrichQueueItemWithPatient when patient is missing or lacks fields. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("handles enrichQueueItemWithPatient when patient is missing or lacks fields", async () => {
             const { queueRefs } = setupFirestore({
                 queueItems: [
@@ -656,6 +690,7 @@ describe("queueService", () => {
             expect(queue.WAITING[0].patientName).toBe("ghost"); // Falls back to ID
         });
 
+        // Test: checks shouldMarkQueueItemMissed returns false for non-WAITING or invalid time items. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("shouldMarkQueueItemMissed returns false for non-WAITING or invalid time items", async () => {
             jest.setSystemTime(new Date("2026-05-11T12:00:00"));
             const { queueRefs } = setupFirestore({
@@ -670,6 +705,7 @@ describe("queueService", () => {
             expect(queue.WAITING).toHaveLength(1); // q2 stays waiting because time is invalid
         });
 
+        // Test: checks normalizeToHourSlot returns null for completely invalid formats, treating it as a walk-in. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("normalizeToHourSlot returns null for completely invalid formats, treating it as a walk-in", async () => {
             setupFirestore({ clinicData: mondayHours });
             const result = await queueService.addQueueItem("clinic-1", {
@@ -679,6 +715,7 @@ describe("queueService", () => {
             expect(result.timeSlot).toBe("08:00 - 09:00");
         });
         
+        // Test: checks gets missing patients via sync. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("gets missing patients via sync", async () => {
             setupFirestore({
                 appointments: [

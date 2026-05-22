@@ -62,8 +62,10 @@ function mockResponse() {
     };
 }
 
+// Suite: groups related coverage for Appointment Controller.
 describe("Appointment Controller", () => {
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.clearAllMocks();
 
@@ -74,8 +76,10 @@ describe("Appointment Controller", () => {
     // getAvailability
     // =====================================================
 
+    // Suite: groups related coverage for getAvailability.
     describe("getAvailability", () => {
 
+        // Test: checks should return availability slots. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return availability slots", async () => {
 
             getAvailabilityForDate.mockResolvedValue([
@@ -105,6 +109,7 @@ describe("Appointment Controller", () => {
                 );
         });
 
+        // Test: checks should return 400 if date missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if date missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -118,6 +123,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if availability lookup fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if availability lookup fails", async () => {
 
             getAvailabilityForDate.mockRejectedValue(new Error("Availability failed"));
@@ -136,8 +142,10 @@ describe("Appointment Controller", () => {
         });
     });
 
+    // Suite: groups related coverage for getRecommendations.
     describe("getRecommendations", () => {
 
+        // Test: checks should fetch ML predictions and return recommended slots. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fetch ML predictions and return recommended slots", async () => {
 
             fetch.mockResolvedValue({
@@ -178,6 +186,7 @@ describe("Appointment Controller", () => {
             );
         });
 
+        // Test: checks should return 400 if date missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if date missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -191,6 +200,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should continue and return empty if ML service fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should continue and return empty if ML service fails", async () => {
 
             fetch.mockRejectedValue(new Error("ML failed"));
@@ -211,6 +221,7 @@ describe("Appointment Controller", () => {
             expect(res.body.recommendations).toEqual([]);
         });
 
+        // Test: checks should return empty if ML_SERVICE_URL not configured. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return empty if ML_SERVICE_URL not configured", async () => {
             delete process.env.ML_SERVICE_URL;
 
@@ -233,8 +244,10 @@ describe("Appointment Controller", () => {
     // postAppointment
     // =====================================================
 
+    // Suite: groups related coverage for postAppointment.
     describe("postAppointment", () => {
 
+        // Test: checks should create appointment successfully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should create appointment successfully", async () => {
 
             createAppointment.mockResolvedValue({
@@ -274,6 +287,7 @@ describe("Appointment Controller", () => {
                 .toHaveBeenCalled();
         });
 
+        // Test: checks should return 400 when date missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 when date missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -289,6 +303,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 400 when service info missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 when service info missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -306,6 +321,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should create appointment by patient email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should create appointment by patient email", async () => {
 
             getUserProfileByEmail.mockResolvedValue({
@@ -358,6 +374,7 @@ describe("Appointment Controller", () => {
             );
         });
 
+        // Test: checks should return 404 when patient email has no account. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 404 when patient email has no account", async () => {
 
             getUserProfileByEmail.mockResolvedValue(null);
@@ -381,6 +398,7 @@ describe("Appointment Controller", () => {
             expect(createAppointment).not.toHaveBeenCalled();
         });
 
+        // Test: checks should return 404 when email belongs to a non-patient account. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 404 when email belongs to a non-patient account", async () => {
 
             getUserProfileByEmail.mockResolvedValue({
@@ -408,6 +426,7 @@ describe("Appointment Controller", () => {
             expect(createAppointment).not.toHaveBeenCalled();
         });
 
+        // Test: checks should use clinic metadata when appointment request omits clinic display fields. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should use clinic metadata when appointment request omits clinic display fields", async () => {
 
             db.collection.mockReturnValue({
@@ -459,6 +478,7 @@ describe("Appointment Controller", () => {
             );
         });
 
+        // Test: checks should fall back when clinic metadata is unavailable. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fall back when clinic metadata is unavailable", async () => {
 
             db.collection.mockReturnValue({
@@ -506,6 +526,7 @@ describe("Appointment Controller", () => {
             );
         });
 
+        // Test: checks should still create appointment when confirmation email fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should still create appointment when confirmation email fails", async () => {
 
             createAppointment.mockResolvedValue({
@@ -541,6 +562,7 @@ describe("Appointment Controller", () => {
             expect(res.body.success).toBe(true);
         });
 
+        // Test: checks should use default clinic labels when no clinic id is supplied. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should use default clinic labels when no clinic id is supplied", async () => {
 
             createAppointment.mockResolvedValue({
@@ -579,6 +601,7 @@ describe("Appointment Controller", () => {
             );
         });
 
+        // Test: checks should return 400 when patient id and email are missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 when patient id and email are missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -598,6 +621,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should cancel old appointment and delete its queue item during reschedule. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should cancel old appointment and delete its queue item during reschedule", async () => {
 
             cancelAppointment.mockResolvedValue();
@@ -672,6 +696,7 @@ describe("Appointment Controller", () => {
             expect(queueItemDelete).toHaveBeenCalled();
         });
 
+        // Test: checks should return 400 for slot full error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 for slot full error", async () => {
 
             createAppointment.mockRejectedValue(
@@ -699,6 +724,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 for unexpected appointment creation errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 for unexpected appointment creation errors", async () => {
 
             createAppointment.mockRejectedValue(
@@ -731,8 +757,10 @@ describe("Appointment Controller", () => {
     // getAppointmentsByPatientId
     // =====================================================
 
+    // Suite: groups related coverage for getAppointmentsByPatientId.
     describe("getAppointmentsByPatientId", () => {
 
+        // Test: checks should fetch appointments. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fetch appointments", async () => {
 
             getAppointmentsByPatientId.mockResolvedValue([
@@ -757,6 +785,7 @@ describe("Appointment Controller", () => {
                 .toHaveBeenCalledWith("patient1");
         });
 
+        // Test: checks should return 400 if patientId missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if patientId missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -770,6 +799,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if fetching appointments fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if fetching appointments fails", async () => {
 
             getAppointmentsByPatientId.mockRejectedValue(new Error("Fetch failed"));
@@ -792,8 +822,10 @@ describe("Appointment Controller", () => {
     // cancelAppointmentController
     // =====================================================
 
+    // Suite: groups related coverage for cancelAppointmentController.
     describe("cancelAppointmentController", () => {
 
+        // Test: checks should cancel appointment successfully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should cancel appointment successfully", async () => {
 
             const mockGet = jest.fn().mockResolvedValue({
@@ -879,6 +911,7 @@ describe("Appointment Controller", () => {
                 .toHaveBeenCalled();
         });
 
+        // Test: checks should return 400 if appointment id missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if appointment id missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -892,6 +925,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should still succeed if cancellation email fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should still succeed if cancellation email fails", async () => {
 
             const mockGet = jest.fn().mockResolvedValue({
@@ -938,6 +972,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return 500 if cancellation fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if cancellation fails", async () => {
 
             admin.firestore.mockReturnValue({
@@ -970,8 +1005,10 @@ describe("Appointment Controller", () => {
     // getSmartSuggestion
     // =====================================================
 
+    // Suite: groups related coverage for getSmartSuggestion.
     describe("getSmartSuggestion", () => {
 
+        // Test: checks should return smart suggestions. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return smart suggestions", async () => {
 
             process.env.ML_SERVICE_URL = "http://localhost:5000";
@@ -1003,6 +1040,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return smart suggestions with only future recommendations. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return smart suggestions with only future recommendations", async () => {
             process.env.ML_SERVICE_URL = "http://localhost:5000";
 
@@ -1038,6 +1076,7 @@ describe("Appointment Controller", () => {
             expect(res.body.future).toBeDefined();
         });
 
+        // Test: checks should return fallback message if no recommendations are found. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return fallback message if no recommendations are found", async () => {
             process.env.ML_SERVICE_URL = "http://localhost:5000";
 
@@ -1070,6 +1109,7 @@ describe("Appointment Controller", () => {
             expect(res.body.suggestion).toContain("Traffic models suggest normal volume");
         });
 
+        // Test: checks should return fallback suggestion if ML service missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return fallback suggestion if ML service missing", async () => {
 
             delete process.env.ML_SERVICE_URL;
@@ -1083,6 +1123,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return fallback suggestion on ML error. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return fallback suggestion on ML error", async () => {
 
             process.env.ML_SERVICE_URL = "http://localhost:5000";
@@ -1098,6 +1139,7 @@ describe("Appointment Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return no-prediction response when ML has no recommendations. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return no-prediction response when ML has no recommendations", async () => {
 
             process.env.ML_SERVICE_URL = "http://localhost:5000";
@@ -1119,6 +1161,7 @@ describe("Appointment Controller", () => {
             expect(res.body.hasPrediction).toBe(false);
         });
 
+        // Test: checks should return a future smart suggestion when a later date is recommended. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return a future smart suggestion when a later date is recommended", async () => {
 
             process.env.ML_SERVICE_URL = "http://localhost:5000";
