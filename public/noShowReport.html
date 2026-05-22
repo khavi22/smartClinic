@@ -360,7 +360,7 @@
         if (!user) {
           console.log("No active user session found. Relocating to home page...");
           window.location.href = "index.html";
-        
+        }
         // Setup listener hooks after authentication settles
         document.getElementById("dateRange").addEventListener("change", loadReport);
         document.getElementById("refreshBtn").addEventListener("click",  loadReport);
@@ -382,10 +382,10 @@
       --text:    #1a1d2e;
       --muted:   #6b7280;
       --accent:  #2563eb;
-      --red:     #ef4444;
+      --red:     #1097e6;
       --red-lt:  #fee2e2;
-      --amber:   #f59e0b;
-      --green:   #10b981;
+      --amber:   #0b4df5;
+      --green:   #0bc6eb;
       --radius:  12px;
       --shadow:  0 2px 12px rgba(0,0,0,.07);
     }
