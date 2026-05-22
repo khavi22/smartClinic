@@ -1,6 +1,9 @@
 const admin = require("firebase-admin");
 
 
+// Initializes the Firebase Admin SDK once per Node process. In production it
+// expects service account JSON in FIREBASE_CREDENTIALS_JSON; in tests it uses a
+// lightweight projectId-only setup so modules can load without real secrets.
 if (!admin.apps.length) {
     const credentialsJson = process.env.FIREBASE_CREDENTIALS_JSON;
 

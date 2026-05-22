@@ -7,6 +7,7 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const BASE_URL = process.env.BASE_URL;
 
+// Shared SMTP transporter used by every email helper below.
 const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: parseInt(SMTP_PORT),
@@ -17,6 +18,8 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Sends one HTML email with the configured SMTP account and an optional custom
+// sender display name/reply-to address.
 const sendEmail = async (
     to,
     subject,
@@ -36,6 +39,7 @@ const sendEmail = async (
     return transporter.sendMail(mailOptions);
 };
 
+// Escapes dynamic email content before inserting it into HTML templates.
 const escapeHtml = (value) => String(value || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -43,6 +47,7 @@ const escapeHtml = (value) => String(value || "")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+// Normalizes BASE_URL so email buttons point back to the web app root.
 const getAppBaseUrl = () => {
     if (!BASE_URL) {
         return null;
@@ -57,6 +62,8 @@ const getAppBaseUrl = () => {
     }
 };
 
+// Builds the reusable appointment email layout used for confirmations,
+// reschedules, and cancellations.
 const buildAppointmentEmail = ({
     title,
     greeting,
@@ -134,6 +141,7 @@ const buildAppointmentEmail = ({
     `;
 };
 
+// Emails an invited staff member that a clinic admin has asked them to join.
 const sendStaffInvitation = async (
     email,
     clinicName,
@@ -155,6 +163,7 @@ const sendStaffInvitation = async (
     );
 };
 
+// Notifies a staff member that their clinic account was approved.
 const sendStaffApproval = async (
     email,
     clinicName,
@@ -175,6 +184,7 @@ const sendStaffApproval = async (
     );
 };
 
+// Notifies a staff member that their clinic application was rejected.
 const sendStaffRejection = async (
     email,
     clinicName,
@@ -196,6 +206,8 @@ const sendStaffRejection = async (
     );
 };
 
+// Sends a patient either a first booking confirmation or a reschedule
+// confirmation, depending on the isReschedule flag.
 const sendAppointmentConfirmation = async (
     email,
     patientName,
@@ -230,6 +242,7 @@ const sendAppointmentConfirmation = async (
     return sendEmail(email, subject, html);
 };
 
+// Sends a patient an appointment cancellation notice.
 const sendAppointmentCancellation = async (
     email,
     patientName,
@@ -259,6 +272,7 @@ const sendAppointmentCancellation = async (
     return sendEmail(email, subject, html);
 };
 
+// Sends a short notification when a patient's queue status changes.
 const sendQueueStatusUpdate = async (
     email,
     patientName,
@@ -286,6 +300,7 @@ const sendQueueStatusUpdate = async (
     return sendEmail(email, subject, html);
 };
 
+// Sends support-team generated admin onboarding invitations.
 const sendAdminInvitation = async (
     email,
     subject,

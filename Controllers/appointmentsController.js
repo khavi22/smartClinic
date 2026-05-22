@@ -1,6 +1,9 @@
 const { admin, db } = require('../services/config/firebase');
 const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment, getPatientProfileById, getUserProfileByEmail } = require("../services/firebaseService");
 
+// GET /api/availability
+// Reads a date and clinicId from the query string, asks Firebase for the
+// booking slots on that date, and returns the slot capacity/status list.
 exports.getAvailability = async (req, res) => {
     try {
         const dateObj = req.query.date;
@@ -18,6 +21,9 @@ exports.getAvailability = async (req, res) => {
     }
 };
 
+// GET /api/availability/recommendations
+// Calls the optional ML service for low-traffic time slots, filters out past
+// times for today, and returns only the recommended slot start times.
 exports.getRecommendations = async (req, res) => {
     try {
         const dateObj = req.query.date;
@@ -78,6 +84,8 @@ exports.getRecommendations = async (req, res) => {
 
 const emailService    = require('../services/emailService');
 
+// Looks up clinic display details when the booking request did not include
+// a clinic name/address, so confirmation records and emails stay readable.
 const getClinicMetadata = async (clinicId) => {
     if (!clinicId || !db?.collection) {
         return {};
@@ -97,6 +105,8 @@ const getClinicMetadata = async (clinicId) => {
     };
 };
 
+// Removes the matching queue entry for an appointment when that appointment
+// is cancelled or replaced during rescheduling.
 const deleteQueueItemForAppointment = async (appointmentId, appointmentData = null) => {
     if (!appointmentId || !db?.collection) {
         return;
@@ -135,6 +145,9 @@ const deleteQueueItemForAppointment = async (appointmentId, appointmentData = nu
     }
 };
 
+// POST /api/appointments
+// Creates a new appointment, optionally resolving the patient by email and
+// cancelling the old appointment first when this is a reschedule.
 exports.postAppointment = async (req, res) => {
     try {
         const { patientId, patientEmail, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
@@ -217,6 +230,8 @@ exports.postAppointment = async (req, res) => {
     }
 };
 
+// GET /api/appointments/:patientId
+// Returns all appointment records linked to one patient profile.
 exports.getAppointmentsByPatientId = async (req, res) => {
     try {
         const patientId = req.params.patientId;
@@ -234,6 +249,9 @@ exports.getAppointmentsByPatientId = async (req, res) => {
 };
 // make the put/post that updates status to cancelled by using function from firebaseService
 // Controller to cancel a booking
+// PATCH /api/appointments/:id
+// Marks an appointment as cancelled, removes its queue item if one exists,
+// and tries to notify the patient by email.
 exports.cancelAppointmentController = async (req, res) => {
     try {
         const appointmentId = req.params.id;
@@ -293,6 +311,9 @@ exports.cancelAppointmentController = async (req, res) => {
     }
 };
 
+// GET /api/smart-suggestion
+// Asks the ML service for a one-week forecast and formats the best available
+// current/future booking windows for the frontend AI suggestion card.
 exports.getSmartSuggestion = async (req, res) => {
     try {
         const localDate = new Date();

@@ -9,6 +9,9 @@ const {
 } = require("../services/clinicService");
 
 // ── OPERATING HOURS ─────────────────────────────────────────
+// POST /api/clinics/update-hours
+// Verifies that the signed-in user owns the clinic, then saves the weekly
+// operating-hours object used by booking and queue slot calculations.
 exports.updateClinicHoursController = async (req, res) => {
   try {
     console.log("Update clinic hours - Request body:", req.body);
@@ -61,6 +64,9 @@ exports.updateClinicHoursController = async (req, res) => {
   }
 };
 // ── Slots CLINICS ─────────────────────────────────────────────
+// PATCH /api/clinics/:clinicId/slot-capacity
+// Allows the clinic admin to change how many patients can share each hourly
+// booking/queue slot.
 exports.updateSlotCapacity = async (req, res) => {
     console.log("PATCH slot-capacity hit", req.params, req.body);
     try {
@@ -118,6 +124,8 @@ exports.updateSlotCapacity = async (req, res) => {
     }
 };
 // ── UPDATE CLINIC PROFILE ────────────────────────────────────
+// PUT /api/clinics/profile
+// Updates editable clinic metadata for the admin's own clinic only.
 exports.updateClinicProfile = async (req, res) => {
   try {
     const clinicId = req.user.clinicId;  // set by authMiddleware
@@ -142,6 +150,9 @@ exports.updateClinicProfile = async (req, res) => {
 };
 
 // ── GET CLINICS ─────────────────────────────────────────────
+// GET /api/clinics
+// Searches Google Places for clinics either by search text or by nearby
+// latitude/longitude coordinates and returns Google's place results.
 exports.getClinics = async (req, res) => {
   const searchName = req.query.search;
   const latitude = req.query.lat;
@@ -171,6 +182,9 @@ exports.getClinics = async (req, res) => {
 };
 
 // ── ENSURE CLINIC EXISTS ────────────────────────────────────
+// POST /api/clinics/ensure-exists
+// Creates a Firestore clinic document the first time a Google Place clinic is
+// selected, so later booking/admin flows have a local clinic record.
 exports.ensureClinicExistsController = async (req, res) => {
   try {
     const { clinicId, name, address } = req.body;
@@ -186,6 +200,8 @@ exports.ensureClinicExistsController = async (req, res) => {
 };
 
 // ── SERVICE TEMPLATES ───────────────────────────────────────
+// GET /api/clinics/templates
+// Returns global service templates that can be used to seed clinic services.
 exports.getServiceTemplates = async (req, res) => {
   try {
     const templates = await db.collection("serviceTemplates").get();
@@ -197,6 +213,9 @@ exports.getServiceTemplates = async (req, res) => {
   }
 };
 
+// POST /api/clinics/templates/seed
+// Protected safety endpoint that reports whether templates exist; the actual
+// seeding is intentionally done through the script in scripts/.
 exports.seedServiceTemplates = async (req, res) => {
   try {
     const existing = await db.collection("serviceTemplates").limit(1).get();
@@ -212,6 +231,9 @@ exports.seedServiceTemplates = async (req, res) => {
 };
 
 // ── CLINIC SERVICES ─────────────────────────────────────────
+// GET /api/clinics/services
+// Loads services for a clinic from query params or, when possible, from the
+// authenticated admin's linked clinic.
 exports.getServices = async (req, res) => {
   try {
     let clinicId = req.query.clinicId || (req.user && req.user.clinicId);
@@ -252,6 +274,9 @@ exports.getServices = async (req, res) => {
   }
 };
 
+// POST /api/clinics/services
+// Adds a new service to the authenticated admin's clinic after validating the
+// service fields and checking for duplicate names.
 exports.addService = async (req, res) => {
   try {
     const clinicId = req.user.clinicId;
@@ -274,6 +299,8 @@ exports.addService = async (req, res) => {
   }
 };
 
+// PUT /api/clinics/services/:serviceId
+// Updates one service under the authenticated admin's clinic.
 exports.updateService = async (req, res) => {
   try {
     const clinicId = req.user.clinicId;
@@ -286,6 +313,8 @@ exports.updateService = async (req, res) => {
   }
 };
 
+// DELETE /api/clinics/services/:serviceId
+// Deletes one service from the authenticated admin's clinic.
 exports.deleteService = async (req, res) => {
   try {
     const clinicId = req.user.clinicId;
@@ -299,6 +328,9 @@ exports.deleteService = async (req, res) => {
 };
 
 // ── STAFF UTILISATION REPORT ──────────────────────────────────
+// GET /api/clinics/:clinicId/staff-utilisation
+// Verifies clinic ownership, then returns staff workload and availability data
+// for the requested date range.
 exports.getStaffUtilisationReport = async (req, res) => {
     console.log("GET staff-utilisation hit", req.params, req.query);
     try {
