@@ -38,7 +38,7 @@ export function renderKPIs({ totalCompleted, overallAvg, peakHour, quietHour, lo
 
   document.getElementById("kpi-list").innerHTML = items.map(k => `
     <article class="kpi-card kpi-${k.color}" aria-label="${k.label}: ${k.value}">
-      <span class="kpi-icon" aria-hidden="true">${k.icon}</span>
+      <i class="kpi-icon" aria-hidden="true">${k.icon}</i>
       <output class="kpi-value">${k.value}</output>
       <p class="kpi-label">${k.label}</p>
     </article>
@@ -61,13 +61,13 @@ export function renderTimeOfDayChart(byTimeOfDay) {
         const label = formatHour(t.timeSlot);
         return `
           <li class="bar-group" aria-label="${label}: ${t.avgWaitMinutes} min avg (${t.appointmentsCompleted} appointments)">
-            <span class="bar-tooltip" role="tooltip">${t.avgWaitMinutes} min avg · ${t.appointmentsCompleted} appts</span>
-            <span class="bar-col" aria-hidden="true">
-              <span class="bar-fill" style="height:${(t.avgWaitMinutes / max) * 160}px; background:${color};">
-                <span class="bar-val">${t.avgWaitMinutes}m</span>
-              </span>
-            </span>
-            <span class="bar-label">${label}</span>
+            <output class="bar-tooltip" role="tooltip">${t.avgWaitMinutes} min avg · ${t.appointmentsCompleted} appts</output>
+            <figure class="bar-col" aria-hidden="true">
+              <output class="bar-fill" style="height:${(t.avgWaitMinutes / max) * 160}px; background:${color};">
+                <output class="bar-val">${t.avgWaitMinutes}m</output>
+              </output>
+            </figure>
+            <p class="bar-label">${label}</p>
           </li>`;
       }).join("")}
     </ul>`;
@@ -89,13 +89,13 @@ export function renderDailyChart(byDate) {
         const label = new Date(d.date + "T00:00:00").toLocaleDateString("en-ZA", { day: "2-digit", month: "short" });
         return `
           <li class="bar-group" aria-label="${label}: ${d.avgWaitMinutes} min avg">
-            <span class="bar-tooltip" role="tooltip">${label} · ${d.avgWaitMinutes} min · ${d.appointmentsCompleted} appts</span>
-            <span class="bar-col" aria-hidden="true">
-              <span class="bar-fill" style="height:${(d.avgWaitMinutes / max) * 160}px; background:${color};">
-                <span class="bar-val">${d.avgWaitMinutes}m</span>
-              </span>
-            </span>
-            <span class="bar-label"><time datetime="${d.date}">${label}</time></span>
+            <output class="bar-tooltip" role="tooltip">${label} · ${d.avgWaitMinutes} min · ${d.appointmentsCompleted} appts</output>
+            <figure class="bar-col" aria-hidden="true">
+              <output class="bar-fill" style="height:${(d.avgWaitMinutes / max) * 160}px; background:${color};">
+                <output class="bar-val">${d.avgWaitMinutes}m</output>
+              </output>
+            </figure>
+            <p class="bar-label"><time datetime="${d.date}">${label}</time></p>
           </li>`;
       }).join("")}
     </ul>`;
@@ -109,24 +109,24 @@ export function renderServiceBreakdown(byService) {
     return;
   }
   el.innerHTML = `
-    <dl class="h-bar-list">
+    <ol class="h-bar-list" role="list">
       ${byService.map(s => {
         const color = waitColor(s.avgWaitMinutes);
         const pct   = Math.min(Math.round((s.avgWaitMinutes / 60) * 100), 100);
         return `
-          <div class="h-bar-row">
-            <dt class="h-bar-name" title="${s.serviceName}">${s.serviceName}</dt>
-            <dd class="h-bar-meter">
+          <li class="h-bar-row">
+            <p class="h-bar-name" title="${s.serviceName}">${s.serviceName}</p>
+            <figure class="h-bar-meter">
               <meter min="0" max="100" value="${pct}"
                 aria-label="${s.serviceName}: ${s.avgWaitMinutes} min avg"
                 style="--fill:${color}"></meter>
-            </dd>
-            <dd class="h-bar-stat" aria-label="${s.avgWaitMinutes} min avg, ${s.count} appointments">
-              ${s.avgWaitMinutes} min&nbsp;<span>(${s.count} appts)</span>
-            </dd>
-          </div>`;
+            </figure>
+            <output class="h-bar-stat" aria-label="${s.avgWaitMinutes} min avg, ${s.count} appointments">
+              ${s.avgWaitMinutes} min&nbsp;<small>(${s.count} appts)</small>
+            </output>
+          </li>`;
       }).join("")}
-    </dl>`;
+    </ol>`;
 }
 
 // Renders the appointment detail table used below the report charts.
@@ -235,12 +235,10 @@ export function exportPDF() {
   const barHtml = (minutes, max) => {
     const color = minutes >= 45 ? "#dc2626" : minutes >= 20 ? "#d97706" : "#059669";
     const pct   = Math.min(Math.round((minutes / Math.max(max, 1)) * 100), 100);
-    return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
-      <div style="flex:1;background:#f3f4f6;border-radius:4px;height:10px">
-        <div style="width:${pct}%;background:${color};height:10px;border-radius:4px"></div>
-      </div>
-      <span style="font-weight:600;min-width:52px;text-align:right;color:${color}">${minutes} min</span>
-    </div>`;
+    return `<section style="display:flex;align-items:center;gap:8px;margin:3px 0">
+      <meter min="0" max="100" value="${pct}" style="flex:1;height:10px;--bar-color:${color}"></meter>
+      <output style="font-weight:600;min-width:52px;text-align:right;color:${color}">${minutes} min</output>
+    </section>`;
   };
 
   const maxTod     = Math.max(...byTimeOfDay.map(t => t.avgWaitMinutes), 1);
@@ -248,10 +246,10 @@ export function exportPDF() {
   const maxService = Math.max(...byService.map(s => s.avgWaitMinutes), 1);
 
   const kpiCard = (label, value, color) =>
-    `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;text-align:center;min-width:130px">
-      <div style="font-size:22px;font-weight:700;color:${color}">${value}</div>
-      <div style="font-size:11px;color:#6b7280;margin-top:4px">${label}</div>
-    </div>`;
+    `<article style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;text-align:center;min-width:130px">
+      <output style="display:block;font-size:22px;font-weight:700;color:${color}">${value}</output>
+      <p style="font-size:11px;color:#6b7280;margin-top:4px">${label}</p>
+    </article>`;
 
   const todRows = byTimeOfDay.map(t =>
     `<tr><td>${formatHour(t.timeSlot)}</td><td style="text-align:center">${t.appointmentsCompleted}</td>
@@ -275,7 +273,7 @@ export function exportPDF() {
       <td>${escHtml(a.serviceName || "–")}</td>
       <td style="text-align:center;font-weight:600">${a.serviceDuration}</td>
       <td>${escHtml(a.clinicName || "–")}</td>
-      <td><span style="background:${badge};padding:2px 8px;border-radius:99px;font-size:11px">${label}</span></td>
+      <td><mark style="background:${badge};padding:2px 8px;border-radius:99px;font-size:11px">${label}</mark></td>
     </tr>`;
   }).join("");
 
@@ -292,52 +290,58 @@ export function exportPDF() {
       .meta { font-size:11px; color:#6b7280; text-align:right; line-height:1.8; }
       .kpis { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
       .section { margin-bottom:28px; }
+      meter { border:none; border-radius:4px; background:#f3f4f6; appearance:none; }
+      meter::-webkit-meter-bar { background:#f3f4f6; border:none; border-radius:4px; }
+      meter::-webkit-meter-optimum-value,
+      meter::-webkit-meter-suboptimum-value,
+      meter::-webkit-meter-even-less-good-value { background:var(--bar-color); border-radius:4px; }
+      meter::-moz-meter-bar { background:var(--bar-color); border-radius:4px; }
       table { width:100%; border-collapse:collapse; font-size:12px; }
       th { background:#f9fafb; padding:8px 10px; text-align:left; font-weight:600; color:#374151; border-bottom:2px solid #e5e7eb; }
       td { padding:7px 10px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
       tr:nth-child(even) td { background:#fafafa; }
       @media print { body { padding:16px; } @page { margin:1cm; } }
     </style></head><body>
-    <div class="header">
-      <div><h1>Average Patient <em>Wait Times</em> Report</h1></div>
-      <div class="meta">
-        <div><strong>Date Range:</strong> ${range}</div>
-        <div><strong>Generated:</strong> ${new Date().toLocaleString("en-ZA")}</div>
-      </div>
-    </div>
+    <header class="header">
+      <section><h1>Average Patient <em>Wait Times</em> Report</h1></section>
+      <aside class="meta">
+        <p><strong>Date Range:</strong> ${range}</p>
+        <p><strong>Generated:</strong> ${new Date().toLocaleString("en-ZA")}</p>
+      </aside>
+    </header>
 
-    <div class="kpis">
+    <section class="kpis" aria-label="Key metrics">
       ${kpiCard("Appointments Analysed", metrics.totalCompleted.toLocaleString(), "#0d9488")}
       ${kpiCard("Overall Avg Wait",      metrics.overallAvg + " min",            avgColor)}
       ${kpiCard("Busiest Hour",          metrics.peakHour,                        "#dc2626")}
       ${kpiCard("Quietest Hour",         metrics.quietHour,                       "#059669")}
       ${kpiCard("Longest Wait Day",      metrics.longestDay,                      "#d97706")}
       ${kpiCard("Shortest Wait Day",     metrics.shortestDay,                     "#059669")}
-    </div>
+    </section>
 
-    <div class="section">
+    <section class="section">
       <h2>Average Wait Time by Hour of Day</h2>
       <table><thead><tr><th>Hour</th><th>Appointments</th><th style="width:220px">Avg Wait</th></tr></thead>
       <tbody>${todRows || '<tr><td colspan="3" style="color:#9ca3af;text-align:center">No data</td></tr>'}</tbody></table>
-    </div>
+    </section>
 
-    <div class="section">
+    <section class="section">
       <h2>Average Wait Time by Date</h2>
       <table><thead><tr><th>Date</th><th>Appointments</th><th style="width:220px">Avg Wait</th></tr></thead>
       <tbody>${dateRows || '<tr><td colspan="3" style="color:#9ca3af;text-align:center">No data</td></tr>'}</tbody></table>
-    </div>
+    </section>
 
-    <div class="section">
+    <section class="section">
       <h2>Average Wait Time by Service Type</h2>
       <table><thead><tr><th>Service</th><th>Appointments</th><th style="width:220px">Avg Wait</th></tr></thead>
       <tbody>${serviceRows || '<tr><td colspan="3" style="color:#9ca3af;text-align:center">No data</td></tr>'}</tbody></table>
-    </div>
+    </section>
 
-    <div class="section">
+    <section class="section">
       <h2>Appointment Detail Log (most recent ${Math.min(appointments.length, 100)})</h2>
       <table><thead><tr><th>Date</th><th>Hour</th><th>Service</th><th>Duration (min)</th><th>Clinic</th><th>Band</th></tr></thead>
       <tbody>${apptRows || '<tr><td colspan="6" style="color:#9ca3af;text-align:center">No appointments in this period</td></tr>'}</tbody></table>
-    </div>
+    </section>
   </body></html>`;
 
   const blob = new Blob([html], { type: "text/html;charset=utf-8;" });
