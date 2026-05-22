@@ -1,410 +1,624 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard — smartClinic</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="css/availability_styles.css?v=2">
-    <link rel="stylesheet" href="css/global_nav.css?v=1">
-    <link rel="stylesheet" href="css/admin.css?v=1">
-    <link rel="stylesheet" href="css/notifications.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/availability_styles.css?v=2" />
+    <link rel="stylesheet" href="css/global_nav.css?v=1" />
+    <link rel="stylesheet" href="css/admin.css?v=1" />
+    <link rel="stylesheet" href="css/notifications.css" />
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <!-- ── NAV ── -->
     <nav class="global-app-bar" aria-label="Main Navigation">
-        <section class="nav-container">
-            <a href="adminDashboard.html" class="nav-brand">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                <span>smartClinic</span>
-            </a>
-            <section class="nav-user" aria-label="Account">
-                <img id="userAvatar" class="nav-avatar" src="" alt="Your profile picture" hidden>
-                <span id="userGreeting" class="nav-greeting" hidden></span>
-                <button id="logoutBtn" class="nav-logout-btn" type="button" hidden>
-                    <i class='bx bx-log-out' aria-hidden="true"></i>
-                    Logout
-                </button>
-            </section>
+      <section class="nav-container">
+        <a href="adminDashboard.html" class="nav-brand">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+          <span>smartClinic</span>
+        </a>
+        <section class="nav-user" aria-label="Account">
+          <img
+            id="userAvatar"
+            class="nav-avatar"
+            src=""
+            alt="Your profile picture"
+            hidden
+          />
+          <span id="userGreeting" class="nav-greeting" hidden></span>
+          <button id="logoutBtn" class="nav-logout-btn" type="button" hidden>
+            <i class="bx bx-log-out" aria-hidden="true"></i>
+            Logout
+          </button>
         </section>
+      </section>
     </nav>
 
     <!-- ── PAGE ── -->
     <main class="admin-main">
-
-        <!-- Page header -->
-        <header class="admin-page-header">
-            <section id="middleSection" class="admin-header-inner">
-                <h1 id="adminGreeting">Admin Dashboard</h1>
-                <p>Manage your clinic's operating hours and settings</p>
-                <p id="clinicNameDisplay" class="clinic-name-badge" hidden>
-                    <i class='bx bx-building-house' aria-hidden="true"></i>
-                    <span id="clinicNameText"></span>
-                </p>
-            </section>
-        </header>
-
-        <!-- Content grid -->
-        <section class="admin-grid">
-
-            <!-- ── OPERATING HOURS CARD ── -->
-            <article class="admin-card hours-card" aria-labelledby="hours-heading">
-                <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-time-five' aria-hidden="true"></i></span>
-                    <div>
-                        <h2 id="hours-heading">Operating Hours</h2>
-                        <p>Set when your clinic is open each day</p>
-                    </div>
-                </header>
-
-                <form class="hours-form" id="hoursForm">
-                    <ol class="days-list" role="list">
-
-                        <!-- Monday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="mon-open" id="mon-open" checked>
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Monday</span>
-                            </label>
-                            <fieldset class="time-fields" id="mon-fields">
-                                <legend class="visually-hidden">Monday hours</legend>
-                                <input type="time" id="mon-start" name="mon-start" value="08:00"
-                                    aria-label="Monday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="mon-end" name="mon-end" value="17:00"
-                                    aria-label="Monday closing time">
-                            </fieldset>
-                        </li>
-
-                        <!-- Tuesday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="tue-open" id="tue-open" checked>
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Tuesday</span>
-                            </label>
-                            <fieldset class="time-fields" id="tue-fields">
-                                <legend class="visually-hidden">Tuesday hours</legend>
-                                <input type="time" id="tue-start" name="tue-start" value="08:00"
-                                    aria-label="Tuesday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="tue-end" name="tue-end" value="17:00"
-                                    aria-label="Tuesday closing time">
-                            </fieldset>
-                        </li>
-
-                        <!-- Wednesday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="wed-open" id="wed-open" checked>
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Wednesday</span>
-                            </label>
-                            <fieldset class="time-fields" id="wed-fields">
-                                <legend class="visually-hidden">Wednesday hours</legend>
-                                <input type="time" id="wed-start" name="wed-start" value="08:00"
-                                    aria-label="Wednesday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="wed-end" name="wed-end" value="17:00"
-                                    aria-label="Wednesday closing time">
-                            </fieldset>
-                        </li>
-
-                        <!-- Thursday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="thu-open" id="thu-open" checked>
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Thursday</span>
-                            </label>
-                            <fieldset class="time-fields" id="thu-fields">
-                                <legend class="visually-hidden">Thursday hours</legend>
-                                <input type="time" id="thu-start" name="thu-start" value="08:00"
-                                    aria-label="Thursday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="thu-end" name="thu-end" value="17:00"
-                                    aria-label="Thursday closing time">
-                            </fieldset>
-                        </li>
-
-                        <!-- Friday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="fri-open" id="fri-open" checked>
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Friday</span>
-                            </label>
-                            <fieldset class="time-fields" id="fri-fields">
-                                <legend class="visually-hidden">Friday hours</legend>
-                                <input type="time" id="fri-start" name="fri-start" value="08:00"
-                                    aria-label="Friday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="fri-end" name="fri-end" value="13:00"
-                                    aria-label="Friday closing time">
-                            </fieldset>
-                        </li>
-
-                        <!-- Saturday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="sat-open" id="sat-open">
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Saturday</span>
-                            </label>
-                            <fieldset class="time-fields" id="sat-fields" disabled>
-                                <legend class="visually-hidden">Saturday hours</legend>
-                                <input type="time" id="sat-start" name="sat-start" value="08:00"
-                                    aria-label="Saturday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="sat-end" name="sat-end" value="13:00"
-                                    aria-label="Saturday closing time">
-                            </fieldset>
-                        </li>
-
-                        <!-- Sunday -->
-                        <li class="day-row">
-                            <label class="day-toggle">
-                                <input type="checkbox" name="sun-open" id="sun-open">
-                                <span class="toggle-track" aria-hidden="true"></span>
-                                <span class="day-name">Sunday</span>
-                            </label>
-                            <fieldset class="time-fields" id="sun-fields" disabled>
-                                <legend class="visually-hidden">Sunday hours</legend>
-                                <input type="time" id="sun-start" name="sun-start" value="08:00"
-                                    aria-label="Sunday opening time">
-                                <span class="time-sep" aria-hidden="true">to</span>
-                                <input type="time" id="sun-end" name="sun-end" value="13:00"
-                                    aria-label="Sunday closing time">
-                            </fieldset>
-                        </li>
-
-                    </ol>
-
-                    <footer class="card-footer">
-                        <p id="hoursSaveStatus" class="save-status" role="status" aria-live="polite"></p>
-                        <button type="submit" class="btn-save" id="hoursSaveBtn">
-                            <i class='bx bx-save' aria-hidden="true"></i>
-                            <span>Save Hours</span>
-                        </button>
-                    </footer>
-                </form>
-            </article>
-
+      <!-- Page header -->
+      <header class="admin-page-header">
+        <section id="middleSection" class="admin-header-inner">
+          <h1 id="adminGreeting">Admin Dashboard</h1>
+          <p>Manage your clinic's operating hours and settings</p>
+          <p id="clinicNameDisplay" class="clinic-name-badge" hidden>
+            <i class="bx bx-building-house" aria-hidden="true"></i>
+            <span id="clinicNameText"></span>
+          </p>
         </section>
+      </header>
 
-        <!-- ── SPLIT GRID: STAFF & SERVICES ── -->
-        <section class="admin-grid-split">
-
-            <!-- STAFF MANAGEMENT (Tabbed) -->
-            <article class="admin-card staff-card" aria-labelledby="staff-heading">
-                <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-group' aria-hidden="true"></i></span>
-                    <div>
-                        <h2 id="staff-heading">Staff Management</h2>
-                        <p>Manage your clinic's medical and admin team</p>
-                    </div>
-                </header>
-
-                <nav class="staff-tabs" role="tablist">
-                    <button class="tab-btn active" data-tab="active-staff" role="tab" aria-selected="true">
-                        <i class='bx bx-user-check'></i> Active
-                    </button>
-                    <button class="tab-btn" data-tab="pending-approvals" role="tab" aria-selected="false">
-                        <i class='bx bx-time'></i> Pending
-                    </button>
-                    <button class="tab-btn" data-tab="invite-new" role="tab" aria-selected="false">
-                        <i class='bx bx-user-plus'></i> Invite
-                    </button>
-                </nav>
-
-                <!-- Active Staff Tab -->
-                <div id="active-staff" class="tab-content active" role="tabpanel">
-                    <div id="activeStaffList" class="active-staff-list">
-                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">Loading staff members...</p>
-                    </div>
-                </div>
-
-                <!-- Pending Approvals Tab -->
-                <div id="pending-approvals" class="tab-content" role="tabpanel">
-                    <div id="pendingStaffList" class="pending-list">
-                        <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0;">No pending approvals</p>
-                    </div>
-                </div>
-
-                <!-- Invite Tab -->
-                <div id="invite-new" class="tab-content" role="tabpanel">
-                    <form id="inviteStaffForm" class="invite-form">
-                        <input type="email" id="inviteEmail" placeholder="staff@example.com" required>
-                        <button type="submit" class="btn-save" id="inviteBtn">Send Invite</button>
-                    </form>
-                    <p id="inviteStatus" class="save-status" style="margin-top: 10px;"></p>
-                </div>
-            </article>
-
-        </section>
-
-        <!-- ── MANAGE CLINIC & SERVICES BUTTON ── -->
-        <section class="admin-grid" style="margin-top: 32px; margin-bottom: 32px;padding-bottom:20px">
-            <article class="admin-card">
-                <header class="card-header"
-                    style="display: flex; justify-content: space-between; align-items: center; border: none; padding-bottom: 20px;">
-                    <div style="display: flex; gap: 16px; align-items: center;">
-                        <span class="card-icon"><i class='bx bx-clinic' aria-hidden="true"></i></span>
-                        <div>
-                            <h2 style="margin: 0; font-size: 1.25rem;">Clinic Settings &amp; Services</h2>
-                            <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Update facility details and
-                                manage bookable services</p>
-                        </div>
-                    </div>
-                    <a href="manageservices.html" class="btn-save"
-                        style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; font-weight: 600; padding: 10px 20px;">
-                        <i class='bx bx-cog'></i> Manage Services
-                    </a>
-                </header>
-            </article>
-        </section>
-        <!-- ── REPORTS CARD ── -->
-        <section class="admin-grid" style="margin-top: 0; margin-bottom: 32px;">
-            <article class="admin-card" aria-labelledby="reports-heading">
-                <header class="card-header">
-                    <span class="card-icon"><i class='bx bx-bar-chart-alt-2' aria-hidden="true"></i></span>
-                    <div>
-                        <h2 id="reports-heading">Analytics & Reports</h2>
-                        <p>View operational insights and export clinic performance data</p>
-                    </div>
-                </header>
-
-                <div class="reports-list">
-
-                    <div class="report-item">
-                        <div class="report-info">
-                            <span class="report-icon accent-blue"><i class='bx bx-group'></i></span>
-                            <div>
-                                <div class="report-title">Staff Utilisation</div>
-                                <div class="report-desc">Workload distribution, peak hours, and staff activity patterns
-                                </div>
-                            </div>
-                        </div>
-                        <a href="staffReport.html" class="btn-report">
-                            <i class='bx bx-line-chart'></i> View Report
-                        </a>
-                    </div>
-
-                    <div class="report-item">
-                        <div class="report-info">
-                            <span class="report-icon accent-green"><i class='bx bx-time-five'></i></span>
-                            <div>
-                                <div class="report-title">Average Patient Wait Times</div>
-                                <div class="report-desc">Queue wait times by time slot, day, and staff member</div>
-                            </div>
-                        </div>
-                        <a href="waitTimesReport.html" class="btn-report">
-                            <i class='bx bx-line-chart'></i> View Report
-                        </a>
-                    </div>
-
-                    <div class="report-item" style="border-bottom: none;">
-                        <div class="report-info">
-                            <span class="report-icon accent-orange"><i class='bx bx-calendar-x'></i></span>
-                            <div>
-                                <div class="report-title">Appointment No-Show Rates</div>
-                                <div class="report-desc">No-show trends by date, time slot, and patient demographics
-                                </div>
-                            </div>
-                        </div>
-                        <a href="noShowReport.html" class="btn-report">
-                            <i class='bx bx-line-chart'></i> View Report
-                        </a>
-                    </div>
-
-                </div>
-            </article>
-        </section>
-        <!-- ── SLOT CAPACITY CARD ── -->
-        <article class="admin-card capacity-card" aria-labelledby="capacity-heading">
-            <header class="card-header">
-                <span class="card-icon"><i class='bx bx-group' aria-hidden="true"></i></span>
-                <div>
-                    <h2 id="capacity-heading">Slot Capacity</h2>
-                    <p>Set the maximum number of patients per time slot</p>
-                </div>
-            </header>
-
-            <div class="capacity-body">
-                <div class="capacity-display" aria-live="polite">
-                    <span id="capacityValue">10</span>
-                    <span class="capacity-unit">patients / slot</span>
-                </div>
-
-                <fieldset class="capacity-fieldset">
-                    <legend class="visually-hidden">Slot capacity slider</legend>
-                    <div class="slider-track-wrap">
-                        <span class="slider-bound" aria-hidden="true">5</span>
-                        <input type="range" id="slotCapacitySlider" name="slotCapacity" min="5" max="50" step="1"
-                            value="10" aria-label="Patients per slot" aria-valuemin="5" aria-valuemax="50"
-                            aria-valuenow="10">
-                        <span class="slider-bound" aria-hidden="true">50</span>
-                    </div>
-                </fieldset>
+      <!-- Content grid -->
+      <section class="admin-grid">
+        <!-- ── OPERATING HOURS CARD ── -->
+        <article class="admin-card hours-card" aria-labelledby="hours-heading">
+          <header class="card-header">
+            <span class="card-icon"
+              ><i class="bx bx-time-five" aria-hidden="true"></i
+            ></span>
+            <div>
+              <h2 id="hours-heading">Operating Hours</h2>
+              <p>Set when your clinic is open each day</p>
             </div>
+          </header>
+
+          <form class="hours-form" id="hoursForm">
+            <ol class="days-list" role="list">
+              <!-- Monday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input
+                    type="checkbox"
+                    name="mon-open"
+                    id="mon-open"
+                    checked
+                  />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Monday</span>
+                </label>
+                <fieldset class="time-fields" id="mon-fields">
+                  <legend class="visually-hidden">Monday hours</legend>
+                  <input
+                    type="time"
+                    id="mon-start"
+                    name="mon-start"
+                    value="08:00"
+                    aria-label="Monday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="mon-end"
+                    name="mon-end"
+                    value="17:00"
+                    aria-label="Monday closing time"
+                  />
+                </fieldset>
+              </li>
+
+              <!-- Tuesday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input
+                    type="checkbox"
+                    name="tue-open"
+                    id="tue-open"
+                    checked
+                  />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Tuesday</span>
+                </label>
+                <fieldset class="time-fields" id="tue-fields">
+                  <legend class="visually-hidden">Tuesday hours</legend>
+                  <input
+                    type="time"
+                    id="tue-start"
+                    name="tue-start"
+                    value="08:00"
+                    aria-label="Tuesday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="tue-end"
+                    name="tue-end"
+                    value="17:00"
+                    aria-label="Tuesday closing time"
+                  />
+                </fieldset>
+              </li>
+
+              <!-- Wednesday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input
+                    type="checkbox"
+                    name="wed-open"
+                    id="wed-open"
+                    checked
+                  />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Wednesday</span>
+                </label>
+                <fieldset class="time-fields" id="wed-fields">
+                  <legend class="visually-hidden">Wednesday hours</legend>
+                  <input
+                    type="time"
+                    id="wed-start"
+                    name="wed-start"
+                    value="08:00"
+                    aria-label="Wednesday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="wed-end"
+                    name="wed-end"
+                    value="17:00"
+                    aria-label="Wednesday closing time"
+                  />
+                </fieldset>
+              </li>
+
+              <!-- Thursday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input
+                    type="checkbox"
+                    name="thu-open"
+                    id="thu-open"
+                    checked
+                  />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Thursday</span>
+                </label>
+                <fieldset class="time-fields" id="thu-fields">
+                  <legend class="visually-hidden">Thursday hours</legend>
+                  <input
+                    type="time"
+                    id="thu-start"
+                    name="thu-start"
+                    value="08:00"
+                    aria-label="Thursday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="thu-end"
+                    name="thu-end"
+                    value="17:00"
+                    aria-label="Thursday closing time"
+                  />
+                </fieldset>
+              </li>
+
+              <!-- Friday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input
+                    type="checkbox"
+                    name="fri-open"
+                    id="fri-open"
+                    checked
+                  />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Friday</span>
+                </label>
+                <fieldset class="time-fields" id="fri-fields">
+                  <legend class="visually-hidden">Friday hours</legend>
+                  <input
+                    type="time"
+                    id="fri-start"
+                    name="fri-start"
+                    value="08:00"
+                    aria-label="Friday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="fri-end"
+                    name="fri-end"
+                    value="13:00"
+                    aria-label="Friday closing time"
+                  />
+                </fieldset>
+              </li>
+
+              <!-- Saturday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input type="checkbox" name="sat-open" id="sat-open" />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Saturday</span>
+                </label>
+                <fieldset class="time-fields" id="sat-fields" disabled>
+                  <legend class="visually-hidden">Saturday hours</legend>
+                  <input
+                    type="time"
+                    id="sat-start"
+                    name="sat-start"
+                    value="08:00"
+                    aria-label="Saturday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="sat-end"
+                    name="sat-end"
+                    value="13:00"
+                    aria-label="Saturday closing time"
+                  />
+                </fieldset>
+              </li>
+
+              <!-- Sunday -->
+              <li class="day-row">
+                <label class="day-toggle">
+                  <input type="checkbox" name="sun-open" id="sun-open" />
+                  <span class="toggle-track" aria-hidden="true"></span>
+                  <span class="day-name">Sunday</span>
+                </label>
+                <fieldset class="time-fields" id="sun-fields" disabled>
+                  <legend class="visually-hidden">Sunday hours</legend>
+                  <input
+                    type="time"
+                    id="sun-start"
+                    name="sun-start"
+                    value="08:00"
+                    aria-label="Sunday opening time"
+                  />
+                  <span class="time-sep" aria-hidden="true">to</span>
+                  <input
+                    type="time"
+                    id="sun-end"
+                    name="sun-end"
+                    value="13:00"
+                    aria-label="Sunday closing time"
+                  />
+                </fieldset>
+              </li>
+            </ol>
 
             <footer class="card-footer">
-                <p id="capacitySaveStatus" class="save-status" role="status" aria-live="polite"></p>
-                <button type="button" class="btn-save" id="capacitySaveBtn">
-                    <i class='bx bx-save' aria-hidden="true"></i>
-                    <span>Save Capacity</span>
-                </button>
+              <p
+                id="hoursSaveStatus"
+                class="save-status"
+                role="status"
+                aria-live="polite"
+              ></p>
+              <button type="submit" class="btn-save" id="hoursSaveBtn">
+                <i class="bx bx-save" aria-hidden="true"></i>
+                <span>Save Hours</span>
+              </button>
             </footer>
+          </form>
         </article>
+      </section>
 
-        <!-- ── DANGER ZONE ── -->
-        <section class="danger-zone" aria-labelledby="danger-heading">
-            <h2 id="danger-heading"><i class='bx bx-error-circle' aria-hidden="true"></i> Danger Zone</h2>
-            <p>Permanently deleting your account will remove all your clinic data, operating hours, and admin access.
-                This action cannot be undone.</p>
-            <button id="deleteAccBtn" class="btn-delete" type="button">
-                <i class='bx bx-trash' aria-hidden="true"></i>
-                Delete My Account
+      <!-- ── SPLIT GRID: STAFF & SERVICES ── -->
+      <section class="admin-grid-split">
+        <!-- STAFF MANAGEMENT (Tabbed) -->
+        <article class="admin-card staff-card" aria-labelledby="staff-heading">
+          <header class="card-header">
+            <span class="card-icon"
+              ><i class="bx bx-group" aria-hidden="true"></i
+            ></span>
+            <div>
+              <h2 id="staff-heading">Staff Management</h2>
+              <p>Manage your clinic's medical and admin team</p>
+            </div>
+          </header>
+
+          <nav class="staff-tabs" role="tablist">
+            <button
+              class="tab-btn active"
+              data-tab="active-staff"
+              role="tab"
+              aria-selected="true"
+            >
+              <i class="bx bx-user-check"></i> Active
             </button>
+            <button
+              class="tab-btn"
+              data-tab="pending-approvals"
+              role="tab"
+              aria-selected="false"
+            >
+              <i class="bx bx-time"></i> Pending
+            </button>
+            <button
+              class="tab-btn"
+              data-tab="invite-new"
+              role="tab"
+              aria-selected="false"
+            >
+              <i class="bx bx-user-plus"></i> Invite
+            </button>
+          </nav>
+
+          <!-- Active Staff Tab -->
+          <div id="active-staff" class="tab-content active" role="tabpanel">
+            <div id="activeStaffList" class="active-staff-list">
+              <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0">
+                Loading staff members...
+              </p>
+            </div>
+          </div>
+
+          <!-- Pending Approvals Tab -->
+          <div id="pending-approvals" class="tab-content" role="tabpanel">
+            <div id="pendingStaffList" class="pending-list">
+              <p class="text-muted" style="font-size: 0.88rem; padding: 12px 0">
+                No pending approvals
+              </p>
+            </div>
+          </div>
+
+          <!-- Invite Tab -->
+          <div id="invite-new" class="tab-content" role="tabpanel">
+            <form id="inviteStaffForm" class="invite-form">
+              <input
+                type="email"
+                id="inviteEmail"
+                placeholder="staff@example.com"
+                required
+              />
+              <button type="submit" class="btn-save" id="inviteBtn">
+                Send Invite
+              </button>
+            </form>
+            <p
+              id="inviteStatus"
+              class="save-status"
+              style="margin-top: 10px"
+            ></p>
+          </div>
+        </article>
+      </section>
+
+      <!-- ── MANAGE CLINIC & SERVICES BUTTON ── -->
+      <section
+        class="admin-grid"
+        style="margin-top: 32px; margin-bottom: 32px; padding-bottom: 20px"
+      >
+        <article class="admin-card">
+          <header
+            class="card-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border: none;
+              padding-bottom: 20px;
+            "
+          >
+            <div style="display: flex; gap: 16px; align-items: center">
+              <span class="card-icon"
+                ><i class="bx bx-clinic" aria-hidden="true"></i
+              ></span>
+              <div>
+                <h2 style="margin: 0; font-size: 1.25rem">
+                  Clinic Settings &amp; Services
+                </h2>
+                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem">
+                  Update facility details and manage bookable services
+                </p>
+              </div>
+            </div>
+            <a
+              href="manageservices.html"
+              class="btn-save"
+              style="
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 10px;
+                font-weight: 600;
+                padding: 10px 20px;
+              "
+            >
+              <i class="bx bx-cog"></i> Manage Services
+            </a>
+          </header>
+        </article>
+      </section>
+      <!-- ── REPORTS CARD ── -->
+      <section class="admin-grid" style="margin-top: 0; margin-bottom: 32px">
+        <article class="admin-card" aria-labelledby="reports-heading">
+          <header class="card-header">
+            <span class="card-icon"
+              ><i class="bx bx-bar-chart-alt-2" aria-hidden="true"></i
+            ></span>
+            <div>
+              <h2 id="reports-heading">Analytics & Reports</h2>
+              <p>
+                View operational insights and export clinic performance data
+              </p>
+            </div>
+          </header>
+
+          <div class="reports-list">
+            <div class="report-item">
+              <div class="report-info">
+                <span class="report-icon accent-blue"
+                  ><i class="bx bx-group"></i
+                ></span>
+                <div>
+                  <div class="report-title">Staff Utilisation</div>
+                  <div class="report-desc">
+                    Workload distribution, peak hours, and staff activity
+                    patterns
+                  </div>
+                </div>
+              </div>
+              <a href="staffReport.html" class="btn-report">
+                <i class="bx bx-line-chart"></i> View Report
+              </a>
+            </div>
+
+            <div class="report-item">
+              <div class="report-info">
+                <span class="report-icon accent-green"
+                  ><i class="bx bx-time-five"></i
+                ></span>
+                <div>
+                  <div class="report-title">Average Patient Wait Times</div>
+                  <div class="report-desc">
+                    Queue wait times by time slot, day, and staff member
+                  </div>
+                </div>
+              </div>
+              <a href="waitTimesReport.html" class="btn-report">
+                <i class="bx bx-line-chart"></i> View Report
+              </a>
+            </div>
+
+            <div class="report-item" style="border-bottom: none">
+              <div class="report-info">
+                <span class="report-icon accent-orange"
+                  ><i class="bx bx-calendar-x"></i
+                ></span>
+                <div>
+                  <div class="report-title">Appointment No-Show Rates</div>
+                  <div class="report-desc">
+                    No-show trends by date, time slot, and patient demographics
+                  </div>
+                </div>
+              </div>
+              <a href="noShowReport.html" class="btn-report">
+                <i class="bx bx-line-chart"></i> View Report
+              </a>
+            </div>
+          </div>
+        </article>
+      </section>
+      <!-- ── SLOT CAPACITY CARD ── -->
+      <article
+        class="admin-card capacity-card"
+        aria-labelledby="capacity-heading"
+      >
+        <header class="card-header">
+          <span class="card-icon"
+            ><i class="bx bx-group" aria-hidden="true"></i
+          ></span>
+          <section>
+            <h2 id="capacity-heading">Slot Capacity</h2>
+            <p>Set the maximum number of patients per time slot</p>
+          </section>
+        </header>
+
+        <section class="capacity-body">
+          <section class="capacity-display" aria-live="polite">
+            <span id="capacityValue">10</span>
+            <span class="capacity-unit">patients / slot</span>
+          </section>
+
+          <fieldset class="capacity-fieldset">
+            <legend class="visually-hidden">Slot capacity slider</legend>
+            <section class="slider-track-wrap">
+              <span class="slider-bound" aria-hidden="true">5</span>
+              <input
+                type="range"
+                id="slotCapacitySlider"
+                name="slotCapacity"
+                min="5"
+                max="50"
+                step="1"
+                value="10"
+                aria-label="Patients per slot"
+                aria-valuemin="5"
+                aria-valuemax="50"
+                aria-valuenow="10"
+              />
+              <span class="slider-bound" aria-hidden="true">50</span>
+            </section>
+          </fieldset>
         </section>
 
+        <footer class="card-footer">
+          <p
+            id="capacitySaveStatus"
+            class="save-status"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <button type="button" class="btn-save" id="capacitySaveBtn">
+            <i class="bx bx-save" aria-hidden="true"></i>
+            <span>Save Capacity</span>
+          </button>
+        </footer>
+      </article>
+
+      <!-- ── DANGER ZONE ── -->
+      <section class="danger-zone" aria-labelledby="danger-heading">
+        <h2 id="danger-heading">
+          <i class="bx bx-error-circle" aria-hidden="true"></i> Danger Zone
+        </h2>
+        <p>
+          Permanently deleting your account will remove all your clinic data,
+          operating hours, and admin access. This action cannot be undone.
+        </p>
+        <button id="deleteAccBtn" class="btn-delete" type="button">
+          <i class="bx bx-trash" aria-hidden="true"></i>
+          Delete My Account
+        </button>
+      </section>
     </main>
 
     <!-- ── DELETE CONFIRM MODAL ── -->
-    <dialog id="deleteModal" aria-labelledby="modalTitle" aria-describedby="modalDesc">
-        <article class="modal-box">
-            <span class="modal-icon" aria-hidden="true"><i class='bx bx-trash'></i></span>
-            <h3 id="modalTitle">Delete your account?</h3>
-            <p id="modalDesc">This will permanently erase your admin profile, clinic data, and all associated records.
-                You'll need to sign in again to confirm.</p>
-            <footer class="modal-actions">
-                <button class="modal-cancel" id="modalCancel" type="button">Cancel</button>
-                <button class="modal-confirm" id="modalConfirm" type="button">
-                    <span id="confirmText">Yes, Delete</span>
-                </button>
-            </footer>
-        </article>
+    <dialog
+      id="deleteModal"
+      aria-labelledby="modalTitle"
+      aria-describedby="modalDesc"
+    >
+      <article class="modal-box">
+        <span class="modal-icon" aria-hidden="true"
+          ><i class="bx bx-trash"></i
+        ></span>
+        <h3 id="modalTitle">Delete your account?</h3>
+        <p id="modalDesc">
+          This will permanently erase your admin profile, clinic data, and all
+          associated records. You'll need to sign in again to confirm.
+        </p>
+        <footer class="modal-actions">
+          <button class="modal-cancel" id="modalCancel" type="button">
+            Cancel
+          </button>
+          <button class="modal-confirm" id="modalConfirm" type="button">
+            <span id="confirmText">Yes, Delete</span>
+          </button>
+        </footer>
+      </article>
     </dialog>
-
 
     <script src="js/notifications.js"></script>
     <script src="js/dashboard.js?v=3"></script>
     <script src="js/adminDashboard.js"></script>
-</body>
-
+  </body>
 </html>
