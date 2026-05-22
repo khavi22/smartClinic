@@ -185,7 +185,7 @@ exports.registerUser = async (req, res) => {
             }
 
             roleData = { clinicId: invite.clinicId, approvalStatus: "pending" };
-            redirect = "/login.html"; // Redirect to login to show pending message
+            redirect = "/index.html"; // Redirect to home to show pending message
             message = "Staff account created successfully. Awaiting admin approval.";
 
             await firebaseService.createUserProfile(userData, roleData);

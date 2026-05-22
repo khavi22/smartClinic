@@ -322,7 +322,7 @@
                 <a href="dashboard.html" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: white; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; transition: all 0.2s ease;">
                     ← Go to Dashboard
                 </a>
-                <button onclick="firebase.auth().signOut().then(() => window.location.href = 'login.html')" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;">
+                <button onclick="firebase.auth().signOut().then(() => window.location.href = 'index.html')" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;">
                     Logout
                 </button>
             </nav>
@@ -480,10 +480,10 @@
                 const mainContent = document.getElementById('mainContent');
 
                 if (!user) {
-                    // Not authenticated - redirect to login with return URL
-                    console.log("No active user. Redirecting to login...");
+                    // Not authenticated - redirect to home page with return URL
+                    console.log("No active user. Redirecting to home...");
                     const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    window.location.href = `index.html?returnTo=${returnTo}`;
                     return;
                 }
 

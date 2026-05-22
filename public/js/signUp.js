@@ -44,7 +44,7 @@ roleSelect.addEventListener("change", updateRoleCodeField);
 auth.onAuthStateChanged(user => {
     if (!user) {
         console.warn("No active session found on signUp.html. Redirecting...");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
     }
 });
 
@@ -55,7 +55,7 @@ signupForm.addEventListener("submit", async (e) => {
 
     if (!user) {
         showToast("Session expired. Please log in again.", "error");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 

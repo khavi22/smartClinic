@@ -44,7 +44,7 @@ class AdminOnboardingUI {
             const user = firebase.auth().currentUser;
             if (!user) {
                 const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.href = `login.html?returnTo=${returnTo}`;
+                window.location.href = `index.html?returnTo=${returnTo}`;
                 return;
             }
             const token = await user.getIdToken();
@@ -61,7 +61,7 @@ class AdminOnboardingUI {
             if (!response.ok) {
                 if (response.status === 401) {
                     const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    window.location.href = `index.html?returnTo=${returnTo}`;
                     return;
                 }
                 if (response.status === 403) {
@@ -124,7 +124,7 @@ class AdminOnboardingUI {
             const user = firebase.auth().currentUser;
             if (!user) {
                 const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.href = `login.html?returnTo=${returnTo}`;
+                window.location.href = `index.html?returnTo=${returnTo}`;
                 return;
             }
             const token = await user.getIdToken();
@@ -141,7 +141,7 @@ class AdminOnboardingUI {
             if (!response.ok) {
                 if (response.status === 401) {
                     const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    window.location.href = `index.html?returnTo=${returnTo}`;
                     return;
                 }
                 if (response.status === 403) {
@@ -208,7 +208,7 @@ class AdminOnboardingUI {
             const user = firebase.auth().currentUser;
             if (!user) {
                 const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.href = `login.html?returnTo=${returnTo}`;
+                window.location.href = `index.html?returnTo=${returnTo}`;
                 return;
             }
             const token = await user.getIdToken();
@@ -247,7 +247,7 @@ class AdminOnboardingUI {
                 // Handle auth failures
                 if (response.status === 401) {
                     const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
-                    window.location.href = `login.html?returnTo=${returnTo}`;
+                    window.location.href = `index.html?returnTo=${returnTo}`;
                     return;
                 }
                 if (response.status === 403) {

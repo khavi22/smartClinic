@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 
 
-let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes , patientQueueRoutes, adminOnboardingRoutes;
+let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, adminRoutes, queueRoutes, patientQueueRoutes, adminOnboardingRoutes;
 
 try {
   clinicsRoutes = require("./routes/clinics");
@@ -34,7 +34,7 @@ try {
   console.error("Error loading admin onboarding routes:", err);
 }
 
-try{
+try {
   patientQueueRoutes = require("./routes/patientQueueRoutes");
   console.log("Patients Queue  routes loaded");
 }
@@ -79,7 +79,7 @@ try {
 }
 
 if (clinicsRoutes) app.use("/api/clinics", clinicsRoutes);
-if (appointmentRoutes) app.use("/api", appointmentRoutes); 
+if (appointmentRoutes) app.use("/api", appointmentRoutes);
 if (userRoutes) app.use("/api/user", userRoutes);
 if (staffAvailabilityRoutes) app.use("/api/staff/availability", staffAvailabilityRoutes);
 if (adminRoutes) app.use("/api/admin", adminRoutes);
@@ -88,25 +88,25 @@ if (patientQueueRoutes) app.use("/api/patient/queue", patientQueueRoutes);
 if (adminOnboardingRoutes) app.use("/api/admin-onboarding", adminOnboardingRoutes);
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`);
-    next();
+  console.log(`${req.method} ${req.path}`);
+  next();
 });
 
 // 404 handler
 app.use((req, res) => {
-    console.log(`404 Not Found: ${req.method} ${req.path}`);
-    res.status(404).json({ error: "Not found" });
+  console.log(`404 Not Found: ${req.method} ${req.path}`);
+  res.status(404).json({ error: "Not found" });
 });
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(port, () => {
-        console.log(`Server running on port ${port}`);
-    });
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
 }
 
 module.exports = app;

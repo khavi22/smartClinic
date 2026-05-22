@@ -101,7 +101,7 @@ async function loadNextQueue() {
   const patientId = localStorage.getItem("patientId");
 
   if (!patientId) {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
     return;
   }
 

@@ -722,7 +722,7 @@ async function updatePatientStatus(patient, status) {
 
 auth.onAuthStateChanged(async (user) => {
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 
@@ -780,5 +780,5 @@ if (patientLookupModeInput) {
 
 document.getElementById("logoutBtn")?.addEventListener("click", (event) => {
     event.preventDefault();
-    auth.signOut().then(() => window.location.href = "login.html");
+    auth.signOut().then(() => window.location.href = "index.html");
 });

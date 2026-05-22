@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const patientId = localStorage.getItem("patientId");
 
                     if (!patientId) {
-                        window.location.href = "login.html";
+                        window.location.href = "index.html";
                     }
                     const res = await fetch('/api/appointments', {
                         method: 'POST',

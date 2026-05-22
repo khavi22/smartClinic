@@ -5,7 +5,7 @@ let charts = {};
 
 // ── AUTH ─────────────────────────────────────────────────
 firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) { window.location.href = "login.html"; return; }
+    if (!user) { window.location.href = "index.html"; return; }
 
     try {
         const idToken = await user.getIdToken();

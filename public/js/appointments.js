@@ -15,7 +15,7 @@ async function fetchAppointments() {
     const patientId = localStorage.getItem("patientId");
 
     if (!patientId) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
     }
     const APPOINTMENTS_URL = `/api/appointments/${patientId}`;
     const response = await fetch(APPOINTMENTS_URL);
