@@ -360,6 +360,7 @@
         if (!user) {
           console.log("No active user session found. Relocating to home page...");
           window.location.href = "index.html";
+          return;
         }
         // Setup listener hooks after authentication settles
         document.getElementById("dateRange").addEventListener("change", loadReport);
@@ -367,6 +368,8 @@
         document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
         document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
         document.getElementById("tableCsvBtn").addEventListener("click",  exportCSV);
+
+        loadReport();
       });
     });
   </script>
