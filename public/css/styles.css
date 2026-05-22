@@ -26,13 +26,18 @@ body {
 /* Immersive Hero Wrapper */
 .landing-hero {
   position: relative;
-  width: 100%;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: url('../images/hero.png') center/cover no-repeat;
-  padding: 2rem 1.5rem;
+  padding: 0;
+  margin: 0;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }
 
 /* Overlay for better readability */
@@ -47,17 +52,18 @@ body {
 /* Welcome Card - Glassmorphism */
 .welcome-entrance {
   position: relative;
-  width: min(100%, 640px);
-  margin: 0 auto;
+  width: 100%;
+  max-width: 640px;
   background: var(--glass-white);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  padding: 4rem;
+  padding: 3rem 2rem;
   border-radius: 2rem;
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-premium);
   text-align: center;
   animation: entranceFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  margin: 0 1.5rem;
 }
 
 @keyframes entranceFade {
@@ -86,7 +92,7 @@ body {
 
 .welcome-entrance h1 {
   font-family: var(--font-heading);
-  font-size: 3rem;
+  font-size: 2.25rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -98,9 +104,9 @@ body {
 }
 
 .welcome-entrance > p {
-  font-size: 1.125rem;
+  font-size: 0.95rem;
   color: #475569;
-  margin: 1.5rem 0 2rem;
+  margin: 1rem 0 1.5rem;
   line-height: 1.6;
 }
 
@@ -225,7 +231,7 @@ body {
 }
 
 .ribbon-item span {
-  font-size: 0.775rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
@@ -262,6 +268,116 @@ body {
   display: block;
 }
 
+/* ──────────────────────────────────────────────────────────────
+   SIGNUP PAGE STYLES
+   ────────────────────────────────────────────────────────────── */
+
+.signup-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8f1f8 100%);
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+}
+
+.signup-card header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.signup-card h1 {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.signup-card header p {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.signup-card fieldset {
+  border: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+.signup-card legend {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.signup-card .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.signup-card label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: left;
+}
+
+.signup-card input,
+.signup-card select {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.signup-card input:focus,
+.signup-card select:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.signup-card button {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.signup-card button:hover {
+  background: var(--primary-blue-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -3px rgba(37, 99, 235, 0.3);
+}
+
 /* Responsive Fixes */
 @media (max-width: 640px) {
   .welcome-entrance {
@@ -270,7 +386,11 @@ body {
   }
   
   .welcome-entrance h1 {
-    font-size: 2.25rem;
+    font-size: 1.75rem;
+  }
+  
+  .signup-card {
+    padding: 2rem 1.5rem;
   }
 }
 /* Optimized for Windows Desktop Screens */
@@ -372,5 +492,3 @@ body {
 .btn-premium {
   padding: 1.1rem 1.75rem;
 }
-
-
