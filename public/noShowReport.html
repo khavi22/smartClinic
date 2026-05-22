@@ -35,7 +35,7 @@
 
       document.getElementById("kpi-list").innerHTML = items.map(k => `
         <article class="kpi-card kpi-${k.color}" aria-label="${k.label}: ${k.value}">
-          <span class="kpi-icon" aria-hidden="true">${k.icon}</span>
+          <i class="kpi-icon" aria-hidden="true">${k.icon}</i>
           <output class="kpi-value">${k.value}</output>
           <p class="kpi-label">${k.label}</p>
         </article>
@@ -55,13 +55,13 @@
         <ul class="bar-chart" role="list" aria-label="Monthly no-show rate">
           ${trend.map(t => `
             <li class="bar-group" aria-label="${t.label}: ${t.rate}% (${t.missed} of ${t.total})">
-              <span class="bar-tooltip" role="tooltip">${t.missed} missed / ${t.total} total</span>
-              <span class="bar-col" aria-hidden="true">
-                <span class="bar-fill" style="height:${(t.rate / max) * 160}px">
-                  <span class="bar-val">${t.rate}%</span>
-                </span>
-              </span>
-              <span class="bar-label"><time>${t.label}</time></span>
+              <output class="bar-tooltip" role="tooltip">${t.missed} missed / ${t.total} total</output>
+              <figure class="bar-col" aria-hidden="true">
+                <output class="bar-fill" style="height:${(t.rate / max) * 160}px">
+                  <output class="bar-val">${t.rate}%</output>
+                </output>
+              </figure>
+              <p class="bar-label"><time>${t.label}</time></p>
             </li>
           `).join("")}
         </ul>`;
@@ -75,21 +75,21 @@
         return;
       }
       el.innerHTML = `
-        <dl class="h-bar-list">
+        <ol class="h-bar-list" role="list">
           ${data.map(p => `
-            <div class="h-bar-row">
-              <dt class="h-bar-name" title="${p.name}">${p.name}</dt>
-              <dd class="h-bar-meter">
+            <li class="h-bar-row">
+              <p class="h-bar-name" title="${p.name}">${p.name}</p>
+              <figure class="h-bar-meter">
                 <meter min="0" max="100" value="${p.rate}"
                   aria-label="${p.name}: ${p.rate}% no-show rate"
                   style="--fill:${rateColor(p.rate)}"></meter>
-              </dd>
-              <dd class="h-bar-stat" aria-label="${p.missed} missed of ${p.total}">
-                ${p.rate}%&nbsp;<span>(${p.missed}/${p.total})</span>
-              </dd>
-            </div>
+              </figure>
+              <output class="h-bar-stat" aria-label="${p.missed} missed of ${p.total}">
+                ${p.rate}%&nbsp;<small>(${p.missed}/${p.total})</small>
+              </output>
+            </li>
           `).join("")}
-        </dl>`;
+        </ol>`;
     }
 
     /* Missed appointments table */
@@ -215,12 +215,10 @@
 
       const rateColor = r => r >= 25 ? "#dc2626" : r >= 15 ? "#d97706" : "#059669";
       const bar = (rate, color) =>
-        `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
-          <div style="flex:1;background:#f3f4f6;border-radius:4px;height:10px">
-            <div style="width:${Math.min(rate,100)}%;background:${color};height:10px;border-radius:4px"></div>
-          </div>
-          <span style="font-weight:600;min-width:38px;text-align:right">${rate}%</span>
-        </div>`;
+        `<section style="display:flex;align-items:center;gap:8px;margin:3px 0">
+          <meter min="0" max="100" value="${Math.min(rate,100)}" style="flex:1;height:10px;--bar-color:${color}"></meter>
+          <output style="font-weight:600;min-width:38px;text-align:right">${rate}%</output>
+        </section>`;
 
       const typeRows = byType.map(t =>
         `<tr><td>${t.name}</td><td style="text-align:center">${t.total}</td><td style="text-align:center">${t.missed}</td>
@@ -242,15 +240,15 @@
           <td>${a.patientName || a.patient?.name || "Unknown"}</td>
           <td>${a.providerName || a.doctorName || a.provider || "Unknown"}</td>
           <td>${a.appointmentType || a.type || a.serviceType || "General"}</td>
-          <td><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:99px;font-size:11px">${a.status || "no-show"}</span></td>
+          <td><mark style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:99px;font-size:11px">${a.status || "no-show"}</mark></td>
         </tr>`;
       }).join("");
 
       const kpiCard = (label, value, color) =>
-        `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;text-align:center;min-width:130px">
-          <div style="font-size:22px;font-weight:700;color:${color}">${value}</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:4px">${label}</div>
-        </div>`;
+        `<article style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;text-align:center;min-width:130px">
+          <output style="display:block;font-size:22px;font-weight:700;color:${color}">${value}</output>
+          <p style="font-size:11px;color:#6b7280;margin-top:4px">${label}</p>
+        </article>`;
 
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
         <title>No Show Rates Report</title>
@@ -263,52 +261,58 @@
           .meta { font-size: 11px; color: #6b7280; text-align: right; line-height: 1.8; }
           .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
           .section { margin-bottom: 28px; }
+          meter { border: none; border-radius: 4px; background: #f3f4f6; appearance: none; }
+          meter::-webkit-meter-bar { background: #f3f4f6; border: none; border-radius: 4px; }
+          meter::-webkit-meter-optimum-value,
+          meter::-webkit-meter-suboptimum-value,
+          meter::-webkit-meter-even-less-good-value { background: var(--bar-color); border-radius: 4px; }
+          meter::-moz-meter-bar { background: var(--bar-color); border-radius: 4px; }
           table { width: 100%; border-collapse: collapse; font-size: 12px; }
           th { background: #f9fafb; padding: 8px 10px; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; }
           td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
           tr:nth-child(even) td { background: #fafafa; }
           @media print { body { padding: 16px; } @page { margin: 1cm; } }
         </style></head><body>
-        <div class="header">
-          <div><h1>Appointment <em>No-Show</em> Rates Report</h1></div>
-          <div class="meta">
-            <div><strong>Date Range:</strong> ${range}</div>
-            <div><strong>Generated:</strong> ${new Date().toLocaleString("en-ZA")}</div>
-          </div>
-        </div>
+        <header class="header">
+          <section><h1>Appointment <em>No-Show</em> Rates Report</h1></section>
+          <aside class="meta">
+            <p><strong>Date Range:</strong> ${range}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString("en-ZA")}</p>
+          </aside>
+        </header>
 
-        <div class="kpis">
+        <section class="kpis" aria-label="Key metrics">
           ${kpiCard("Total Appointments", metrics.total.toLocaleString(), "#2563eb")}
           ${kpiCard("No-Shows", metrics.missed.toLocaleString(), "#dc2626")}
           ${kpiCard("No-Show Rate", metrics.noShowRate + "%", rateColor(metrics.noShowRate))}
           ${kpiCard("Avg / Day", metrics.avgPerDay, "#6b7280")}
           ${kpiCard("Peak Day", metrics.peakWeekday, "#d97706")}
           ${kpiCard("Rescheduled", metrics.recoveryRate + "%", "#059669")}
-        </div>
+        </section>
 
-        <div class="section">
+        <section class="section">
           <h2>No-Show Rate by Service Type</h2>
           <table><thead><tr><th>Service Type</th><th>Total</th><th>No-Shows</th><th style="width:200px">Rate</th></tr></thead>
           <tbody>${typeRows || '<tr><td colspan="4" style="color:#9ca3af;text-align:center">No data</td></tr>'}</tbody></table>
-        </div>
+        </section>
 
-        <div class="section">
+        <section class="section">
           <h2>No-Show Rate by Provider</h2>
           <table><thead><tr><th>Provider</th><th>Total</th><th>No-Shows</th><th style="width:200px">Rate</th></tr></thead>
           <tbody>${providerRows || '<tr><td colspan="4" style="color:#9ca3af;text-align:center">No data</td></tr>'}</tbody></table>
-        </div>
+        </section>
 
-        <div class="section">
+        <section class="section">
           <h2>Monthly Trend</h2>
           <table><thead><tr><th>Month</th><th>Total</th><th>No-Shows</th><th style="width:200px">Rate</th></tr></thead>
           <tbody>${trendRows || '<tr><td colspan="4" style="color:#9ca3af;text-align:center">No data</td></tr>'}</tbody></table>
-        </div>
+        </section>
 
-        <div class="section">
+        <section class="section">
           <h2>Missed Appointments Log (most recent ${Math.min(missedAppointments.length, 100)})</h2>
           <table><thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Provider</th><th>Service Type</th><th>Status</th></tr></thead>
           <tbody>${logRows || '<tr><td colspan="6" style="color:#9ca3af;text-align:center">No missed appointments in this period</td></tr>'}</tbody></table>
-        </div>
+        </section>
       </body></html>`;
 
       const blob = new Blob([html], { type: "text/html;charset=utf-8;" });
@@ -411,7 +415,7 @@
     }
     .brand-group { display: flex; align-items: center; gap: 16px; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; color: var(--text); text-decoration: none; }
-    .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    .brand-dot { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
     
     /* Navigation Back Button Links */
     .btn-back {
@@ -460,7 +464,7 @@
     /* loader */
     #loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px; }
     #loader[hidden] { display: none; }
-    .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    .spinner { display: block; width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* report body */
@@ -471,7 +475,7 @@
     #kpi-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
     .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 18px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); transition: transform .15s; }
     .kpi-card:hover { transform: translateY(-2px); }
-    .kpi-icon  { font-size: 1.4rem; }
+    .kpi-icon  { font-size: 1.4rem; font-style: normal; }
     .kpi-value { font-size: 2rem; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1; display: block; }
     .kpi-label { font-size: 0.78rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
     .kpi-blue  { border-top: 3px solid var(--accent); } .kpi-blue  .kpi-value { color: var(--accent); }
@@ -509,7 +513,7 @@
     meter::-webkit-meter-even-less-good-value { background: var(--fill, var(--accent)); border-radius: 99px; }
     meter::-moz-meter-bar { background: var(--fill, var(--accent)); border-radius: 99px; }
     .h-bar-stat { font-size: 0.78rem; font-family: 'DM Mono', monospace; font-weight: 600; text-align: right; }
-    .h-bar-stat span { color: var(--muted); font-weight: 400; }
+    .h-bar-stat small { color: var(--muted); font-weight: 400; font-size: inherit; }
 
     /* type section */
     .type-section { margin-bottom: 28px; }
@@ -545,13 +549,13 @@
 <body>
 
 <header class="site-header" role="banner">
-  <div class="brand-group">
+  <section class="brand-group">
     <a href="#" class="brand" aria-label="Clinic Admin home">
-      <span class="brand-dot" aria-hidden="true"></span>
+      <i class="brand-dot" aria-hidden="true"></i>
       Clinic Admin
     </a>
     <a href="adminDashboard.html" class="btn-back" id="backDashboardBtn">← Back to Dashboard</a>
-  </div>
+  </section>
   <nav aria-label="Export actions" class="header-actions">
     <small id="last-updated" aria-live="polite"></small>
     <button type="button" class="btn-ghost"   id="exportCsvBtn">⬇ Export CSV</button>
@@ -578,7 +582,7 @@
 <main aria-label="No-show rate report">
 
   <section id="loader" aria-label="Loading" aria-live="polite">
-    <span class="spinner" role="status" aria-label="Loading appointments"></span>
+    <output class="spinner" role="status" aria-label="Loading appointments"></output>
     <p>Loading appointments…</p>
   </section>
 
@@ -586,10 +590,10 @@
 
     <section class="kpi-section" aria-labelledby="kpi-heading">
       <h2 id="kpi-heading" class="sr-only">Key metrics</h2>
-      <div id="kpi-list" aria-label="Key performance indicators"></div>
+      <section id="kpi-list" aria-label="Key performance indicators"></section>
     </section>
 
-    <div class="charts-grid">
+    <section class="charts-grid">
       <article class="card" aria-labelledby="trend-heading">
         <h2 id="trend-heading">Monthly No-Show Rate Trend</h2>
         <figure id="trend-chart" aria-label="Monthly no-show rate bar chart"></figure>
@@ -597,14 +601,14 @@
 
       <article class="card" aria-labelledby="provider-heading">
         <h2 id="provider-heading">No-Show Rate by Provider</h2>
-        <div id="provider-bars"></div>
+        <section id="provider-bars"></section>
       </article>
-    </div>
+    </section>
 
     <section class="type-section" aria-labelledby="type-heading">
       <article class="card">
         <h2 id="type-heading">No-Show Rate by Appointment Type</h2>
-        <div id="type-bars"></div>
+        <section id="type-bars"></section>
       </article>
     </section>
 
@@ -618,7 +622,7 @@
           ⬇ Download CSV
         </button>
       </header>
-      <div class="table-scroll" role="region" aria-labelledby="log-heading" tabindex="0">
+      <section class="table-scroll" role="region" aria-labelledby="log-heading" tabindex="0">
         <table>
           <caption class="sr-only">The 50 most recent missed appointments, sorted newest first.</caption>
           <thead>
@@ -635,7 +639,7 @@
             <tr><td colspan="6" class="empty-cell">Loading…</td></tr>
           </tbody>
         </table>
-      </div>
+      </section>
     </section>
 
   </section>
