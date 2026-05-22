@@ -14,7 +14,7 @@ const db = admin.firestore();
 
 // ── CONFIG ───────────────────────────────────────────────────
 const CLINIC_ID = "ChIJPRRsEHUNlR4RGKv7Sn9-KWk";
-const STAFF_ID = "wjvKln6luyZTV1vmtrPbWxlrTNK2";
+const STAFF_ID = "nuAhVo0OCKfbLTMF5iUVppdITHo2";
 
 const SERVICES = [
     { serviceId: "BrovLizm40Bd16wcmDrU", serviceName: "Nutrition Consultation", serviceDuration: 45 },
@@ -30,12 +30,12 @@ const TIME_SLOTS = [
 const STATUSES = ["COMPLETE", "COMPLETE", "COMPLETE", "WAITING", "IN_CONSULTATION"];
 
 const PATIENT_NAMES = [
-    "Thabo Nkosi", "Lerato Dlamini", "Sipho Zulu", "Nomsa Khumalo",
-    "Bongani Mthembu", "Zanele Ndlovu", "Mandla Sithole", "Precious Mokoena",
-    "Thandeka Mahlangu", "Lungelo Buthelezi", "Ayanda Cele", "Nompilo Hadebe",
-    "Sibusiso Mhlongo", "Nokwanda Mchunu", "Sandile Gwala", "Phindile Ntuli",
-    "Mduduzi Shabalala", "Nonhlanhla Zungu", "Lwazi Mnguni", "Simphiwe Gumede",
-    "Khanyisile Majola", "Siyanda Madlala", "Nothando Ngcobo", "Mlungisi Nzama"
+    "Kagiso Sithole", "Refilwe Mokoena", "Tebogo Dlamini", "Naledi Mahlangu",
+    "Mpho Nkosi", "Kefilwe Molefe", "Katlego Motsepe", "Boitumelo Sefako",
+    "Lesego Tau", "Dineo Sekgobela", "Tshepo Ramahlele", "Mmabatho Tladi",
+    "Karabo Matlala", "Palesa Moshoeshoe", "Lethabo Khoza", "Tumelo Ntseki",
+    "Amogelang Moagi", "Gosiame Mothibi", "Phenyo Seleke", "Keabetswe Phiri",
+    "Wandile Dube", "Nosipho Radebe", "Sibongile Ntanzi", "Mthokozisi Nxumalo"
 ];
 
 // ── HELPERS ──────────────────────────────────────────────────

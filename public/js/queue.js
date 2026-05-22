@@ -5,15 +5,21 @@ const totalQueueCount = document.getElementById("totalQueueCount");
 const waitingQueueCount = document.getElementById("waitingQueueCount");
 const consultationQueueCount = document.getElementById("consultationQueueCount");
 const addQueueForm = document.getElementById("addQueueForm");
+const patientLookupModeInput = document.getElementById("patientLookupModeInput");
 const patientNameInput = document.getElementById("patientNameInput");
+const patientEmailInput = document.getElementById("patientEmailInput");
+const patientEmailField = document.getElementById("patientEmailField");
+const addQueueSubmitText = document.getElementById("addQueueSubmitText");
 const appointmentTimeInput = document.getElementById("appointmentTimeInput");
 const priorityInput = document.getElementById("priorityInput");
 const queueActionStatus = document.getElementById("queueActionStatus");
 
-const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED",];
+const QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION", "COMPLETE", "MISSED"];
+const STATUS_UPDATE_OPTIONS = ["WAITING", "COMPLETE", "MISSED"];
 let currentClinicId = null;
 let currentIdToken = null;
 let currentStaffId = null;
+let currentClinicName = "";
 
 function setQueueMessage(message) {
     if (!queueTableBody) return;
@@ -95,6 +101,35 @@ function isLockedStatus(status) {
     return ["COMPLETE", "MISSED"].includes(status || "");
 }
 
+function isEmailMode() {
+    return patientLookupModeInput?.value === "email";
+}
+
+function updatePatientLookupMode() {
+    const emailMode = isEmailMode();
+    const patientNameField = patientNameInput?.closest(".field-group");
+
+    if (patientNameField) {
+        patientNameField.hidden = emailMode;
+    }
+
+    if (patientEmailField) {
+        patientEmailField.hidden = !emailMode;
+    }
+
+    if (patientNameInput) {
+        patientNameInput.required = !emailMode;
+    }
+
+    if (patientEmailInput) {
+        patientEmailInput.required = emailMode;
+    }
+
+    if (addQueueSubmitText) {
+        addQueueSubmitText.textContent = emailMode ? "Book Appointment" : "Add to Queue";
+    }
+}
+
 function renderQueue(queue) {
     const patients = normalizeQueue(queue);
     const waiting = patients.filter((patient) => patient.status === "WAITING").length;
@@ -131,19 +166,43 @@ function renderQueue(queue) {
 
         const actionsCell = row.querySelector(".col-actions");
 
+        const actionsWrap = document.createElement("div");
+        actionsWrap.className = "queue-row-actions";
+
+        const primaryActions = document.createElement("div");
+        primaryActions.className = "queue-primary-actions";
+
+        const statusActions = document.createElement("div");
+        statusActions.className = "queue-status-actions";
+
         const startButton = document.createElement("button");
         startButton.type = "button";
-        startButton.className = "action-icon-btn start";
+        startButton.className = "queue-row-btn start";
         startButton.title = "Start Consultation";
-        startButton.innerHTML = "<i class='bx bx-play'></i>";
+        startButton.setAttribute("aria-label", `Start consultation for ${getPatientName(patient)}`);
+        startButton.innerHTML = "<i class='bx bx-play'></i><span>Start</span>";
         startButton.disabled = patientStatus !== "WAITING";
         startButton.addEventListener("click", () => startPatientConsultation(patient));
 
         const statusSelect = document.createElement("select");
         statusSelect.className = "mini-status-select";
+        statusSelect.setAttribute("aria-label", `Choose status for ${getPatientName(patient)}`);
         statusSelect.disabled = statusLocked;
 
-        QUEUE_STATUSES.forEach((status) => {
+        const updateOptions = patientStatus === "IN_CONSULTATION"
+            ? ["COMPLETE", "MISSED"]
+            : STATUS_UPDATE_OPTIONS;
+
+        if (!updateOptions.includes(patientStatus)) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Update to...";
+            placeholder.selected = true;
+            placeholder.disabled = true;
+            statusSelect.appendChild(placeholder);
+        }
+
+        updateOptions.forEach((status) => {
             const option = document.createElement("option");
             option.value = status;
             option.textContent = formatStatus(status);
@@ -153,21 +212,32 @@ function renderQueue(queue) {
 
         const updateButton = document.createElement("button");
         updateButton.type = "button";
-        updateButton.className = "action-icon-btn update";
+        updateButton.className = "queue-row-btn compact update";
         updateButton.title = "Update Status";
-        updateButton.innerHTML = "<i class='bx bx-check'></i>";
-        updateButton.disabled = statusLocked;
+        updateButton.setAttribute("aria-label", `Update status for ${getPatientName(patient)}`);
+        updateButton.innerHTML = "<i class='bx bx-check'></i><span>Update</span>";
         updateButton.addEventListener("click", () => updatePatientStatus(patient, statusSelect.value));
+
+        const syncUpdateButtonState = () => {
+            updateButton.disabled = statusLocked || !statusSelect.value || statusSelect.value === patientStatus;
+        };
+
+        statusSelect.addEventListener("change", syncUpdateButtonState);
+        syncUpdateButtonState();
 
         const rescheduleButton = document.createElement("button");
         rescheduleButton.type = "button";
-        rescheduleButton.className = "action-icon-btn reschedule";
+        rescheduleButton.className = "queue-row-btn reschedule";
         rescheduleButton.title = "Reschedule Slot";
-        rescheduleButton.innerHTML = "<i class='bx bx-redo'></i>";
+        rescheduleButton.setAttribute("aria-label", `Reschedule ${getPatientName(patient)}`);
+        rescheduleButton.innerHTML = "<i class='bx bx-calendar-edit'></i><span>Reschedule</span>";
         rescheduleButton.disabled = patientStatus !== "WAITING";
         rescheduleButton.addEventListener("click", () => showReschedulePicker(patient, actionsCell));
 
-        actionsCell.append(startButton, rescheduleButton, statusSelect, updateButton);
+        primaryActions.append(startButton, rescheduleButton);
+        statusActions.append(statusSelect, updateButton);
+        actionsWrap.append(primaryActions, statusActions);
+        actionsCell.appendChild(actionsWrap);
         queueTableBody.appendChild(row);
     });
 }
@@ -319,6 +389,51 @@ async function loadClinicServices(clinicId, idToken) {
     }
 }
 
+function getSelectedServiceDetails() {
+    const serviceSelect = document.getElementById("serviceSelectInput");
+    const serviceId = serviceSelect?.value;
+
+    if (!serviceSelect || !serviceId) {
+        return null;
+    }
+
+    const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+
+    return {
+        serviceId,
+        serviceName: selectedOption.dataset.name || selectedOption.textContent,
+        serviceDuration: parseInt(selectedOption.dataset.duration, 10)
+    };
+}
+
+async function createAppointmentByEmail(patientEmail, appointmentTime, serviceDetails) {
+    const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${currentIdToken}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            patientEmail,
+            clinicId: currentClinicId,
+            clinicName: currentClinicName,
+            date: getTodayKey(),
+            timeSlot: appointmentTime,
+            serviceId: serviceDetails.serviceId,
+            serviceName: serviceDetails.serviceName,
+            serviceDuration: serviceDetails.serviceDuration
+        })
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || result.success === false) {
+        throw new Error(result.message || result.error || `Appointment creation failed with ${response.status}`);
+    }
+
+    return result.appointment;
+}
+
 async function addPatientToQueue(event) {
     event.preventDefault();
 
@@ -327,9 +442,17 @@ async function addPatientToQueue(event) {
         return;
     }
 
+    const emailMode = isEmailMode();
     const patientName = patientNameInput.value.trim();
-    if (!patientName) {
+    const patientEmail = patientEmailInput?.value.trim() || "";
+
+    if (!emailMode && !patientName) {
         showToast("Enter a patient name before adding to the queue.", "error");
+        return;
+    }
+
+    if (emailMode && !patientEmail) {
+        showToast("Enter the patient's account email before booking.", "error");
         return;
     }
 
@@ -339,21 +462,30 @@ async function addPatientToQueue(event) {
         return;
     }
 
-    const serviceSelect = document.getElementById("serviceSelectInput");
-    const serviceId = serviceSelect?.value;
-    if (!serviceId) {
+    const serviceDetails = getSelectedServiceDetails();
+    if (!serviceDetails?.serviceId) {
         showToast("Choose a service type.", "error");
         return;
     }
-    const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-    const serviceName = selectedOption.dataset.name;
-    const serviceDuration = parseInt(selectedOption.dataset.duration);
 
     const submitButton = addQueueForm.querySelector("button[type='submit']");
     submitButton.disabled = true;
-    showToast("Adding patient...", "info");
+    showToast(emailMode ? "Creating appointment..." : "Adding patient...", "info");
 
     try {
+        if (emailMode) {
+            const appointment = await createAppointmentByEmail(patientEmail, appointmentTime, serviceDetails);
+            const bookedTime = appointment?.timeSlot || appointmentTime;
+
+            addQueueForm.reset();
+            updatePatientLookupMode();
+            showToast(`Appointment created for ${patientEmail} at ${bookedTime}.`, "success");
+            await refreshQueue();
+            await loadClinicServices(currentClinicId, currentIdToken);
+            await loadAddQueueSlots("", false);
+            return;
+        }
+
         const priority = Number(priorityInput.value || 0);
 
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}`, {
@@ -370,9 +502,9 @@ async function addPatientToQueue(event) {
                 status: "WAITING",
                 date: getTodayKey(),
                 addedBy: currentStaffId,
-                serviceId,
-                serviceName,
-                serviceDuration
+                serviceId: serviceDetails.serviceId,
+                serviceName: serviceDetails.serviceName,
+                serviceDuration: serviceDetails.serviceDuration
             })
         });
 
@@ -384,6 +516,7 @@ async function addPatientToQueue(event) {
 
         const assignedTime = result.queueItem?.timeSlot || result.queueItem?.appointmentTime;
         addQueueForm.reset();
+        updatePatientLookupMode();
         showToast(`${patientName} was added to the queue${assignedTime ? ` for ${assignedTime}` : ""}.`, "success");
         await refreshQueue();
         await loadClinicServices(currentClinicId, currentIdToken);
@@ -560,7 +693,7 @@ async function updatePatientStatus(patient, status) {
     }
 
     try {
-        showToast(`Updating ${getPatientName(patient)}to ${status}......`, "info");
+        showToast(`Updating ${getPatientName(patient)} to ${status}......`, "info");
         const response = await fetch(`/api/queue/${encodeURIComponent(currentClinicId)}/${encodeURIComponent(patient.queueItemId)}`, {
             method: "PATCH",
             headers: {
@@ -613,6 +746,7 @@ auth.onAuthStateChanged(async (user) => {
 
         const data = result.profile;
         currentClinicId = data.clinicId;
+        currentClinicName = data.clinicName || "";
         const firstName = (data.fullName || "there").split(" ")[0];
         document.getElementById("userGreeting").textContent = `Welcome, ${firstName}`;
 
@@ -637,6 +771,11 @@ auth.onAuthStateChanged(async (user) => {
 
 if (addQueueForm) {
     addQueueForm.addEventListener("submit", addPatientToQueue);
+}
+
+if (patientLookupModeInput) {
+    patientLookupModeInput.addEventListener("change", updatePatientLookupMode);
+    updatePatientLookupMode();
 }
 
 document.getElementById("logoutBtn")?.addEventListener("click", (event) => {

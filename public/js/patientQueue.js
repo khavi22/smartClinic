@@ -55,6 +55,12 @@ function formatMinutes(value) {
   return `${remaining} min`;
 }
 
+function formatCount(value, singular, plural = `${singular}s`) {
+  const count = Number(value);
+  if (!Number.isFinite(count)) return "--";
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function renderQueue(queue) {
   const position = Number(queue.position) || 0;
   const totalInQueue = Number(queue.totalInQueue) || 0;
@@ -67,7 +73,7 @@ function renderQueue(queue) {
   setText(fields.clinicName, queue.clinicName, "Clinic pending");
   setText(fields.clinicAddress, queue.clinicAddress, "Clinic address pending");
   setText(fields.estimatedWait, formatMinutes(queue.estimatedWaitTime));
-  setText(fields.waitBreakdown, `${formatMinutes(queue.waitBeforeYou)} from patients before you`);
+  setText(fields.waitBreakdown, `${formatMinutes(queue.waitBeforeYou)} from active patients before you`);
   setText(fields.positionLabel, position && totalInQueue ? `${position} of ${totalInQueue}` : "--");
   setText(fields.appointmentTime, queue.appointmentTime);
   setText(fields.patientsAhead, patientsAhead);
@@ -83,10 +89,10 @@ function renderQueue(queue) {
   setText(fields.snapshotClinicName, queue.clinicName);
   setText(fields.snapshotClinicAddress, queue.clinicAddress);
   setText(fields.snapshotAppointmentTime, queue.appointmentTime);
-  setText(fields.snapshotPosition, queue.position);
-  setText(fields.snapshotTotal, queue.totalInQueue);
-  setText(fields.snapshotWaitBefore, queue.waitBeforeYou);
-  setText(fields.snapshotEstimatedWait, queue.estimatedWaitTime);
+  setText(fields.snapshotPosition, position && totalInQueue ? `${position} of ${totalInQueue}` : "--");
+  setText(fields.snapshotTotal, formatCount(totalInQueue, "active patient"));
+  setText(fields.snapshotWaitBefore, formatMinutes(queue.waitBeforeYou));
+  setText(fields.snapshotEstimatedWait, formatMinutes(queue.estimatedWaitTime));
 
   showOnly(queueContent);
 }

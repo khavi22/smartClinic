@@ -334,21 +334,23 @@ body {
 
 .snapshot-list div {
   min-width: 0;
-  padding: 0.9rem;
+  padding: 1rem;
   background: #fafbfc;
 }
 
 .snapshot-list dt {
-  color: var(--pc-gray-500);
-  font-size: 0.74rem;
+  color: var(--pc-gray-700);
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
+  letter-spacing: 0;
+  margin-bottom: 0.35rem;
 }
 
 .snapshot-list dd {
   color: var(--pc-gray-900);
   font-weight: 700;
+  font-size: 0.98rem;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 

@@ -136,11 +136,11 @@ const createAppointment = async (
 
         const capacitySnapshot = await capacityQuery.get();
         const clinicDoc = await db.collection("clinics").doc(clinicId).get();
-        const slotCapacity = clinicDoc.exists 
-        ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT) 
-        : MAX_CAPACITY_PER_SLOT;
+        const slotCapacity = clinicDoc.exists
+            ? (clinicDoc.data().slotCapacity ?? MAX_CAPACITY_PER_SLOT)
+            : MAX_CAPACITY_PER_SLOT;
 
-        if (capacitySnapshot.size >= MAX_CAPACITY_PER_SLOT) {
+        if (capacitySnapshot.size >= slotCapacity) {
             throw new Error("This slot is full.");
         }
 
@@ -329,7 +329,7 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
     const adminCode = "ADM-" + uuidv4().substring(0, 6).toUpperCase();
     const defaultHours = { open: "00:00", close: "24:00", isOpen: true };
 
-   await db.collection("clinics").doc(placeId).set({
+    await db.collection("clinics").doc(placeId).set({
         placeId,
         clinicName,
         city: city || "",
@@ -338,12 +338,12 @@ const createClinic = async ({ placeId, clinicName, city, address }) => {
             monday: { ...defaultHours },
             // ...
         },
-        slotCapacity: MAX_CAPACITY_PER_SLOT, 
+        slotCapacity: MAX_CAPACITY_PER_SLOT,
         adminCode,
         adminUid: null,
         isActive: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-});
+    });
 
     return { clinicId: placeId, adminCode };
 };
@@ -542,21 +542,20 @@ const deleteUserAccount = async (uid) => {
 };
 async function getPatientProfileById(uid) {
     const doc = await admin.firestore()
-        .collection('patients')  // ✅ confirmed from your Firestore screenshot
+        .collection('patients')
         .doc(uid)
         .get();
 
     return doc.exists ? doc.data() : null;
 }
 
-
 const getServiceTemplates = async () => {
-  const snapshot = await db.collection("serviceTemplates").get();
+    const snapshot = await db.collection("serviceTemplates").get();
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
 };
 
 const getClinicServices = async (clinicId) => {
@@ -577,58 +576,202 @@ const getClinicServices = async (clinicId) => {
         };
         return [service];
     }
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
 };
 
 const addClinicService = async (clinicId, data) => {
-  const ref = await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .add({
-      ...data,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      active: true,
-    });
+    const ref = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .add({
+            ...data,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            active: true,
+        });
 
-  return ref.id;
+    return ref.id;
 };
 
 const updateClinicService = async (clinicId, serviceId, data) => {
-  await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .doc(serviceId)
-    .update({
-      ...data,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .doc(serviceId)
+        .update({
+            ...data,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
 };
 
 const deleteClinicService = async (clinicId, serviceId) => {
-  await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .doc(serviceId)
-    .delete();
+    await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .doc(serviceId)
+        .delete();
 };
 
 const serviceExists = async (clinicId, name) => {
-  const snapshot = await db
-    .collection("clinics")
-    .doc(clinicId)
-    .collection("services")
-    .where("name", "==", name)
-    .limit(1)
-    .get();
+    const snapshot = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("services")
+        .where("name", "==", name)
+        .limit(1)
+        .get();
 
-  return !snapshot.empty;
+    return !snapshot.empty;
+};
+
+/**
+ * Get no-show rate report for a clinic within a date range.
+ * A "no-show" is any appointment with status === "no-show".
+ * 
+ * @param {string} clinicId
+ * @param {string} startDate  - "YYYY-MM-DD"
+ * @param {string} endDate    - "YYYY-MM-DD"
+ * @returns {{ total: number, noShows: number, noShowRate: string, breakdown: Array }}
+ */
+const getNoShowReport = async (clinicId, startDate, endDate) => {
+    if (!clinicId || !startDate || !endDate) {
+        throw new Error("clinicId, startDate, and endDate are required");
+    }
+
+    let query = db.collection("appointments")
+        .where("clinicId", "==", clinicId)
+        .where("date", ">=", startDate)
+        .where("date", "<=", endDate);
+
+    const snapshot = await query.get();
+
+    const appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // All booked appointments count as scheduled.
+    // Both "no-show" and "cancelled" are treated as missed —
+    // a patient who cancels did not attend, same outcome for the clinic.
+    const scheduled = appointments;
+    const noShows = scheduled.filter(a =>
+        a.status === "missed" || a.status === "cancelled"
+    );
+
+    // Group no-shows by date for a daily breakdown
+    const breakdownMap = {};
+    scheduled.forEach(a => {
+        if (!breakdownMap[a.date]) {
+            breakdownMap[a.date] = { date: a.date, total: 0, noShows: 0 };
+        }
+        breakdownMap[a.date].total += 1;
+        if (a.status === "missed" || a.status === "cancelled") {
+            breakdownMap[a.date].noShows += 1;
+        }
+    });
+
+    const breakdown = Object.values(breakdownMap)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map(row => ({
+            ...row,
+            noShowRate: row.total > 0
+                ? ((row.noShows / row.total) * 100).toFixed(1) + "%"
+                : "0.0%"
+        }));
+
+    const totalScheduled = scheduled.length;
+    const totalNoShows = noShows.length;
+    const overallRate = totalScheduled > 0
+        ? ((totalNoShows / totalScheduled) * 100).toFixed(1) + "%"
+        : "0.0%";
+
+    return {
+        clinicId,
+        startDate,
+        endDate,
+        totalScheduled,
+        totalNoShows,
+        noShowRate: overallRate,
+        breakdown
+    };
+};
+
+
+const getWaitTimeReport = async (clinicId, startDate, endDate) => {
+    if (!clinicId || !startDate || !endDate) {
+        throw new Error("clinicId, startDate, and endDate are required");
+    }
+
+    const snapshot = await db.collection("appointments")
+        .where("clinicId", "==", clinicId)
+        .where("date", ">=", startDate)
+        .where("date", "<=", endDate)
+        .get();
+
+    const appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Only use completed appointments that have a valid serviceDuration (minutes)
+    const completed = appointments.filter(
+        a => a.status === "completed" && typeof a.serviceDuration === "number" && a.serviceDuration > 0
+    );
+
+    // ── Per-clinic summary ──────────────────────────────────────────────────
+    const totalCompleted = completed.length;
+    const totalDuration = completed.reduce((sum, a) => sum + a.serviceDuration, 0);
+    const overallAvgWait = totalCompleted > 0
+        ? parseFloat((totalDuration / totalCompleted).toFixed(1))
+        : 0;
+
+    // ── Time-of-day breakdown (group by timeSlot hour) ─────────────────────
+    const hourMap = {};
+    completed.forEach(a => {
+        // timeSlot is stored as "09:00", "14:00", etc.
+        const hour = a.timeSlot ? a.timeSlot.split(":")[0] : "unknown";
+        if (!hourMap[hour]) {
+            hourMap[hour] = { timeSlot: hour, count: 0, totalDuration: 0 };
+        }
+        hourMap[hour].count += 1;
+        hourMap[hour].totalDuration += a.serviceDuration;
+    });
+
+    const byTimeOfDay = Object.values(hourMap)
+        .sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
+        .map(entry => ({
+            timeSlot: entry.timeSlot + ":00",
+            appointmentsCompleted: entry.count,
+            avgWaitMinutes: parseFloat((entry.totalDuration / entry.count).toFixed(1))
+        }));
+
+    // ── Daily breakdown ─────────────────────────────────────────────────────
+    const dateMap = {};
+    completed.forEach(a => {
+        if (!dateMap[a.date]) {
+            dateMap[a.date] = { date: a.date, count: 0, totalDuration: 0 };
+        }
+        dateMap[a.date].count += 1;
+        dateMap[a.date].totalDuration += a.serviceDuration;
+    });
+
+    const byDate = Object.values(dateMap)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map(entry => ({
+            date: entry.date,
+            appointmentsCompleted: entry.count,
+            avgWaitMinutes: parseFloat((entry.totalDuration / entry.count).toFixed(1))
+        }));
+
+    return {
+        clinicId,
+        startDate,
+        endDate,
+        totalCompleted,
+        overallAvgWaitMinutes: overallAvgWait,
+        byTimeOfDay,
+        byDate
+    };
 };
 
 module.exports = {
@@ -661,6 +804,7 @@ module.exports = {
     updateClinicService,
     deleteClinicService,
     serviceExists,
-    getPatientProfileById
+    getPatientProfileById,
+    getNoShowReport,
+    getWaitTimeReport
 };
-

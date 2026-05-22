@@ -22,60 +22,60 @@ let clinicsRoutes, appointmentRoutes, userRoutes, staffAvailabilityRoutes, admin
 
 try {
   clinicsRoutes = require("./routes/clinics");
-  console.log("✓ Clinics routes loaded");
+  console.log("Clinics routes loaded");
 } catch (err) {
-  console.error("✗ Error loading clinics routes:", err);
+  console.error("Error loading clinics routes:", err);
 }
 
 try {
   adminOnboardingRoutes = require("./routes/adminOnboarding");
-  console.log("✓ Admin onboarding routes loaded");
+  console.log("Admin onboarding routes loaded");
 } catch (err) {
-  console.error("✗ Error loading admin onboarding routes:", err);
+  console.error("Error loading admin onboarding routes:", err);
 }
 
 try{
   patientQueueRoutes = require("./routes/patientQueueRoutes");
-  console.log("✓ Patients Queue  routes loaded");
+  console.log("Patients Queue  routes loaded");
 }
 catch (err) {
-  console.error("✗ Error loading Patients Queue  routes:", err);
+  console.error("Error loading Patients Queue  routes:", err);
 }
 
 
 try {
   appointmentRoutes = require("./routes/appointments");
-  console.log("✓ Appointments routes loaded");
+  console.log("Appointments routes loaded");
 } catch (err) {
-  console.error("✗ Error loading appointments routes:", err);
+  console.error("Error loading appointments routes:", err);
 }
 
 try {
   userRoutes = require("./routes/user");
-  console.log("✓ User routes loaded");
+  console.log("User routes loaded");
 } catch (err) {
-  console.error("✗ Error loading user routes:", err);
+  console.error("Error loading user routes:", err);
 }
 
 try {
   staffAvailabilityRoutes = require("./routes/StaffAvailability");
-  console.log("✓ Staff availability routes loaded");
+  console.log("Staff availability routes loaded");
 } catch (err) {
-  console.error("✗ Error loading staff availability routes:", err);
+  console.error("Error loading staff availability routes:", err);
 }
 
 try {
   adminRoutes = require("./routes/admin");
-  console.log("✓ Admin routes loaded");
+  console.log("Admin routes loaded");
 } catch (err) {
-  console.error("✗ Error loading admin routes:", err);
+  console.error("Error loading admin routes:", err);
 }
 
 try {
   queueRoutes = require("./routes/Queue");
-  console.log("✓ Queue routes loaded");
+  console.log("Queue routes loaded");
 } catch (err) {
-  console.error("✗ Error loading queue routes:", err);
+  console.error("Error loading queue routes:", err);
 }
 
 if (clinicsRoutes) app.use("/api/clinics", clinicsRoutes);

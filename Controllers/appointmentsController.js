@@ -1,5 +1,5 @@
 const { admin, db } = require('../services/config/firebase');
-const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment,getPatientProfileById } = require("../services/firebaseService");
+const { getAvailabilityForDate, createAppointment, getAppointmentsByPatientId, cancelAppointment, getPatientProfileById, getUserProfileByEmail } = require("../services/firebaseService");
 
 exports.getAvailability = async (req, res) => {
     try {
@@ -11,14 +11,36 @@ exports.getAvailability = async (req, res) => {
         }
 
         let slots = await getAvailabilityForDate(clinicId, dateObj);
-        
-        // Fetch ML recommendations
+        res.json({ date: dateObj, slots });
+    } catch (error) {
+        console.error("Failed to get availability:", error);
+        res.status(500).json({ error: "Failed to fetch availability data." });
+    }
+};
+
+exports.getRecommendations = async (req, res) => {
+    try {
+        const dateObj = req.query.date;
+        const clinicId = req.query.clinicId || "default";
+
+        if (!dateObj) {
+            return res.status(400).json({ error: "Missing date parameter" });
+        }
+
+        const mlBaseUrl = process.env.ML_SERVICE_URL;
+        if (!mlBaseUrl) {
+            return res.json({ recommendations: [] });
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+
         try {
-            const mlBaseUrl = process.env.ML_SERVICE_URL;
-            if (!mlBaseUrl) {
-                throw new Error("ML_SERVICE_URL is not defined");
-            }
-            const mlRes = await fetch(`${mlBaseUrl}/predict?date=${dateObj}`);
+            const mlRes = await fetch(`${mlBaseUrl}/predict?date=${dateObj}&clinicId=${encodeURIComponent(clinicId)}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             if (mlRes.ok) {
                 const mlData = await mlRes.json();
                 const predictions = mlData.predictions || [];
@@ -32,37 +54,109 @@ exports.getAvailability = async (req, res) => {
                 const isToday = dateObj === todayStr;
                 const currentHour = localDate.getHours();
 
-                // Merge recommendations into slots
-                slots = slots.map(slot => {
-                    const prediction = predictions.find(p => p.timeSlot === slot.time);
-                    const slotHour = parseInt(slot.time);
-                    const isFuture = !isToday || slotHour > currentHour;
+                const recommendedSlots = predictions
+                    .filter(p => {
+                        const slotHour = parseInt(p.timeSlot);
+                        const isFuture = !isToday || slotHour > currentHour;
+                        return p.recommended && isFuture;
+                    })
+                    .map(p => p.timeSlot);
 
-                    if (prediction && prediction.recommended && isFuture) {
-                        return { ...slot, isRecommended: true };
-                    }
-                    return slot;
-                });
+                return res.json({ recommendations: recommendedSlots });
             }
         } catch (mlError) {
-            console.log("ML service unavailable, proceeding without recommendations");
+            clearTimeout(timeoutId);
+            console.log("ML service unavailable or timed out, proceeding with empty recommendations:", mlError.message);
         }
 
-        res.json({ date: dateObj, slots });
+        res.json({ recommendations: [] });
     } catch (error) {
-        console.error("Failed to get availability:", error);
-        res.status(500).json({ error: "Failed to fetch availability data." });
+        console.error("Failed to get recommendations:", error);
+        res.status(500).json({ error: "Failed to fetch recommendations." });
     }
 };
 
 const emailService    = require('../services/emailService');
 
+const getClinicMetadata = async (clinicId) => {
+    if (!clinicId || !db?.collection) {
+        return {};
+    }
+
+    const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+
+    if (!clinicDoc.exists) {
+        return {};
+    }
+
+    const clinic = clinicDoc.data() || {};
+
+    return {
+        clinicName: clinic.clinicName || clinic.name,
+        clinicAddress: clinic.address || clinic.formattedAddress
+    };
+};
+
+const deleteQueueItemForAppointment = async (appointmentId, appointmentData = null) => {
+    if (!appointmentId || !db?.collection) {
+        return;
+    }
+
+    let appointment = appointmentData;
+
+    if (!appointment) {
+        const appointmentDoc = await db.collection("appointments").doc(appointmentId).get();
+
+        if (!appointmentDoc.exists) {
+            return;
+        }
+
+        appointment = appointmentDoc.data() || {};
+    }
+
+    const queueClinicId = appointment.clinicId;
+    const queueDate = appointment.date;
+
+    if (!queueClinicId || !queueDate) {
+        return;
+    }
+
+    const queueItemRef = db
+        .collection("clinics")
+        .doc(queueClinicId)
+        .collection("queues")
+        .doc(queueDate)
+        .collection("queueItems")
+        .doc(appointmentId);
+    const queueItemDoc = await queueItemRef.get();
+
+    if (queueItemDoc.exists) {
+        await queueItemRef.delete();
+    }
+};
+
 exports.postAppointment = async (req, res) => {
     try {
-        const { patientId, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
+        const { patientId, patientEmail, clinicId, date, timeSlot, clinicName, clinicAddress, serviceId, serviceName, serviceDuration, oldAppointmentId } = req.body;
 
         if (!date || !timeSlot) {
             return res.status(400).json({ error: "Missing date or timeSlot" });
+        }
+
+        let resolvedPatientId = patientId;
+
+        if (!resolvedPatientId && patientEmail) {
+            const patient = await getUserProfileByEmail(patientEmail);
+
+            if (!patient || patient.role !== "patient" || !patient.uid) {
+                return res.status(404).json({ error: "No patient account found for this email" });
+            }
+
+            resolvedPatientId = patient.uid;
+        }
+
+        if (!resolvedPatientId) {
+            return res.status(400).json({ error: "Missing patientId or patientEmail" });
         }
 
         if (!serviceId || !serviceName || !serviceDuration) {
@@ -73,28 +167,35 @@ exports.postAppointment = async (req, res) => {
         if (oldAppointmentId) {
             console.log(`Rescheduling: Cancelling old appointment ${oldAppointmentId}`);
             await cancelAppointment(oldAppointmentId);
+            await deleteQueueItemForAppointment(oldAppointmentId);
         }
 
-        const newAppointment = await createAppointment(clinicId, date, timeSlot, patientId, clinicName, clinicAddress, !!oldAppointmentId, serviceId, serviceName, serviceDuration);
+        const clinicMetadata = (!clinicName || !clinicAddress)
+            ? await getClinicMetadata(clinicId)
+            : {};
+        const resolvedClinicName = clinicName || clinicMetadata.clinicName || "Unknown Clinic";
+        const resolvedClinicAddress = clinicAddress || clinicMetadata.clinicAddress || "N/A";
+
+        const newAppointment = await createAppointment(clinicId, date, timeSlot, resolvedPatientId, resolvedClinicName, resolvedClinicAddress, !!oldAppointmentId, serviceId, serviceName, serviceDuration);
 
         // ✉️ Send confirmation email
         try {
-            const patient = await getPatientProfileById(patientId);
+            const patient = await getPatientProfileById(resolvedPatientId);
 
             // Only send if patient exists and has an email
             if (patient?.email) {
                 await emailService.sendAppointmentConfirmation(
                     patient.email,           
                     patient.fullName,        
-                    clinicName,
-                    clinicAddress,
+                    resolvedClinicName,
+                    resolvedClinicAddress,
                     date,
                     timeSlot,
                     !!oldAppointmentId       
                 );
                 console.log(`✅ Confirmation email sent to ${patient.email}`);
             } else {
-                console.warn(`⚠️ No email found for patientId: ${patientId}`);
+                console.warn(`⚠️ No email found for patientId: ${resolvedPatientId}`);
             }
         } catch (emailError) {
             // Email failure never blocks the appointment saving
@@ -150,12 +251,16 @@ exports.cancelAppointmentController = async (req, res) => {
             .doc(appointmentId)
             .get();
 
+        const appointmentData = appointmentDoc.exists ? appointmentDoc.data() : null;
+
         const result = await cancelAppointment(appointmentId);
+
+        await deleteQueueItemForAppointment(appointmentId, appointmentData);
 
         // ✉️ Send cancellation email
         try {
-            if (appointmentDoc.exists) {
-                const appt = appointmentDoc.data();
+            if (appointmentData) {
+                const appt = appointmentData;
                 const patient = await getPatientProfileById(appt.patientId);
                 if (patient?.email) {
                     await emailService.sendAppointmentCancellation(
@@ -212,8 +317,21 @@ exports.getSmartSuggestion = async (req, res) => {
         const endDateStr = `${yEnd}-${mEnd}-${dayEnd}`;
 
         const clinicId = req.query.clinicId || '';
-        const mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}&clinicId=${clinicId}`);
-        if (!mlRes.ok) throw new Error("ML service unreachable");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+        let mlRes;
+        try {
+            mlRes = await fetch(`${mlBaseUrl}/predict-range?startDate=${todayStr}&endDate=${endDateStr}&clinicId=${clinicId}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+        } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            throw new Error(`ML service unreachable: ${fetchErr.message}`);
+        }
+
+        if (!mlRes.ok) throw new Error("ML service returned an error status");
 
         const mlData = await mlRes.json();
         const predictionsByDate = mlData.predictionsByDate || {};

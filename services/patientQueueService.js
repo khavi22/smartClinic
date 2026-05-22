@@ -1,9 +1,60 @@
-const { db, admin } = require("./config/firebase");
+const { db } = require("./config/firebase");
+
+const ACTIVE_QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION"];
+
+function isActiveQueueItem(queueItem) {
+    return ACTIVE_QUEUE_STATUSES.includes(String(queueItem?.status || "WAITING").toUpperCase());
+}
+
+function getQueueItemSlot(queueItem) {
+    return String(queueItem?.timeSlot || queueItem?.appointmentTime || "").trim();
+}
+
+function toMillis(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (typeof value === "number") {
+        return value;
+    }
+
+    if (value instanceof Date) {
+        return value.getTime();
+    }
+
+    if (typeof value.toDate === "function") {
+        return value.toDate().getTime();
+    }
+
+    if (typeof value.seconds === "number") {
+        return (value.seconds * 1000) + Math.floor((value.nanoseconds || 0) / 1000000);
+    }
+
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+function getQueueItemOrder(queueItem) {
+    return toMillis(queueItem.appointmentCreatedAt) ||
+        toMillis(queueItem.createdAt) ||
+        Number(queueItem.queueNumber || 0);
+}
+
+function getEstimatedServiceDuration(queueItem) {
+    const serviceDuration = Number(queueItem?.serviceDuration);
+    return Number.isFinite(serviceDuration) && serviceDuration > 0 ? serviceDuration : 15;
+}
 
 async function getPatientQueueInfo(patientId) {
 
+<<<<<<< HEAD
     const today_date = "2026-05-17";
     //const today_date = new Date().toISOString().split("T")[0]; 
+=======
+    const today_date = new Date().toISOString().split("T")[0]; // "2026-05-17";
+
+>>>>>>> 2105ae3bda9fd1300a9978ae9646f325de6bfc89
     const clinicSnapshot = await db.collection("clinics").get();
 
     for (const clinic of clinicSnapshot.docs) {
@@ -21,7 +72,14 @@ async function getPatientQueueInfo(patientId) {
 
         if (!queueItemsSnapshot.empty) {
 
-            const patient_Queue_Item = queueItemsSnapshot.docs[0].data();
+            const patientQueueDoc = queueItemsSnapshot.docs.find(doc => isActiveQueueItem(doc.data()));
+
+            if (!patientQueueDoc) {
+                return null;
+            }
+
+            const patient_Queue_Item = patientQueueDoc.data();
+            const patientSlot = getQueueItemSlot(patient_Queue_Item);
 
             const allQueueSnapshot = await db
                 .collection("clinics")
@@ -29,43 +87,33 @@ async function getPatientQueueInfo(patientId) {
                 .collection("queues")
                 .doc(today_date)
                 .collection("queueItems")
-                .orderBy("createdAt")
                 .get();
 
-            const all_patients = allQueueSnapshot.docs.map(doc => doc.data());
+            const all_patients = allQueueSnapshot.docs
+                .map(doc => doc.data())
+                .filter(isActiveQueueItem)
+                .filter(patient => getQueueItemSlot(patient) === patientSlot)
+                .sort((a, b) => getQueueItemOrder(a) - getQueueItemOrder(b));
 
             const index = all_patients.findIndex(
                 p => p.patientId === patientId
             );
+
+            if (index === -1) {
+                return null;
+            }
 
             const position = index + 1;
 
             const patientsAheadList = all_patients.slice(0, index);
 
             const waitBeforeYou = patientsAheadList.reduce((total, patient) => {
-                return total + (patient.serviceDuration || 0);
+                return total + getEstimatedServiceDuration(patient);
             }, 0);
 
-            const now = new Date();
-
-            const appointmentStartTime = patient_Queue_Item.appointmentTime
-                .split(" - ")[0];
-
-            const appointmentDateTime = new Date(
-                `${today_date}T${appointmentStartTime}:00`
-            );
-
-            // difference between now and appointment start in minutes
-            const timeUntilAppointment = Math.max(
-                0,
-                Math.floor((appointmentDateTime - now) / 60000)
-            );
-
-            // final estimated wait
-            const estimatedWaitTime =
-                waitBeforeYou + timeUntilAppointment;
+            const estimatedWaitTime = waitBeforeYou;
             
-            await queueItemsSnapshot.docs[0].ref.update({
+            await patientQueueDoc.ref.update({
                 estimatedWaitTime: estimatedWaitTime 
             });
 
@@ -74,6 +122,7 @@ async function getPatientQueueInfo(patientId) {
                 clinicName: patient_Queue_Item.clinicName,
                 clinicAddress: patient_Queue_Item.clinicAddress,
                 appointmentTime: patient_Queue_Item.appointmentTime,
+                status: patient_Queue_Item.status || "WAITING",
 
                 position,
                 totalInQueue: all_patients.length,

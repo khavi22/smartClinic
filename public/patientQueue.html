@@ -7,7 +7,7 @@
   <meta name="description" content="Track your live queue position and estimated wait time for your next clinic appointment.">
   <link rel="stylesheet" href="css/global_nav.css?v=1" />
   <link rel="stylesheet" href="css/notifications.css" />
-  <link rel="stylesheet" href="css/patientQueue.css?v=2" />
+  <link rel="stylesheet" href="css/patientQueue.css?v=3" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -135,44 +135,35 @@
           <p id="updatedAt">Updated just now</p>
         </header>
         <dl class="snapshot-list">
-          <div>
-            <dt>patientName</dt>
-            <dd id="snapshotPatientName">--</dd>
-          </div>
-          <div>
-            <dt>clinicName</dt>
-            <dd id="snapshotClinicName">--</dd>
-          </div>
-          <div>
-            <dt>clinicAddress</dt>
-            <dd id="snapshotClinicAddress">--</dd>
-          </div>
-          <div>
-            <dt>appointmentTime</dt>
-            <dd id="snapshotAppointmentTime">--</dd>
-          </div>
-          <div>
-            <dt>position</dt>
-            <dd id="snapshotPosition">--</dd>
-          </div>
-          <div>
-            <dt>totalInQueue</dt>
-            <dd id="snapshotTotal">--</dd>
-          </div>
-          <div>
-            <dt>waitBeforeYou</dt>
-            <dd id="snapshotWaitBefore">--</dd>
-          </div>
-          <div>
-            <dt>estimatedWaitTime</dt>
-            <dd id="snapshotEstimatedWait">--</dd>
-          </div>
+          <dt>Patient name</dt>
+          <dd id="snapshotPatientName">--</dd>
+          
+          <dt>Clinic name</dt>
+          <dd id="snapshotClinicName">--</dd>
+          
+          <dt>Clinic address</dt>
+          <dd id="snapshotClinicAddress">--</dd>
+          
+          <dt>Appointment time</dt>
+          <dd id="snapshotAppointmentTime">--</dd>
+          
+          <dt>Queue position</dt>
+          <dd id="snapshotPosition">--</dd>
+          
+          <dt>Active patients</dt>
+          <dd id="snapshotTotal">--</dd>
+          
+          <dt>Wait before you</dt>
+          <dd id="snapshotWaitBefore">--</dd>
+          
+          <dt>Estimated wait</dt>
+          <dd id="snapshotEstimatedWait">--</dd>
         </dl>
       </section>
     </article>
   </main>
 
   <script src="js/notifications.js"></script>
-  <script src="js/patientQueue.js?v=2"></script>
+  <script src="js/patientQueue.js?v=3"></script>
 </body>
 </html>

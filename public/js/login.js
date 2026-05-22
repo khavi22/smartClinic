@@ -33,6 +33,16 @@ async function redirectBasedOnUser(user) {
             return;
         }
         
+        // Check if there's a returnTo parameter in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo');
+        
+        if (returnTo) {
+            console.log("Returning to specified page:", returnTo);
+            window.location.href = returnTo;
+            return;
+        }
+        
         const emailQuery = encodeURIComponent(user.email || "");
         const response = await fetch(`/api/user/login/${user.uid}?email=${emailQuery}`);
         

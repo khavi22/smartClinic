@@ -114,6 +114,146 @@ describe("Admin Staff Workflow Tests", () => {
             };
         });
 
+        describe("report endpoints", () => {
+            it("returns wait-time report data", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-05-01",
+                    endDate: "2026-05-31"
+                };
+                const report = { totalCompleted: 2 };
+                jest.spyOn(firebaseService, "getWaitTimeReport").mockResolvedValue(report);
+
+                await adminController.getWaitTimeReport(req, res);
+
+                expect(firebaseService.getWaitTimeReport).toHaveBeenCalledWith(
+                    "clinic-1",
+                    "2026-05-01",
+                    "2026-05-31"
+                );
+                expect(res.status).toHaveBeenCalledWith(200);
+                expect(res.json).toHaveBeenCalledWith({ success: true, report });
+            });
+
+            it("validates required wait-time report query params", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-05-01"
+                };
+
+                await adminController.getWaitTimeReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("validates wait-time report date format", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "05/01/2026",
+                    endDate: "2026-05-31"
+                };
+
+                await adminController.getWaitTimeReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("validates wait-time report date order", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-06-01",
+                    endDate: "2026-05-31"
+                };
+
+                await adminController.getWaitTimeReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("returns 500 when wait-time report generation fails", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-05-01",
+                    endDate: "2026-05-31"
+                };
+                jest.spyOn(firebaseService, "getWaitTimeReport")
+                    .mockRejectedValue(new Error("Report failed"));
+
+                await adminController.getWaitTimeReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(500);
+            });
+
+            it("returns no-show report data", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-05-01",
+                    endDate: "2026-05-31"
+                };
+                const report = { totalNoShows: 1 };
+                jest.spyOn(firebaseService, "getNoShowReport").mockResolvedValue(report);
+
+                await adminController.getNoShowReport(req, res);
+
+                expect(firebaseService.getNoShowReport).toHaveBeenCalledWith(
+                    "clinic-1",
+                    "2026-05-01",
+                    "2026-05-31"
+                );
+                expect(res.status).toHaveBeenCalledWith(200);
+                expect(res.json).toHaveBeenCalledWith({ success: true, report });
+            });
+
+            it("validates required no-show report query params", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    endDate: "2026-05-31"
+                };
+
+                await adminController.getNoShowReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("validates no-show report date format", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-05-01",
+                    endDate: "31-05-2026"
+                };
+
+                await adminController.getNoShowReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("validates no-show report date order", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-06-01",
+                    endDate: "2026-05-31"
+                };
+
+                await adminController.getNoShowReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(400);
+            });
+
+            it("returns 500 when no-show report generation fails", async () => {
+                req.query = {
+                    clinicId: "clinic-1",
+                    startDate: "2026-05-01",
+                    endDate: "2026-05-31"
+                };
+                jest.spyOn(firebaseService, "getNoShowReport")
+                    .mockRejectedValue(new Error("Report failed"));
+
+                await adminController.getNoShowReport(req, res);
+
+                expect(res.status).toHaveBeenCalledWith(500);
+            });
+        });
+
         it("inviteStaff sends an invitation email and creates record", async () => {
             req.body = { email: "staff@test.com", clinicId: "clinic-1" };
             
