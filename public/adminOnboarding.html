@@ -305,29 +305,29 @@
     </header>
 
     <!-- AUTH LOADING STATE -->
-    <div id="authLoadingContainer" style="display: flex; align-items: center; justify-content: center; min-height: 60vh; flex-direction: column; gap: 20px;">
-        <div style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.75s linear infinite;"></div>
+    <section id="authLoadingContainer" style="display: flex; align-items: center; justify-content: center; min-height: 60vh; flex-direction: column; gap: 20px;">
+        <section style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.75s linear infinite;"></section>
         <p style="color: #64748b; font-weight: 500;">Verifying access...</p>
-    </div>
+    </section>
 
     <!-- PERMISSION DENIED STATE -->
-    <div id="permissionDeniedContainer" style="display: none;">
-        <div style="max-width: 600px; margin: 80px auto; padding: 40px; text-align: center; background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(31,38,135,0.07);">
-            <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, #fee2e2 0%, #fecdd3 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #dc3545;">🔒</div>
+    <section id="permissionDeniedContainer" style="display: none;">
+        <article style="max-width: 600px; margin: 80px auto; padding: 40px; text-align: center; background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(31,38,135,0.07);">
+            <section style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, #fee2e2 0%, #fecdd3 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #dc3545;">🔒</section>
             <h2 style="font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Access Denied</h2>
             <p style="font-size: 0.95rem; color: #64748b; margin-bottom: 24px; line-height: 1.6;">
                 You don't have permission to access the Admin Onboarding page. Only support team members can access this area.
             </p>
-            <div style="display: flex; gap: 12px; justify-content: center;">
+            <nav style="display: flex; gap: 12px; justify-content: center;">
                 <a href="dashboard.html" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: white; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; transition: all 0.2s ease;">
                     ← Go to Dashboard
                 </a>
                 <button onclick="firebase.auth().signOut().then(() => window.location.href = 'login.html')" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;">
                     Logout
                 </button>
-            </div>
-        </div>
-    </div>
+            </nav>
+        </article>
+    </section>
 
     <main class="admin-main" id="mainContent" style="display: none;">
 
@@ -335,20 +335,20 @@
         <div id="alertContainer"></div>
 
         <!-- Search Card -->
-        <div class="admin-card">
-            <div class="card-header">
-                <div class="card-icon">
+        <article class="admin-card">
+            <header class="card-header">
+                <span class="card-icon">
                     <span class="material-symbols-rounded">manage_search</span>
-                </div>
-                <div>
+                </span>
+                <hgroup>
                     <h2>Search &amp; Invite Clinic Admins</h2>
                     <p>Search by clinic name to get started</p>
-                </div>
-            </div>
-            <div class="card-body">
+                </hgroup>
+            </header>
+            <section class="card-body">
 
                 <!-- Search Bar — IDs unchanged -->
-                <div class="search-group">
+                <section class="search-group">
                     <input
                         type="text"
                         id="searchInput"
@@ -359,78 +359,78 @@
                         <span class="material-symbols-rounded" style="font-size:1.1rem">search</span>
                         Search Clinics
                     </button>
-                </div>
+                </section>
 
                 <!-- Loading — ID + class unchanged -->
-                <div id="loading" class="loading">
-                    <div class="spinner"></div>
+                <section id="loading" class="loading">
+                    <section class="spinner"></section>
                     <span>Searching for clinics…</span>
-                </div>
+                </section>
 
                 <!-- Results — ID unchanged -->
-                <div id="resultsContainer"></div>
+                <section id="resultsContainer"></section>
 
-            </div>
-        </div>
+            </section>
+        </article>
 
         <!-- Selected Clinic Section — ID + display:none unchanged -->
-        <div id="selectedClinicSection" style="display: none;">
+        <section id="selectedClinicSection" style="display: none;">
 
             <!-- Clinic Details Card -->
-            <div class="admin-card">
-                <div class="card-header">
-                    <div class="card-icon cyan">
+            <article class="admin-card">
+                <header class="card-header">
+                    <span class="card-icon cyan">
                         <span class="material-symbols-rounded">local_hospital</span>
-                    </div>
-                    <div>
+                    </span>
+                    <hgroup>
                         <h2>Selected Clinic</h2>
                         <p>Confirm the details before sending the invite</p>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="selected-clinic">
-                        <div class="selected-clinic-title">
+                    </hgroup>
+                </header>
+                <section class="card-body">
+                    <section class="selected-clinic">
+                        <header class="selected-clinic-title">
                             <span class="material-symbols-rounded" style="font-size:0.95rem">verified</span>
                             Clinic Details
-                        </div>
-                        <div class="clinic-detail">
-                            <div class="detail-row">
+                        </header>
+                        <section class="clinic-detail">
+                            <section class="detail-row">
                                 <span class="detail-label">Clinic Name:</span>
                                 <span class="detail-value" id="displayClinicName"></span>
-                            </div>
-                            <div class="detail-row">
+                            </section>
+                            <section class="detail-row">
                                 <span class="detail-label">Address:</span>
                                 <span class="detail-value" id="displayClinicAddress"></span>
-                            </div>
-                            <div class="detail-row">
+                            </section>
+                            <section class="detail-row">
                                 <span class="detail-label">Admin Code:</span>
-                                <div class="code-display">
+                                <section class="code-display">
                                     <span id="displayAdminCode"></span>
                                     <button class="code-copy-btn" onclick="copyToClipboard('displayAdminCode')">
                                         <span class="material-symbols-rounded" style="font-size:0.9rem">content_copy</span>
                                         Copy
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                </section>
+                            </section>
+                        </section>
+                    </section>
+                </section>
+            </article>
 
             <!-- Invite Form Card -->
-            <div class="admin-card">
-                <div class="card-header">
-                    <div class="card-icon green">
+            <article class="admin-card">
+                <header class="card-header">
+                    <span class="card-icon green">
                         <span class="material-symbols-rounded">forward_to_inbox</span>
-                    </div>
-                    <div>
+                    </span>
+                    <hgroup>
                         <h2>Send Admin Invitation</h2>
                         <p>Enter the admin's email address to dispatch the invite</p>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="admin-invite-form">
-                        <div class="form-group">
+                    </hgroup>
+                </header>
+                <section class="card-body">
+                    <section class="admin-invite-form">
+                        <section class="form-group">
                             <label class="form-label">Admin Email Address *</label>
                             <input
                                 type="email"
@@ -439,8 +439,8 @@
                                 placeholder="admin@clinic.com"
                                 required
                             >
-                        </div>
-                        <div class="form-actions">
+                        </section>
+                        <footer class="form-actions">
                             <button id="cancelBtn" class="btn btn-secondary" onclick="clearSelection()">
                                 <span class="material-symbols-rounded" style="font-size:1rem">close</span>
                                 Cancel
@@ -449,12 +449,12 @@
                                 <span class="material-symbols-rounded" style="font-size:1.1rem">send</span>
                                 Send Invitation
                             </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </footer>
+                    </section>
+                </section>
+            </article>
 
-        </div>
+        </section>
     </main>
 
     <script>
