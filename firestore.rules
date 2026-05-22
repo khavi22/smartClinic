@@ -17,7 +17,11 @@ service cloud.firestore {
         '2841214@students.wits.ca.za',
         '2913455@students.wits.ac.za',
         'gontsemaledu99@gmail.com',
-        'Nnaki128@gmail.com'
+        'Nnaki128@gmail.com',
+        '1064787@students.wits.ac.za',
+        'nhlanhla.nkosi@wits.ac.za',
+        '2461943@students.wits.ac.za'
+        
       ];
     }
 
