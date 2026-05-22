@@ -400,13 +400,13 @@
 
 <!-- ── Sticky Header ───────────────────────────────────────── -->
 <header class="site-header" role="banner">
-  <div class="brand-group">
+  <section class="brand-group">
     <a href="#" class="brand" aria-label="Clinic Admin home">
       <span class="brand-dot" aria-hidden="true"></span>
       Clinic Admin
     </a>
     <a href="adminDashboard.html" class="btn-back">← Back to Dashboard</a>
-  </div>
+  </section>
   <nav aria-label="Export actions" class="header-actions">
     <small id="last-updated" aria-live="polite"></small>
     <button type="button" class="btn-ghost"   id="exportCsvBtn">⬇ Export CSV</button>
@@ -446,18 +446,18 @@
     <!-- KPI Cards -->
     <section class="kpi-section" aria-labelledby="kpi-heading">
       <h2 id="kpi-heading" class="sr-only">Key metrics</h2>
-      <div id="kpi-list" aria-label="Key performance indicators"></div>
+      <section id="kpi-list" aria-label="Key performance indicators"></section>
     </section>
 
     <!-- Colour legend -->
-    <div class="legend" aria-label="Wait time colour legend">
+    <section class="legend" aria-label="Wait time colour legend">
       <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Fast (&lt; 20 min)</span>
       <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Moderate (20–44 min)</span>
       <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Long (45+ min)</span>
-    </div>
+    </section>
 
     <!-- Charts Row 1: Time of day + Daily -->
-    <div class="charts-grid">
+    <section class="charts-grid">
       <article class="card" aria-labelledby="tod-heading">
         <h2 id="tod-heading">Avg Wait by Hour of Day</h2>
         <figure id="tod-chart" aria-label="Avg wait time by hour bar chart"></figure>
@@ -467,13 +467,13 @@
         <h2 id="daily-heading">Avg Wait by Date</h2>
         <figure id="daily-chart" aria-label="Avg wait time by date bar chart"></figure>
       </article>
-    </div>
+    </section>
 
     <!-- Service Breakdown -->
     <section class="service-section" aria-labelledby="service-heading">
       <article class="card">
         <h2 id="service-heading">Avg Wait by Service Type</h2>
-        <div id="service-bars"></div>
+        <section id="service-bars"></section>
       </article>
     </section>
 
@@ -488,7 +488,7 @@
           ⬇ Download CSV
         </button>
       </header>
-      <div class="table-scroll" role="region" aria-labelledby="log-heading" tabindex="0">
+      <section class="table-scroll" role="region" aria-labelledby="log-heading" tabindex="0">
         <table>
           <caption class="sr-only">The 50 most recent completed appointments with service duration, sorted newest first.</caption>
           <thead>
@@ -505,7 +505,7 @@
             <tr><td colspan="6" class="empty-cell">Loading…</td></tr>
           </tbody>
         </table>
-      </div>
+      </section>
     </section>
 
   </section><!-- /report-body -->

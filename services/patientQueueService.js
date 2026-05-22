@@ -59,8 +59,13 @@ function getEstimatedServiceDuration(queueItem) {
 // position and estimated wait based on patients ahead in the same time slot.
 async function getPatientQueueInfo(patientId) {
 
+<<<<<<< HEAD
+    const today_date = "2026-05-17";
+    //const today_date = new Date().toISOString().split("T")[0]; 
+=======
     const today_date = new Date().toISOString().split("T")[0]; // "2026-05-17";
 
+>>>>>>> 2105ae3bda9fd1300a9978ae9646f325de6bfc89
     const clinicSnapshot = await db.collection("clinics").get();
 
     for (const clinic of clinicSnapshot.docs) {
