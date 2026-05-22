@@ -29,6 +29,7 @@ const fields = {
   snapshotEstimatedWait: document.getElementById("snapshotEstimatedWait")
 };
 
+// Shows one queue state panel and hides loading/empty/error/content siblings.
 function showOnly(section) {
   [loadingState, emptyState, errorState, queueContent].forEach(element => {
     if (!element) return;
@@ -36,12 +37,14 @@ function showOnly(section) {
   });
 }
 
+// Safely writes text into an element, using a fallback for missing values.
 function setText(element, value, fallback = "--") {
   if (!element) return;
   const empty = value === undefined || value === null || value === "";
   element.textContent = empty ? fallback : String(value);
 }
 
+// Converts a minute count into a short human-readable label.
 function formatMinutes(value) {
   const minutes = Number(value);
   if (!Number.isFinite(minutes)) return "--";
@@ -55,12 +58,14 @@ function formatMinutes(value) {
   return `${remaining} min`;
 }
 
+// Formats item counts with singular/plural labels.
 function formatCount(value, singular, plural = `${singular}s`) {
   const count = Number(value);
   if (!Number.isFinite(count)) return "--";
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+// Renders the patient's queue position, estimated wait, and summary snapshot.
 function renderQueue(queue) {
   const position = Number(queue.position) || 0;
   const totalInQueue = Number(queue.totalInQueue) || 0;
@@ -97,6 +102,7 @@ function renderQueue(queue) {
   showOnly(queueContent);
 }
 
+// Loads the current patient's active queue information from the backend.
 async function loadNextQueue() {
   const patientId = localStorage.getItem("patientId");
 

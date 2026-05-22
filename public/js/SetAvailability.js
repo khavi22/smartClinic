@@ -9,6 +9,7 @@ let selectedDates = [];
 // const daysLeftInMonth = daysInCurrentMonth - currentDate;
 // const showNextMonth = daysLeftInMonth <= 5;
 
+// Renders the staff availability calendar and highlights all selected dates.
 function renderCalendar() {
     const container = document.getElementById('SetAvailabilitycalendarContainer');
     if (!container) return;
@@ -72,6 +73,8 @@ function renderCalendar() {
     container.innerHTML = html;
 }
 
+// Toggles a clicked date in the selectedDates list and updates the date
+// preview panel.
 window.handleDateSelection = function(dateStr) {
     selectedDate = dateStr;
     if (selectedDates.includes(dateStr)) {
@@ -98,6 +101,7 @@ window.handleDateSelection = function(dateStr) {
     console.log("Selected dates:", selectedDates);
 };
 
+// Moves the availability calendar to the previous or next month.
 window.changeMonth = function(delta) {
     // i will just make all months available for testing and demonstration
     currentViewMonth += delta;
@@ -153,6 +157,8 @@ window.changeMonth = function(delta) {
 };
 
 //save to firestore the avalability data 
+// Sends the selected dates and time range to the backend for the current staff
+// member.
 async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
     //const staffCode = "STF-330AFB";
     // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
@@ -191,6 +197,7 @@ async function saveAvailabilityToBackend(startTime, endTime, checkedValue) {
 }
 
 // get data from firestore
+// Loads the current staff member's saved availability from the backend.
 async function LoadAvailability() {
     // const staffCode = "STF-330AFB";
     // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";
@@ -209,6 +216,7 @@ async function LoadAvailability() {
 }
 
 
+// Renders saved availability cards and wires each remove button.
 function displayAvailability(availability) {
     const display = document.getElementById("Availability_content");
     display.innerHTML = "";
@@ -251,6 +259,7 @@ function displayAvailability(availability) {
 }
 
 //Remove from backend
+// Deletes one saved availability date for the current staff member.
 async function removeAvailabilityFromBackend(date) {
     // const staffCode = "STF-330AFB";
     // const staffCode="J96HrT5YN3VOAAzNGqEhpxj4vUx2";

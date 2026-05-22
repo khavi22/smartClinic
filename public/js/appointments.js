@@ -10,6 +10,7 @@ const cancelDialog = document.getElementById("cancel-dialog");
 const rescheduleDialog = document.getElementById("reschedule-dialog");
 
 
+// Loads all appointments for the patient id stored in localStorage.
 async function fetchAppointments() {
   try {
     const patientId = localStorage.getItem("patientId");
@@ -32,10 +33,13 @@ async function fetchAppointments() {
   }
 }
 
+// Converts appointment status values to lowercase for consistent comparisons.
 function normalizeStatus(status) {
   return String(status || "").toLowerCase();
 }
 
+// Splits a date string into the month/day/year pieces used by appointment
+// cards.
 function formatDateParts(dateString) {
   const date = new Date(dateString);
   if (isNaN(date)) return { month: "N/A", day: "--", year: "----" };
@@ -46,6 +50,7 @@ function formatDateParts(dateString) {
   return { month, day, year };
 }
 
+// Checks whether an appointment date is today in the browser's local time.
 function isToday(dateString) {
   const today = new Date();
   const date = new Date(dateString);
@@ -57,6 +62,7 @@ function isToday(dateString) {
   );
 }
 
+// Checks whether an appointment date is before today.
 function isPast(dateString) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -65,6 +71,7 @@ function isPast(dateString) {
   return date < today;
 }
 
+// Builds the reusable empty-state block shown when a list has no appointments.
 function createEmptyState(title, text, buttonText) {
   const section = document.createElement("section");
   section.className = "empty-state-notice";
@@ -78,6 +85,8 @@ function createEmptyState(title, text, buttonText) {
   return section;
 }
 
+// Builds one appointment card, including status styling and action buttons for
+// active appointments.
 function createAppointmentCard(appointment, past = false) {
   const clinicName = appointment.clinicName || "Unknown Clinic";
   const clinicAddress = appointment.clinicAddress || "Address not available";
@@ -212,6 +221,8 @@ function createAppointmentCard(appointment, past = false) {
   return article;
 }
 
+// Splits loaded appointments into upcoming and past/cancelled groups and
+// renders both tab panels.
 function renderAppointments() {
   upcomingList.innerHTML = "";
   pastList.innerHTML = "";
@@ -287,6 +298,7 @@ function renderAppointments() {
   }
 }
 
+// Wires the upcoming/past tab buttons to their matching appointment panels.
 function setupTabs() {
   const buttons = document.querySelectorAll(".tab-trigger");
   const panels = document.querySelectorAll(".tab-panel");
@@ -365,6 +377,8 @@ document.getElementById("reschedule-confirm").addEventListener("click", () => {
 //   selectedAppointmentId = null;
 // });
 
+// Initializes the appointments page by enabling tabs, loading data, and
+// rendering the first view.
 async function initAppointmentsPage() {
   setupTabs();
   await fetchAppointments();

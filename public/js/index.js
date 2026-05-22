@@ -5,6 +5,8 @@ provider.setCustomParameters({ prompt: 'select_account' });
 
 let signingIn = false;
 
+// Saves the signed-in user's core profile details so other pages can identify
+// their role without repeating the login lookup immediately.
 function storeUserSession(user, profile) {
     localStorage.setItem("userId", user.uid);
     localStorage.setItem("userEmail", profile?.email || user.email || "");
@@ -22,6 +24,8 @@ function storeUserSession(user, profile) {
     }
 }
 
+// Validates the Firebase user against the backend profile and sends them to
+// the correct dashboard, signup page, or pending/rejected staff message.
 async function redirectBasedOnUser(user) {
     try {
         // Force refresh the token to get the latest custom claims (roles)

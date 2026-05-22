@@ -21,6 +21,7 @@ let currentIdToken = null;
 let currentStaffId = null;
 let currentClinicName = "";
 
+// Replaces the queue table body with a single full-width status message row.
 function setQueueMessage(message) {
     if (!queueTableBody) return;
 
@@ -36,6 +37,8 @@ function setQueueMessage(message) {
 
 
 
+// Converts either a grouped queue object or array response into one flat list
+// of patient queue entries.
 function normalizeQueue(queue) {
     if (Array.isArray(queue)) {
         return queue;
@@ -54,6 +57,7 @@ function normalizeQueue(queue) {
     });
 }
 
+// Picks the best available patient display name from a queue entry.
 function getPatientName(patient) {
     return patient.patientName ||
         patient.fullName ||
@@ -63,6 +67,7 @@ function getPatientName(patient) {
         "Unknown patient";
 }
 
+// Normalizes the appointment time field across older and newer queue shapes.
 function getAppointmentTime(patient) {
     return patient.appointmentTime ||
         patient.timeSlot ||
@@ -71,6 +76,7 @@ function getAppointmentTime(patient) {
         "--";
 }
 
+// Chooses a queue number/ticket number, falling back to the rendered row index.
 function getQueueNumber(patient, index) {
     return patient.queueNumber ||
         patient.number ||
@@ -78,6 +84,7 @@ function getQueueNumber(patient, index) {
         index + 1;
 }
 
+// Returns today's date as YYYY-MM-DD for appointment and queue API calls.
 function getTodayKey() {
     const today = new Date();
     const year = today.getFullYear();
@@ -87,24 +94,30 @@ function getTodayKey() {
     return `${year}-${month}-${day}`;
 }
 
+// Converts queue status constants into readable lowercase labels.
 function formatStatus(status) {
     return String(status || "WAITING").replace(/_/g, " ").toLowerCase();
 }
 
+// Converts numeric priority values into the labels shown in the queue table.
 function formatPriority(priority) {
     if (Number(priority) < 0) return "Urgent";
     if (Number(priority) > 0) return "Low";
     return "Normal";
 }
 
+// Checks whether a queue item is final and should no longer be edited.
 function isLockedStatus(status) {
     return ["COMPLETE", "MISSED"].includes(status || "");
 }
 
+// Tells whether the add-queue form is booking by patient email or walk-in name.
 function isEmailMode() {
     return patientLookupModeInput?.value === "email";
 }
 
+// Toggles the add-queue form between walk-in name entry and existing-patient
+// email booking mode.
 function updatePatientLookupMode() {
     const emailMode = isEmailMode();
     const patientNameField = patientNameInput?.closest(".field-group");
@@ -130,6 +143,7 @@ function updatePatientLookupMode() {
     }
 }
 
+// Renders the queue table, summary counts, and per-patient action controls.
 function renderQueue(queue) {
     const patients = normalizeQueue(queue);
     const waiting = patients.filter((patient) => patient.status === "WAITING").length;
@@ -242,6 +256,7 @@ function renderQueue(queue) {
     });
 }
 
+// Loads and displays the current predicted wait time for the staff clinic.
 async function fetchAndRenderWaitTime(clinicId, idToken) {
     const predictedWaitTimeEl = document.getElementById("predictedWaitTime");
     const predictedWaitRangeEl = document.getElementById("predictedWaitRange");
@@ -272,6 +287,8 @@ async function fetchAndRenderWaitTime(clinicId, idToken) {
     predictedWaitRangeEl.textContent = "Unavailable";
 }
 
+// Fetches the clinic queue from the backend and refreshes the queue table plus
+// wait-time summary.
 async function loadQueue(clinicId, idToken) {
     if (!clinicId) {
         setQueueMessage("No clinic is linked to this staff profile.");
@@ -296,11 +313,13 @@ async function loadQueue(clinicId, idToken) {
     await fetchAndRenderWaitTime(clinicId, idToken);
 }
 
+// Reloads the queue using the currently authenticated staff/clinic context.
 async function refreshQueue() {
     if (!currentClinicId || !currentIdToken) return;
     await loadQueue(currentClinicId, currentIdToken);
 }
 
+// Populates the add-queue time-slot dropdown with open same-day slots.
 function renderAddQueueSlotOptions(slots, selectedSlot = "") {
     if (!appointmentTimeInput) return;
 
@@ -332,6 +351,8 @@ function renderAddQueueSlotOptions(slots, selectedSlot = "") {
     appointmentTimeInput.disabled = false;
 }
 
+// Loads available same-day slots for adding or booking a patient from the staff
+// dashboard.
 async function loadAddQueueSlots(selectedSlot = "", showError = true) {
     if (!currentClinicId || !currentIdToken || !appointmentTimeInput) return;
 
@@ -352,6 +373,7 @@ async function loadAddQueueSlots(selectedSlot = "", showError = true) {
     }
 }
 
+// Loads the clinic's service catalog into the manual check-in form.
 async function loadClinicServices(clinicId, idToken) {
     const serviceSelect = document.getElementById("serviceSelectInput");
     if (!serviceSelect) return;
@@ -389,6 +411,7 @@ async function loadClinicServices(clinicId, idToken) {
     }
 }
 
+// Reads the selected service id/name/duration from the service dropdown.
 function getSelectedServiceDetails() {
     const serviceSelect = document.getElementById("serviceSelectInput");
     const serviceId = serviceSelect?.value;
@@ -406,6 +429,7 @@ function getSelectedServiceDetails() {
     };
 }
 
+// Creates a same-day appointment for an existing patient using their email.
 async function createAppointmentByEmail(patientEmail, appointmentTime, serviceDetails) {
     const response = await fetch("/api/appointments", {
         method: "POST",
@@ -434,6 +458,8 @@ async function createAppointmentByEmail(patientEmail, appointmentTime, serviceDe
     return result.appointment;
 }
 
+// Handles the add-queue form, either creating an appointment by email or adding
+// a manual walk-in queue item.
 async function addPatientToQueue(event) {
     event.preventDefault();
 
@@ -529,6 +555,8 @@ async function addPatientToQueue(event) {
     }
 }
 
+// Fetches available slots for a queue item, including its id when rescheduling
+// so its current slot is not double-counted.
 async function fetchAvailableSlots(patient) {
     const params = new URLSearchParams({
         date: patient.date || getTodayKey()
@@ -553,6 +581,7 @@ async function fetchAvailableSlots(patient) {
     return Array.isArray(result.slots) ? result.slots : [];
 }
 
+// Replaces a row's action buttons with a slot picker for waiting patients.
 async function showReschedulePicker(patient, actionsCell) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
         showToast("This queue item cannot be rescheduled.", "error");
@@ -612,6 +641,7 @@ async function showReschedulePicker(patient, actionsCell) {
     }
 }
 
+// Saves a new queue slot for a waiting patient and refreshes the table.
 async function reschedulePatient(patient, timeSlot) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
         showToast("This queue item cannot be rescheduled.", "error");
@@ -647,6 +677,7 @@ async function reschedulePatient(patient, timeSlot) {
     }
 }
 
+// Moves a waiting patient into consultation for the current staff member.
 async function startPatientConsultation(patient) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
         showToast("This queue item cannot be started.", "error");
@@ -681,6 +712,7 @@ async function startPatientConsultation(patient) {
     }
 }
 
+// Saves a manual status update for a queue item and refreshes the queue view.
 async function updatePatientStatus(patient, status) {
     if (!currentClinicId || !currentIdToken || !patient.queueItemId) {
         showToast("This queue item cannot be updated.", "error");

@@ -5,6 +5,8 @@ provider.setCustomParameters({ prompt: 'select_account' });
 
 let signingIn = false;
 
+// Saves the signed-in user's core profile details so later pages can identify
+// their uid, email, role, and patient id.
 function storeUserSession(user, profile) {
     localStorage.setItem("userId", user.uid);
     localStorage.setItem("userEmail", profile?.email || user.email || "");
@@ -22,6 +24,8 @@ function storeUserSession(user, profile) {
     }
 }
 
+// Checks the backend profile for the signed-in Firebase user and redirects
+// them to the right dashboard or signup flow.
 async function redirectBasedOnUser(user) {
     try {
         // Force refresh the token to get the latest custom claims (roles)
@@ -136,6 +140,7 @@ if (googleBtn) {
     });
 }
 
+// Returns the user from the login page to the public home page.
 function goBack() {
     window.location.href = "index.html";
 }

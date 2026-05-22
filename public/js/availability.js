@@ -11,6 +11,7 @@ let selectedSlotId = null;
 
 
 
+// Provides today's date asynchronously so the calendar setup can await it.
 async function fetchTodayDate() {
     return new Promise(resolve => {
         setTimeout(() => {
@@ -20,6 +21,8 @@ async function fetchTodayDate() {
 }
 
 // display a calendar
+// Draws the month calendar, marking today, the selected date, and disabled
+// past dates.
 function renderCalendar() {
     const container = document.getElementById('calendarContainer');
     if (!container) return;
@@ -89,6 +92,8 @@ function renderCalendar() {
 }
 
 // display selection slots
+// Groups and renders the selected day's booking slots with availability,
+// capacity labels, and ML recommendation badges.
 function renderSlots() {
     const grid = document.getElementById('slotsGrid');
     const dateLabel = document.getElementById('selectedDateDisplay');
@@ -181,6 +186,8 @@ function renderSlots() {
     }
 }
 
+// Fetches ML-recommended slots for the selected date and marks them on the
+// cached slot list.
 async function loadMLRecommendations(dateStr, clinicId) {
     const headerLeft = document.querySelector('.header-left');
     let aiLoader = document.getElementById('aiLoader');
@@ -235,6 +242,8 @@ async function loadMLRecommendations(dateStr, clinicId) {
     }
 }
 
+// Handles calendar date clicks by loading available slots, refreshing the
+// calendar/slot UI, and showing the AI suggestion bubble when available.
 window.handleDateSelection = async function (dateStr) {
     selectedDate = dateStr;
     selectedSlotId = null;
@@ -320,6 +329,7 @@ window.handleDateSelection = async function (dateStr) {
     }
 };
 
+// Moves the calendar view forward or backward by one month.
 window.changeMonth = function (delta) {
     currentViewMonth += delta;
     if (currentViewMonth > 11) {
@@ -332,6 +342,8 @@ window.changeMonth = function (delta) {
     renderCalendar();
 };
 
+// Loads service options for the selected clinic and renders them as radio
+// buttons inside the booking modal.
 async function fetchAndRenderServices(clinicId) {
     const servicesContainer = document.getElementById('servicesContainer');
     if (!servicesContainer) return;
@@ -383,6 +395,8 @@ async function fetchAndRenderServices(clinicId) {
     }
 }
 
+// Calls the queue prediction endpoint once a service and slot are selected and
+// displays the estimated wait range in the booking modal.
 async function updatePredictedWaitTime() {
     const container = document.getElementById("mlWaitTimeContainer");
     const textEl = document.getElementById("mlWaitTimeText");
@@ -424,6 +438,8 @@ async function updatePredictedWaitTime() {
     }
 }
 
+// Opens the booking modal for a selected slot and starts loading the clinic's
+// services for that appointment.
 window.handleSlotSelection = function (slotId) {
     const slot = cachedSlots.find(s => s.id === slotId);
     if (!slot || slot.status === 'full') {
@@ -455,6 +471,8 @@ window.handleSlotSelection = function (slotId) {
 };
 
 // load from URL or local storage
+// Reads selected clinic details from the URL/localStorage and places them into
+// the page header.
 function loadHospitalData() {
     const urlParams = new URLSearchParams(window.location.search);
 

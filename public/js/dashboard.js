@@ -15,6 +15,8 @@ auth.onAuthStateChanged(async (user) => {
     await loadUserProfile(user);
 });
 
+// Loads the authenticated user's backend profile, enforces that patients stay
+// on the patient dashboard, and fills the header/session UI.
 async function loadUserProfile(user) {
     try {
         let doc = null;

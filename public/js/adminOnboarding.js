@@ -4,6 +4,7 @@
  */
 
 class AdminOnboardingUI {
+    // Captures page elements, initializes state, and wires the onboarding UI.
     constructor() {
         this.searchInput = document.getElementById('searchInput');
         this.searchBtn = document.getElementById('searchBtn');
@@ -20,6 +21,8 @@ class AdminOnboardingUI {
         this.initializeEventListeners();
     }
 
+    // Connects the search, Enter key, and send-invite controls to their
+    // handlers.
     initializeEventListeners() {
         this.searchBtn.addEventListener('click', () => this.handleSearch());
         this.searchInput.addEventListener('keypress', (e) => {
@@ -28,6 +31,8 @@ class AdminOnboardingUI {
         this.sendInviteBtn.addEventListener('click', () => this.handleSendInvite());
     }
 
+    // Searches clinics through the protected onboarding API and renders the
+    // returned Google Places results.
     async handleSearch() {
         const query = this.searchInput.value.trim();
 
@@ -90,6 +95,7 @@ class AdminOnboardingUI {
         }
     }
 
+    // Renders selectable clinic result cards from Google Places data.
     displayResults(places) {
         const resultsList = document.createElement('div');
         resultsList.className = 'results-list';
@@ -111,6 +117,8 @@ class AdminOnboardingUI {
         this.resultsContainer.appendChild(resultsList);
     }
 
+    // Stores the chosen clinic, fetches its admin code, and reveals the invite
+    // form.
     async selectClinic(place) {
         this.selectedClinic = place;
 
@@ -169,6 +177,8 @@ class AdminOnboardingUI {
         }
     }
 
+    // Validates the admin email and sends the support-team invitation request
+    // for the selected clinic.
     async handleSendInvite() {
         const email = this.adminEmail.value.trim();
 
@@ -290,11 +300,13 @@ class AdminOnboardingUI {
         }
     }
 
+    // Performs a lightweight email format check before sending an invitation.
     isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
 
+    // Toggles the search loading indicator.
     showLoading(show) {
         if (show) {
             this.loading.classList.add('show');
@@ -303,6 +315,7 @@ class AdminOnboardingUI {
         }
     }
 
+    // Shows a dismissible status message in the onboarding page.
     showAlert(message, type = 'info') {
         const alert = document.createElement('div');
         alert.className = `alert alert-${type} show`;
@@ -321,6 +334,7 @@ class AdminOnboardingUI {
 }
 
 // Global function accessed by the Cancel button via onclick and by clearSelection calls
+// Clears the selected clinic and resets the onboarding search/invite form.
 function clearSelection() {
     const ui = window.adminOnboardingUI;
 
@@ -337,6 +351,8 @@ function clearSelection() {
 }
 
 // Global function used by the Copy button in the admin code display row
+// Copies text from a page element, then briefly changes the clicked button text
+// to confirm the copy.
 function copyToClipboard(elementId) {
     const element = document.getElementById(elementId);
 
@@ -361,6 +377,7 @@ function copyToClipboard(elementId) {
 }
 
 // Initialize the UI once auth check has passed and DOM is fully loaded
+// Creates the page controller once and exposes it globally for button handlers.
 function initializeAdminOnboardingUI() {
     if (!window.adminOnboardingUI) {
         window.adminOnboardingUI = new AdminOnboardingUI();

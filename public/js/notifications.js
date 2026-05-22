@@ -5,6 +5,7 @@
 
 (function() {
     // Create container if it doesn't exist
+    // Creates the shared toast container on first use.
     function ensureContainer() {
         let container = document.querySelector('.toast-container');
         if (!container) {
@@ -21,6 +22,7 @@
      * @param {string} type - 'success', 'error', or 'info' (default: 'info')
      * @param {number} duration - Time in ms before auto-closing (default: 5000)
      */
+    // Displays one toast message and schedules or wires up its dismissal.
     window.showToast = function(message, type = 'info', duration = 5000) {
         const container = ensureContainer();
         
