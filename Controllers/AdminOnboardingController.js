@@ -11,6 +11,9 @@ const { db } = require("../services/config/firebase");
  * Search for clinics by name
  * POST /api/admin-onboarding/search
  */
+// POST /api/admin-onboarding/search
+// Lets the support team search Google Places for a clinic before inviting an
+// administrator to claim it.
 exports.searchClinics = async (req, res) => {
     try {
         console.log("Admin onboarding - Search request:", req.body);
@@ -45,6 +48,9 @@ exports.searchClinics = async (req, res) => {
  * Get clinic admin code by place ID
  * POST /api/admin-onboarding/clinic-code
  */
+// POST /api/admin-onboarding/clinic-code
+// Finds or creates the local clinic record for a Google Place and returns the
+// admin code that will be included in the invitation email.
 exports.getClinicCode = async (req, res) => {
     try {
         console.log("Admin onboarding - Get clinic code request:", req.body);
@@ -114,6 +120,9 @@ exports.getClinicCode = async (req, res) => {
  * Send admin invitation email
  * POST /api/admin-onboarding/send-invite
  */
+// POST /api/admin-onboarding/send-invite
+// Saves pending admin invitation details on the clinic, emails the admin code,
+// and logs the invitation for support-team tracking.
 exports.sendAdminInvite = async (req, res) => {
     try {
         console.log("Admin onboarding - Send invite request:", {
@@ -212,6 +221,8 @@ exports.sendAdminInvite = async (req, res) => {
  * Get admin invitation status
  * GET /api/admin-onboarding/invitation-status/:clinicId
  */
+// GET /api/admin-onboarding/invitation-status/:clinicId
+// Returns the latest support-team invitation record for a clinic.
 exports.getInvitationStatus = async (req, res) => {
     try {
         const { clinicId } = req.params;
@@ -259,6 +270,8 @@ exports.getInvitationStatus = async (req, res) => {
 /**
  * Generate admin invitation email HTML
  */
+// Builds the HTML email body that tells a clinic admin how to sign up and use
+// the generated admin code.
 function generateAdminInvitationEmail({ clinicName, clinicAddress, adminCode }) {
     return `
         <article style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">

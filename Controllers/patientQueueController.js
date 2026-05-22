@@ -3,6 +3,9 @@ const {
     getPatientQueueInfo
 } = require("../services/patientQueueService");
 
+// GET /api/patient/queue/:patientId
+// Returns the patient's active queue position and estimated wait information
+// for today's clinic queue, if they are currently waiting or in consultation.
 async function getMyNextQueue(req, res) {
     try {
         const patientId = req.params.patientId;

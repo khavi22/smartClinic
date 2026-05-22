@@ -10,6 +10,8 @@ if (!GOOGLE_API_KEY) {
     console.warn("GOOGLE_MAPS_API_KEY is not set in environment variables");
 }
 
+// Calls Google Places Text Search and returns matching clinic place records for
+// onboarding/discovery flows.
 exports.searchClinics = async (query) => {
     if (!GOOGLE_API_KEY) {
         throw new Error("GOOGLE_API_KEY is not configured");
@@ -30,6 +32,8 @@ exports.searchClinics = async (query) => {
     return response.data.places || [];
 };
 
+// Validates and saves the number of patients allowed per hourly slot for a
+// clinic.
 exports.updateClinicSlotCapacity = async (clinicId, slotCapacity) => {
     try {
         if (!clinicId || clinicId === "default") {
@@ -61,6 +65,8 @@ exports.updateClinicSlotCapacity = async (clinicId, slotCapacity) => {
 
 
 
+// Builds a staff workload report for a clinic by combining approved staff,
+// queue activity, and each staff member's saved availability for the range.
 exports.getStaffUtilisationData = async (clinicId, startDate, endDate) => {
     // Fetch clinic info
     const clinicDoc = await db.collection("clinics").doc(clinicId).get();

@@ -16,8 +16,10 @@ process.env.BASE_URL = "http://localhost:3000";
 
 const emailService = require("../services/emailService");
 
+// Suite: groups related coverage for Email Service.
 describe("Email Service", () => {
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
 
         jest.clearAllMocks();
@@ -31,8 +33,10 @@ describe("Email Service", () => {
     // sendEmail
     // =====================================================
 
+    // Suite: groups related coverage for sendEmail.
     describe("sendEmail", () => {
 
+        // Test: checks should send an email successfully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send an email successfully", async () => {
 
             const result = await emailService.sendEmail(
@@ -56,6 +60,7 @@ describe("Email Service", () => {
                 .toBe("message-123");
         });
 
+        // Test: checks should throw error if sendMail fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should throw error if sendMail fails", async () => {
 
             mockSendMail.mockRejectedValue(
@@ -76,8 +81,10 @@ describe("Email Service", () => {
     // sendStaffInvitation
     // =====================================================
 
+    // Suite: groups related coverage for sendStaffInvitation.
     describe("sendStaffInvitation", () => {
 
+        // Test: checks should send staff invitation email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send staff invitation email", async () => {
 
             await emailService.sendStaffInvitation(
@@ -103,8 +110,10 @@ describe("Email Service", () => {
     // sendStaffApproval
     // =====================================================
 
+    // Suite: groups related coverage for sendStaffApproval.
     describe("sendStaffApproval", () => {
 
+        // Test: checks should send approval email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send approval email", async () => {
 
             await emailService.sendStaffApproval(
@@ -130,8 +139,10 @@ describe("Email Service", () => {
     // sendStaffRejection
     // =====================================================
 
+    // Suite: groups related coverage for sendStaffRejection.
     describe("sendStaffRejection", () => {
 
+        // Test: checks should send rejection email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send rejection email", async () => {
 
             await emailService.sendStaffRejection(
@@ -157,8 +168,10 @@ describe("Email Service", () => {
     // sendAppointmentConfirmation
     // =====================================================
 
+    // Suite: groups related coverage for sendAppointmentConfirmation.
     describe("sendAppointmentConfirmation", () => {
 
+        // Test: checks should send appointment confirmation email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send appointment confirmation email", async () => {
 
             await emailService.sendAppointmentConfirmation(
@@ -187,6 +200,7 @@ describe("Email Service", () => {
                 .toContain("View My Appointments");
         });
 
+        // Test: checks should send rescheduled appointment email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send rescheduled appointment email", async () => {
 
             await emailService.sendAppointmentConfirmation(
@@ -212,8 +226,10 @@ describe("Email Service", () => {
     // sendAppointmentCancellation
     // =====================================================
 
+    // Suite: groups related coverage for sendAppointmentCancellation.
     describe("sendAppointmentCancellation", () => {
 
+        // Test: checks should send cancellation email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send cancellation email", async () => {
 
             await emailService.sendAppointmentCancellation(
@@ -242,6 +258,7 @@ describe("Email Service", () => {
                 .toContain("Book Another Appointment");
         });
 
+        // Test: checks should build appointment links from the site origin when BASE_URL contains a page. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should build appointment links from the site origin when BASE_URL contains a page", async () => {
             jest.resetModules();
             process.env.BASE_URL = "https://smartclinic-hyb0fwfuf9d5crat.uaenorth-01.azurewebsites.net/signUp.html";
@@ -274,8 +291,10 @@ describe("Email Service", () => {
     // sendQueueStatusUpdate
     // =====================================================
 
+    // Suite: groups related coverage for sendQueueStatusUpdate.
     describe("sendQueueStatusUpdate", () => {
 
+        // Test: checks should send queue status update email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send queue status update email", async () => {
 
             await emailService.sendQueueStatusUpdate(
@@ -304,8 +323,10 @@ describe("Email Service", () => {
     // sendAdminInvitation
     // =====================================================
 
+    // Suite: groups related coverage for sendAdminInvitation.
     describe("sendAdminInvitation", () => {
 
+        // Test: checks should send admin invitation email. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should send admin invitation email", async () => {
 
             await emailService.sendAdminInvitation(

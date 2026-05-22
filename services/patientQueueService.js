@@ -2,14 +2,19 @@ const { db } = require("./config/firebase");
 
 const ACTIVE_QUEUE_STATUSES = ["WAITING", "IN_CONSULTATION"];
 
+// Treats only waiting and in-consultation queue items as visible to patients.
 function isActiveQueueItem(queueItem) {
     return ACTIVE_QUEUE_STATUSES.includes(String(queueItem?.status || "WAITING").toUpperCase());
 }
 
+// Normalizes the queue item's time field, since older/newer flows store it
+// under either timeSlot or appointmentTime.
 function getQueueItemSlot(queueItem) {
     return String(queueItem?.timeSlot || queueItem?.appointmentTime || "").trim();
 }
 
+// Converts Date, Firestore Timestamp, epoch number, or date string values into
+// milliseconds so queue entries can be ordered consistently.
 function toMillis(value) {
     if (!value) {
         return null;
@@ -35,17 +40,23 @@ function toMillis(value) {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
+// Chooses the best available timestamp/queue number for ordering patients in a
+// single slot.
 function getQueueItemOrder(queueItem) {
     return toMillis(queueItem.appointmentCreatedAt) ||
         toMillis(queueItem.createdAt) ||
         Number(queueItem.queueNumber || 0);
 }
 
+// Uses the service duration stored on the queue item, falling back to 15
+// minutes when the data is missing or invalid.
 function getEstimatedServiceDuration(queueItem) {
     const serviceDuration = Number(queueItem?.serviceDuration);
     return Number.isFinite(serviceDuration) && serviceDuration > 0 ? serviceDuration : 15;
 }
 
+// Searches today's queue across clinics for the patient, then calculates their
+// position and estimated wait based on patients ahead in the same time slot.
 async function getPatientQueueInfo(patientId) {
 
 <<<<<<< HEAD

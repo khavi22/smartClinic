@@ -1,6 +1,9 @@
 const firebaseService = require("../services/firebaseService");
 const emailService = require("../services/emailService");
 
+// GET /api/admin/wait-time-report
+// Validates a clinic/date range request and returns completed-appointment wait
+// time summaries for admin reporting screens.
 exports.getWaitTimeReport = async (req, res) => {
     try {
         const { clinicId, startDate, endDate } = req.query;
@@ -40,6 +43,9 @@ exports.getWaitTimeReport = async (req, res) => {
     }
 };
 
+// GET /api/admin/no-show-report
+// Validates a clinic/date range request and returns missed/cancelled booking
+// rates for admin reporting screens.
 exports.getNoShowReport = async (req, res) => {
     try {
         const { clinicId, startDate, endDate } = req.query;
@@ -80,6 +86,9 @@ exports.getNoShowReport = async (req, res) => {
     }
 };
 
+// POST /api/admin/invite-staff
+// Creates a staff invitation for an email address and sends the invite email
+// on behalf of the signed-in clinic admin.
 exports.inviteStaff = async (req, res) => {
     try {
         const { email, clinicId } = req.body;
@@ -105,6 +114,8 @@ exports.inviteStaff = async (req, res) => {
     }
 };
 
+// GET /api/admin/pending-staff
+// Lists staff profiles for a clinic that are still waiting for admin approval.
 exports.getPendingStaff = async (req, res) => {
     try {
         const { clinicId } = req.query;
@@ -120,6 +131,8 @@ exports.getPendingStaff = async (req, res) => {
     }
 };
 
+// POST /api/admin/process-staff
+// Approves or rejects a pending staff profile and sends the matching email.
 exports.processStaffApproval = async (req, res) => {
     try {
         const { staffUid, status, clinicId } = req.body; // status: 'approved' or 'rejected'
@@ -157,6 +170,8 @@ exports.processStaffApproval = async (req, res) => {
     }
 };
 
+// GET /api/admin/active-staff
+// Lists approved staff profiles for the clinic.
 exports.getActiveStaff = async (req, res) => {
     try {
         const { clinicId } = req.query;
@@ -170,6 +185,9 @@ exports.getActiveStaff = async (req, res) => {
     }
 };
 
+// POST /api/admin/remove-staff
+// Confirms the staff member belongs to the admin's clinic, then deletes that
+// staff account and invitation data.
 exports.removeStaff = async (req, res) => {
     try {
         const { staffUid } = req.body;

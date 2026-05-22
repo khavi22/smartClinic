@@ -83,8 +83,10 @@ function mockResponse() {
     };
 }
 
+// Suite: groups related coverage for Clinic Controller.
 describe("Clinic Controller", () => {
 
+    // Setup: resets shared mocks and test data before each case in this scope.
     beforeEach(() => {
         jest.clearAllMocks();
     });
@@ -104,8 +106,10 @@ describe("Clinic Controller", () => {
     // updateClinicHoursController
     // =====================================================
 
+    // Suite: groups related coverage for updateClinicHoursController.
     describe("updateClinicHoursController", () => {
 
+        // Test: checks should update clinic hours successfully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should update clinic hours successfully", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -153,6 +157,7 @@ describe("Clinic Controller", () => {
                 );
         });
 
+        // Test: checks should return 401 if no token. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 401 if no token", async () => {
 
             const req = httpMocks.createRequest({
@@ -166,6 +171,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(401);
         });
 
+        // Test: checks should return 400 if clinic hours payload is incomplete. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinic hours payload is incomplete", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -188,6 +194,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 401 if token verification fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 401 if token verification fails", async () => {
 
             admin.auth().verifyIdToken.mockRejectedValue(
@@ -213,6 +220,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(401);
         });
 
+        // Test: checks should return 404 if clinic is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 404 if clinic is missing", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -246,6 +254,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(404);
         });
 
+        // Test: checks should return 403 if the user is not clinic admin. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 403 if the user is not clinic admin", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -282,6 +291,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(403);
         });
 
+        // Test: checks should return 500 if updating operating hours fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if updating operating hours fails", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -315,8 +325,10 @@ describe("Clinic Controller", () => {
     // updateSlotCapacity
     // =====================================================
 
+    // Suite: groups related coverage for updateSlotCapacity.
     describe("updateSlotCapacity", () => {
 
+        // Test: checks should update slot capacity. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should update slot capacity", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -357,6 +369,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return 400 if slot capacity missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if slot capacity missing", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -391,6 +404,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 401 if slot capacity request has no token. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 401 if slot capacity request has no token", async () => {
 
             const req = httpMocks.createRequest({
@@ -409,6 +423,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(401);
         });
 
+        // Test: checks should return 401 if slot capacity token verification fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 401 if slot capacity token verification fails", async () => {
 
             admin.auth().verifyIdToken.mockRejectedValue(new Error("bad token"));
@@ -432,6 +447,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(401);
         });
 
+        // Test: checks should return 404 if clinic is missing for slot capacity. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 404 if clinic is missing for slot capacity", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -458,6 +474,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(404);
         });
 
+        // Test: checks should return 403 if slot capacity user is not clinic admin. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 403 if slot capacity user is not clinic admin", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -484,6 +501,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(403);
         });
 
+        // Test: checks should map known slot capacity service errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should map known slot capacity service errors", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -512,6 +530,7 @@ describe("Clinic Controller", () => {
             expect(res.body.error).toBe("Invalid clinic ID.");
         });
 
+        // Test: checks should return 500 for unexpected slot capacity errors. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 for unexpected slot capacity errors", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -544,8 +563,10 @@ describe("Clinic Controller", () => {
     // updateClinicProfile
     // =====================================================
 
+    // Suite: groups related coverage for updateClinicProfile.
     describe("updateClinicProfile", () => {
 
+        // Test: checks should update clinic profile. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should update clinic profile", async () => {
 
             const updateMock = jest.fn().mockResolvedValue();
@@ -574,6 +595,7 @@ describe("Clinic Controller", () => {
             expect(updateMock).toHaveBeenCalled();
         });
 
+        // Test: checks should return 400 if clinicId missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -588,6 +610,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if clinic profile update fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if clinic profile update fails", async () => {
 
             db.collection.mockReturnValue({
@@ -621,8 +644,10 @@ describe("Clinic Controller", () => {
     // getClinics
     // =====================================================
 
+    // Suite: groups related coverage for getClinics.
     describe("getClinics", () => {
 
+        // Test: checks should fetch clinics from Google API. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fetch clinics from Google API", async () => {
 
             axios.post.mockResolvedValue({
@@ -646,6 +671,7 @@ describe("Clinic Controller", () => {
             expect(axios.post).toHaveBeenCalled();
         });
 
+        // Test: checks should build a location-based Google query. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should build a location-based Google query", async () => {
 
             axios.post.mockResolvedValue({
@@ -671,6 +697,7 @@ describe("Clinic Controller", () => {
             });
         });
 
+        // Test: checks should return 500 on axios failure. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 on axios failure", async () => {
 
             axios.post.mockRejectedValue(
@@ -695,8 +722,10 @@ describe("Clinic Controller", () => {
     // ensureClinicExistsController
     // =====================================================
 
+    // Suite: groups related coverage for ensureClinicExistsController.
     describe("ensureClinicExistsController", () => {
 
+        // Test: checks should ensure clinic exists. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should ensure clinic exists", async () => {
 
             ensureClinicExists.mockResolvedValue({
@@ -718,6 +747,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return 400 if missing fields. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if missing fields", async () => {
 
             const req = httpMocks.createRequest({
@@ -731,6 +761,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if ensure clinic fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if ensure clinic fails", async () => {
 
             ensureClinicExists.mockRejectedValue(new Error("Ensure failed"));
@@ -750,8 +781,10 @@ describe("Clinic Controller", () => {
         });
     });
 
+    // Suite: groups related coverage for getServiceTemplates.
     describe("getServiceTemplates", () => {
 
+        // Test: checks should return service templates. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return service templates", async () => {
 
             db.collection.mockReturnValue({
@@ -774,6 +807,7 @@ describe("Clinic Controller", () => {
             expect(res.body).toEqual([{ id: "template1", name: "General" }]);
         });
 
+        // Test: checks should return 500 when service template lookup fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 when service template lookup fails", async () => {
 
             db.collection.mockReturnValue({
@@ -789,8 +823,10 @@ describe("Clinic Controller", () => {
         });
     });
 
+    // Suite: groups related coverage for seedServiceTemplates.
     describe("seedServiceTemplates", () => {
 
+        // Test: checks should report already seeded when templates exist. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should report already seeded when templates exist", async () => {
 
             db.collection.mockReturnValue({
@@ -810,6 +846,7 @@ describe("Clinic Controller", () => {
             expect(res.body.message).toBe("Already seeded");
         });
 
+        // Test: checks should report seed instructions when templates are absent. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should report seed instructions when templates are absent", async () => {
 
             db.collection.mockReturnValue({
@@ -829,6 +866,7 @@ describe("Clinic Controller", () => {
             expect(res.body.message).toContain("seed");
         });
 
+        // Test: checks should return 500 when seed check fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 when seed check fails", async () => {
 
             db.collection.mockReturnValue({
@@ -850,8 +888,10 @@ describe("Clinic Controller", () => {
     // getServices
     // =====================================================
 
+    // Suite: groups related coverage for getServices.
     describe("getServices", () => {
 
+        // Test: checks should fetch clinic services. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fetch clinic services", async () => {
 
             getClinicServices.mockResolvedValue([
@@ -876,6 +916,7 @@ describe("Clinic Controller", () => {
                 .toHaveBeenCalledWith("clinic1");
         });
 
+        // Test: checks should return 400 if clinicId missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if clinicId missing", async () => {
 
             const req = httpMocks.createRequest({
@@ -890,6 +931,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should resolve clinic id from optional admin auth. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should resolve clinic id from optional admin auth", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -922,6 +964,7 @@ describe("Clinic Controller", () => {
             expect(getClinicServices).toHaveBeenCalledWith("clinic-from-token");
         });
 
+        // Test: checks should continue to 400 if optional auth decoding fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should continue to 400 if optional auth decoding fails", async () => {
 
             admin.auth().verifyIdToken.mockRejectedValue(new Error("bad token"));
@@ -940,6 +983,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if service lookup fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if service lookup fails", async () => {
 
             getClinicServices.mockRejectedValue(new Error("Services failed"));
@@ -962,8 +1006,10 @@ describe("Clinic Controller", () => {
     // addService
     // =====================================================
 
+    // Suite: groups related coverage for addService.
     describe("addService", () => {
 
+        // Test: checks should add service successfully. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should add service successfully", async () => {
 
             serviceExists.mockResolvedValue(false);
@@ -988,6 +1034,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(201);
         });
 
+        // Test: checks should return 409 if service already exists. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 409 if service already exists", async () => {
 
             serviceExists.mockResolvedValue(true);
@@ -1010,6 +1057,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(409);
         });
 
+        // Test: checks should return 400 if adding service has no clinic id. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if adding service has no clinic id", async () => {
 
             const req = httpMocks.createRequest({
@@ -1028,6 +1076,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 400 if service payload is invalid. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if service payload is invalid", async () => {
 
             const req = httpMocks.createRequest({
@@ -1048,6 +1097,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if adding service fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if adding service fails", async () => {
 
             serviceExists.mockResolvedValue(false);
@@ -1076,8 +1126,10 @@ describe("Clinic Controller", () => {
     // updateService
     // =====================================================
 
+    // Suite: groups related coverage for updateService.
     describe("updateService", () => {
 
+        // Test: checks should update service. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should update service", async () => {
 
             updateClinicService.mockResolvedValue();
@@ -1101,6 +1153,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return 400 if updating service has no clinic id. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if updating service has no clinic id", async () => {
 
             const req = httpMocks.createRequest({
@@ -1120,6 +1173,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if updating service fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if updating service fails", async () => {
 
             updateClinicService.mockRejectedValue(new Error("Update failed"));
@@ -1148,8 +1202,10 @@ describe("Clinic Controller", () => {
     // deleteService
     // =====================================================
 
+    // Suite: groups related coverage for deleteService.
     describe("deleteService", () => {
 
+        // Test: checks should delete service. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should delete service", async () => {
 
             deleteClinicService.mockResolvedValue();
@@ -1170,6 +1226,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return 400 if deleting service has no clinic id. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if deleting service has no clinic id", async () => {
 
             const req = httpMocks.createRequest({
@@ -1186,6 +1243,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if deleting service fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if deleting service fails", async () => {
 
             deleteClinicService.mockRejectedValue(new Error("Delete failed"));
@@ -1211,8 +1269,10 @@ describe("Clinic Controller", () => {
     // getStaffUtilisationReport
     // =====================================================
 
+    // Suite: groups related coverage for getStaffUtilisationReport.
     describe("getStaffUtilisationReport", () => {
 
+        // Test: checks should fetch staff utilisation report. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should fetch staff utilisation report", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -1255,6 +1315,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(200);
         });
 
+        // Test: checks should return 401 if unauthorized. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 401 if unauthorized", async () => {
 
             const req = httpMocks.createRequest({
@@ -1272,6 +1333,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(401);
         });
 
+        // Test: checks should return 401 if staff utilisation token is invalid. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 401 if staff utilisation token is invalid", async () => {
 
             admin.auth().verifyIdToken.mockRejectedValue(new Error("bad token"));
@@ -1296,6 +1358,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(401);
         });
 
+        // Test: checks should return 404 if staff utilisation clinic is missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 404 if staff utilisation clinic is missing", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -1323,6 +1386,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(404);
         });
 
+        // Test: checks should return 403 if staff utilisation user is not clinic admin. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 403 if staff utilisation user is not clinic admin", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -1350,6 +1414,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(403);
         });
 
+        // Test: checks should return 400 if staff utilisation dates are missing. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 400 if staff utilisation dates are missing", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({
@@ -1374,6 +1439,7 @@ describe("Clinic Controller", () => {
             expect(res.statusCode).toBe(400);
         });
 
+        // Test: checks should return 500 if staff utilisation lookup fails. How: it arranges mocks or request data, runs the target code, and asserts the expected result.
         it("should return 500 if staff utilisation lookup fails", async () => {
 
             admin.auth().verifyIdToken.mockResolvedValue({

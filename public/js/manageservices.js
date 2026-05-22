@@ -15,7 +15,7 @@ async function getAuthToken() {
 
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 
@@ -49,6 +49,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
 });
 
 // ── LOAD CLINIC PROFILE (DETAILS + FACILITY TYPE) ──
+// Loads read-only clinic profile details and the current facility type into the
+// services admin page.
 async function loadClinicProfile(clinicId) {
     try {
         const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
@@ -132,6 +134,7 @@ document.getElementById('clinicProfileForm').addEventListener('submit', async (e
 
 // ── SERVICES & DURATIONS MANAGEMENT ──
 
+// Fetches global service templates and fills the template dropdown.
 async function loadTemplates() {
   try {
     const res = await fetch("/api/clinics/templates", {
@@ -154,6 +157,7 @@ async function loadTemplates() {
   }
 }
 
+// Copies the selected template's name, description, and duration into the form.
 window.handleTemplateChange = function() {
   const select = document.getElementById("templateSelect");
   if (!select.value) return;
@@ -164,6 +168,7 @@ window.handleTemplateChange = function() {
   document.getElementById("serviceDuration").value = template.duration;
 };
 
+// Loads the clinic's custom service catalog and refreshes the table/stats.
 async function loadServices() {
   try {
     const token = await getAuthToken();
@@ -181,6 +186,8 @@ async function loadServices() {
   }
 }
 
+// Renders service rows with edit/delete controls and inline delete
+// confirmation.
 function renderTable(services) {
   const tbody = document.getElementById("servicesTableBody");
   tbody.innerHTML = "";
@@ -261,6 +268,7 @@ function renderTable(services) {
   });
 }
 
+// Updates service summary numbers shown above the table.
 function renderStats(services) {
   document.getElementById("totalServices").textContent = services.length;
 
@@ -271,6 +279,7 @@ function renderStats(services) {
   document.getElementById("avgDuration").textContent = `${avg} min`;
 }
 
+// Opens the modal in create mode for adding a new custom service.
 window.openServiceModal = function() {
   editingServiceId = null;
   document.getElementById("serviceModalTitle").textContent = "Add Custom Service";
@@ -280,6 +289,7 @@ window.openServiceModal = function() {
   document.getElementById("serviceModal").style.display = "flex";
 };
 
+// Opens the modal in edit mode and pre-fills it with an existing service.
 window.openEditModal = function(service) {
   editingServiceId = service.id;
   document.getElementById("serviceModalTitle").textContent = "Edit Service";
@@ -294,6 +304,7 @@ window.openEditModal = function(service) {
   document.getElementById("serviceModal").style.display = "flex";
 };
 
+// Closes and resets the service modal.
 window.closeServiceModal = function() {
   document.getElementById("serviceModal").style.display = "none";
   document.getElementById("serviceForm").reset();
@@ -301,6 +312,7 @@ window.closeServiceModal = function() {
   editingServiceId = null;
 };
 
+// Creates or updates a service depending on whether the modal is in edit mode.
 window.handleServiceSubmit = async function(event) {
   event.preventDefault();
 
@@ -358,6 +370,7 @@ window.handleServiceSubmit = async function(event) {
   }
 };
 
+// Deletes a service after the inline confirmation row is accepted.
 async function handleServiceDelete(id) {
   try {
     const token = await getAuthToken();

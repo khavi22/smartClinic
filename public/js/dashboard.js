@@ -8,13 +8,15 @@ const ROLE_COLLECTIONS = ["patients", "admins", "staff", "users"];
 auth.onAuthStateChanged(async (user) => {
     if (!user) {
         console.log("Dashboard Guard: No active user session found.");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
     console.log("Dashboard Guard: Session detected for UID:", user.uid);
     await loadUserProfile(user);
 });
 
+// Loads the authenticated user's backend profile, enforces that patients stay
+// on the patient dashboard, and fills the header/session UI.
 async function loadUserProfile(user) {
     try {
         let doc = null;
@@ -95,9 +97,9 @@ async function loadUserProfile(user) {
 
     } catch (err) {
         console.error("Error loading profile:", err);
-        showToast("Session verification failed. Redirecting to login.", "error");
+        showToast("Session verification failed. Redirecting to home.", "error");
         await auth.signOut();
-        window.location.href = "login.html";
+        window.location.href = "index.html";
     }
 }
 
@@ -105,7 +107,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         auth.signOut().then(() => {
-            window.location.href = "login.html";
+            window.location.href = "index.html";
         });
     });
 }
@@ -141,7 +143,7 @@ if (modalConfirm) {
     modalConfirm.addEventListener("click", async () => {
         const user = auth.currentUser;
         if (!user) {
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return;
         }
 

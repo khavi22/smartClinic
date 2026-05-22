@@ -6,7 +6,7 @@ let currentClinicId = null;
 
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
 
@@ -59,6 +59,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 
+// Loads the clinic's saved operating hours and fills the weekly hours form.
 async function loadClinicHours(clinicId) {
     const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();
     if (doc.exists) {
@@ -105,6 +106,7 @@ daysShort.forEach(day => {
     }
 });
 
+// Enables or disables a day's time fields based on whether that day is open.
 function toggleDay(checkbox, fields, row) {
     if (!checkbox || !fields) return;
     if (checkbox.checked) {
@@ -225,6 +227,7 @@ if (inviteForm) {
     });
 }
 
+// Fetches staff applications that are waiting for admin approval.
 async function loadPendingStaff(clinicId) {
     if (!pendingStaffList) return;
 
@@ -243,6 +246,7 @@ async function loadPendingStaff(clinicId) {
     }
 }
 
+// Renders pending staff cards with approve/reject actions.
 function renderPendingStaff(staff) {
     const container = document.getElementById('pendingStaffList');
     if (!container) return;
@@ -266,6 +270,7 @@ function renderPendingStaff(staff) {
     `).join('');
 }
 
+// Approves or rejects one pending staff member and refreshes the staff lists.
 window.processApproval = async (staffUid, status) => {
     if (!currentClinicId) return;
 
@@ -297,6 +302,7 @@ window.processApproval = async (staffUid, status) => {
     }
 };
 
+// Fetches approved staff members for the admin's clinic.
 async function loadActiveStaff(clinicId) {
     const container = document.getElementById('activeStaffList');
     if (!container) return;
@@ -322,6 +328,7 @@ async function loadActiveStaff(clinicId) {
     }
 }
 
+// Renders approved staff members with remove actions.
 function renderActiveStaff(staff) {
     const container = document.getElementById('activeStaffList');
     if (!container) return;
@@ -346,6 +353,7 @@ function renderActiveStaff(staff) {
     `).join('');
 }
 
+// Removes a staff member from the clinic after admin confirmation.
 window.fireStaff = async (staffUid, name) => {
     if (!confirm(`Are you sure you want to remove ${name} from your staff? They will lose all access to the clinic.`)) return;
 
@@ -387,6 +395,7 @@ if (slotCapacitySlider) {
     });
 }
 
+// Loads the clinic's slot capacity into the capacity slider.
 async function loadSlotCapacity(clinicId) {
     try {
         const doc = await firebase.firestore().collection("clinics").doc(clinicId).get();

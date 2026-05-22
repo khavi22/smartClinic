@@ -12,6 +12,8 @@ console.log("JS file loaded!");
 
 import { validateStaffData } from './validateStaffLogic.js';
 
+// Checks the entered staff number against Firestore and delegates the result
+// validation to validateStaffData.
 async function validateStaffNumber(StaffNumber){
     console.log("hi");
     const q_staff_number=query(collection(db,"ClinicStaff") , 
@@ -55,6 +57,7 @@ verify_button.addEventListener("click" , async function(){
 
 })
 
+// Sends a validated staff user to the clinic staff dashboard page.
 function GoToClinicStaffDashboard(){
     window.location.href="ClinicStaffDashBoard.html";
 }

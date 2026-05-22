@@ -31,6 +31,7 @@ if (filterToggle && filterBody) {
 }
 
 // ── Collect active filter values ─────────────────────────────────────────────
+// Collects the currently selected clinic filters from the filter panel.
 function getFilters() {
     const facilityType =
     document.querySelector('input[name="facilityTypeFilter"]:checked')?.value || "";
@@ -42,11 +43,13 @@ function getFilters() {
     return { facilityType, province, district, region, services };
 }
 
+// Counts how many filters are active so the badge can show filter intensity.
 function countFilters(f) {
     return (f.facilityType ? 1 : 0) + (f.province ? 1 : 0) +
            (f.district ? 1 : 0) + (f.region ? 1 : 0) + f.services.length;
 }
 
+// Updates the filter badge number and hides it when no filters are active.
 function updateFilterBadge() {
     const badge = document.getElementById("filterBadge");
     const n = countFilters(getFilters());
@@ -94,6 +97,7 @@ if (clearFiltersBtn) {
 }
 
 // ── Render active filter tags above results ───────────────────────────────────
+// Renders removable chips for each active filter above the search results.
 function renderActiveFilterTags(filters) {
     const existing = document.getElementById("activeFiltersRow");
     if (existing) existing.remove();
@@ -133,6 +137,8 @@ function renderActiveFilterTags(filters) {
 }
 
 // ── Firestore query with filters ─────────────────────────────────────────────
+// Searches locally stored Firestore clinic profiles and applies extra
+// client-side filters that Firestore cannot combine easily.
 async function searchFirestoreClinics(filters) {
     const db = firebase.firestore();
     let query = db.collection("clinics");
@@ -172,6 +178,7 @@ async function searchFirestoreClinics(filters) {
 }
 
 // ── Render from Firestore ─────────────────────────────────────────────────────
+// Renders clinic cards from Firestore records and links each card to booking.
 function renderFirestoreClinics(clinicsArray) {
     section_view_clinics.innerHTML = "";
 
@@ -223,6 +230,8 @@ function renderFirestoreClinics(clinicsArray) {
 }
 
 // ── Render from Google Places API ────────────────────────────────────────────
+// Renders clinic cards from Google Places results and links each card to
+// booking using the place id as the clinic id.
 function renderPlacesClinics(clinicsArray) {
     section_view_clinics.innerHTML = "";
 
